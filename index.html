@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f59e0b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GPS Tracker">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>GPS Tracker — Nikhil</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@400;600;700;800&display=swap');
+:root{
+  --bg:#0a0a0c;--surface:#111115;--surface2:#18181e;--border:#252530;
+  --accent:#f59e0b;--accent-dim:rgba(245,158,11,0.12);
+  --text:#dddde8;--text-dim:#55556a;--text-mid:#9090a8;
+  --work:#4285f4;        --work-dim:rgba(66,133,244,0.12);
+  --money:#0f9d58;       --money-dim:rgba(15,157,88,0.12);
+  --rel:#e91e8c;         --rel-dim:rgba(233,30,140,0.12);
+  --health:#33b679;      --health-dim:rgba(51,182,121,0.12);
+  --spirit:#f6bf26;      --spirit-dim:rgba(246,191,38,0.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;position:sticky;top:0;z-index:100}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:14px 0 12px;border-bottom:1px solid var(--border)}
+.header-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+.header-date{font-size:10px;color:var(--text-dim)}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:11px 14px 9px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;position:relative}
+.tab:hover{color:var(--text-mid)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab.today-tab::after{content:'';position:absolute;top:9px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.tab.stats-tab{margin-left:auto;border-left:1px solid var(--border);padding-left:18px}
+.main{max-width:860px;margin:0 auto;padding:20px 20px 80px}
+.day-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.progress-area{display:flex;align-items:center;gap:14px}
+.ring-wrap{position:relative;width:52px;height:52px;flex-shrink:0}
+.ring-svg{transform:rotate(-90deg)}
+.ring-track{fill:none;stroke:var(--border);stroke-width:4}
+.ring-fill{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .5s cubic-bezier(.4,0,.2,1)}
+.ring-pct{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:500;color:var(--accent)}
+.day-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;letter-spacing:1px;line-height:1}
+.task-count{font-size:11px;color:var(--text-dim);margin-top:4px}
+.task-count span{color:var(--text-mid)}
+.day-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.goal-bars{display:flex;flex-direction:column;gap:5px;min-width:130px}
+.goal-bar-row{display:flex;align-items:center;gap:6px}
+.goal-bar-label{font-size:8px;color:var(--text-dim);width:56px;text-align:right;text-transform:uppercase;letter-spacing:.5px}
+.goal-bar-track{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.goal-bar-fill{height:100%;border-radius:2px;transition:width .4s ease}
+.goal-bar-pct{font-size:8px;color:var(--text-dim);width:26px;text-align:right}
+.btn-reset{padding:5px 12px;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:5px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s}
+.btn-reset:hover{border-color:var(--text-mid);color:var(--text-mid)}
+.task-list{display:flex;flex-direction:column;gap:3px}
+.task-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;border-left:3px solid transparent;cursor:pointer;transition:background .12s,opacity .2s;user-select:none}
+.task-row:hover{background:var(--surface2)}
+.task-row.done{opacity:0.35}
+.task-row.done .task-label{text-decoration:line-through;color:var(--text-dim)}
+.task-row[data-goal=work]{background:var(--work-dim);border-left-color:var(--work)}
+.task-row[data-goal=money]{background:var(--money-dim);border-left-color:var(--money)}
+.task-row[data-goal=relationship]{background:var(--rel-dim);border-left-color:var(--rel)}
+.task-row[data-goal=health]{background:var(--health-dim);border-left-color:var(--health)}
+.task-row[data-goal=spirituality]{background:var(--spirit-dim);border-left-color:var(--spirit)}
+.task-row.done[data-goal]{background:transparent}
+.task-check{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent;transition:all .15s}
+.task-row.done .task-check{background:var(--accent);border-color:var(--accent);color:#000}
+.task-time{font-size:10px;color:var(--text-dim);width:62px;flex-shrink:0}
+.task-label{flex:1;font-size:13px;color:var(--text)}
+.task-meta{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.task-goal-tag{font-size:8px;padding:2px 6px;border-radius:3px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.task-dur{font-size:10px;color:var(--text-dim)}
+.tag-work{background:var(--work-dim);color:var(--work);border:1px solid rgba(66,133,244,0.25)}
+.tag-money{background:var(--money-dim);color:var(--money);border:1px solid rgba(15,157,88,0.25)}
+.tag-relationship{background:var(--rel-dim);color:var(--rel);border:1px solid rgba(233,30,140,0.25)}
+.tag-health{background:var(--health-dim);color:var(--health);border:1px solid rgba(51,182,121,0.25)}
+.tag-spirituality{background:var(--spirit-dim);color:var(--spirit);border:1px solid rgba(246,191,38,0.25)}
+.empty-state{padding:48px 20px;text-align:center;color:var(--text-dim);font-size:12px;line-height:2}
+.empty-state strong{display:block;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--text-mid);letter-spacing:1px;margin-bottom:10px}
+.section-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-mid);margin-bottom:14px}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px}
+.stat-label{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.stat-value{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--accent);line-height:1}
+.stat-sub{font-size:10px;color:var(--text-dim);margin-top:5px}
+.goal-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:28px}
+@media(max-width:560px){.goal-cards{grid-template-columns:repeat(3,1fr)}}
+.goal-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:14px 10px;text-align:center}
+.goal-card-name{font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.goal-card-ring{position:relative;width:44px;height:44px;margin:0 auto 8px}
+.goal-card-sub{font-size:8px;color:var(--text-dim);margin-top:2px}
+.heatmap-wrap{margin-bottom:28px}
+.day-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.day-lbl{font-size:9px;color:var(--text-dim);text-align:center;text-transform:uppercase}
+.heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.heat-cell{aspect-ratio:1;border-radius:4px;cursor:default;transition:transform .1s}
+.heat-cell:hover{transform:scale(1.2);z-index:10;position:relative}
+.h0{background:var(--surface2)}.h1{background:rgba(245,158,11,0.18)}.h2{background:rgba(245,158,11,0.38)}.h3{background:rgba(245,158,11,0.62)}.h4{background:rgba(245,158,11,0.88)}.hf{background:transparent;border:1px dashed var(--border)}
+.heat-legend{display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-top:8px}
+.legend-lbl{font-size:9px;color:var(--text-dim)}
+.legend-cell{width:11px;height:11px;border-radius:2px}
+.bar-chart-wrap{margin-bottom:28px}
+.bar-chart{display:flex;gap:8px;align-items:flex-end;height:90px;padding:0 2px;margin-bottom:6px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%}
+.bar-pct-lbl{font-size:9px;color:var(--text-dim);min-height:12px}
+.bar{width:100%;border-radius:3px 3px 0 0;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);border-bottom:none;min-height:2px}
+.bar.current{background:var(--accent);border-color:var(--accent)}
+.bar-lbl{font-size:9px;color:var(--text-dim)}
+.quarter-wrap{margin-bottom:28px}
+.quarter-meta{font-size:9px;color:var(--text-dim);margin-bottom:14px}
+.quarter-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.quarter-goal-name{font-size:10px;width:76px;flex-shrink:0;color:var(--text-mid)}
+.quarter-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.quarter-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.quarter-pct-lbl{font-size:10px;color:var(--text-dim);width:36px;text-align:right}
+.monthly-table{width:100%;border-collapse:collapse;margin-bottom:28px;font-size:12px}
+.monthly-table th{text-align:left;padding:8px 10px;font-size:9px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);font-weight:500}
+.monthly-table td{padding:9px 10px;border-bottom:1px solid rgba(37,37,48,0.5);color:var(--text-mid)}
+.monthly-table tr:last-child td{border-bottom:none}
+.monthly-table td:first-child{color:var(--text);font-weight:500}
+.pct-c{color:var(--accent)!important}
+.c-work{color:var(--work)!important}.c-money{color:var(--money)!important}
+.c-rel{color:var(--rel)!important}.c-health{color:var(--health)!important}.c-spirit{color:var(--spirit)!important}
+.actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
+.btn-export{padding:9px 18px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.3);color:var(--accent);border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s}
+.btn-export:hover{background:rgba(245,158,11,0.2)}
+.btn-danger{padding:9px 18px;background:none;border:1px solid rgba(239,68,68,0.25);color:rgba(239,68,68,0.7);border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s}
+.btn-danger:hover{border-color:rgba(239,68,68,0.5);color:#ef4444}
+.no-data{padding:32px;text-align:center;color:var(--text-dim);font-size:12px;background:var(--surface);border-radius:9px;border:1px solid var(--border)}
+.tooltip{position:fixed;background:var(--surface2);border:1px solid var(--border);padding:5px 9px;border-radius:5px;font-size:10px;color:var(--text);pointer-events:none;opacity:0;transition:opacity .12s;z-index:9999;white-space:nowrap}
+.tooltip.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-top">
+    <div class="header-title">GPS Tracker</div>
+    <div class="header-date" id="hDate"></div>
+  </div>
+  <div class="tabs">
+    <button class="tab" data-day="mon">MON</button>
+    <button class="tab" data-day="tue">TUE</button>
+    <button class="tab" data-day="wed">WED</button>
+    <button class="tab" data-day="thu">THU</button>
+    <button class="tab" data-day="fri">FRI</button>
+    <button class="tab" data-day="sat">SAT</button>
+    <button class="tab" data-day="sun">SUN</button>
+    <button class="tab stats-tab" data-day="stats">STATS ▸</button>
+  </div>
+</div>
+<div class="main" id="main"></div>
+<div class="tooltip" id="tt"></div>
+<script>
+const DAYS=['mon','tue','wed','thu','fri','sat','sun'];
+const DNAMES={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
+const JS2IDX={0:6,1:0,2:1,3:2,4:3,5:4,6:5};
+const Q_START=new Date('2026-04-01');
+const Q_END=new Date('2026-08-31');
+
+// Goal config — key must exactly match Google Calendar name in lowercase
+const GOALS={
+  work:        {label:'Work',     color:'#4285f4',cls:'c-work'},
+  money:       {label:'Money',    color:'#0f9d58',cls:'c-money'},
+  relationship:{label:'Marriage', color:'#e91e8c',cls:'c-rel'},
+  health:      {label:'Health',   color:'#33b679',cls:'c-health'},
+  spirituality:{label:'Faith',    color:'#f6bf26',cls:'c-spirit'},
+};
+const GOAL_KEYS=Object.keys(GOALS);
+
+// Tasks: empty until Google Calendar wired up in Phase 2
+// Phase 2 will populate this via: tasks[day] = calendarEvents.map(...)
+let tasks={mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
+
+// Storage
+const SK='gps_v1';
+function getStore(){try{return JSON.parse(localStorage.getItem(SK)||'{}')}catch{return{}}}
+function saveStore(s){localStorage.setItem(SK,JSON.stringify(s))}
+function dkey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function recentDateFor(dn){
+  const t=new Date(),ti=JS2IDX[t.getDay()],di=DAYS.indexOf(dn);
+  let df=ti-di;if(df<0)df+=7;
+  const d=new Date(t);d.setDate(t.getDate()-df);return dkey(d);
+}
+function getChecked(ds){return getStore()[ds]?.checked||[]}
+function setChecked(ds,dn,c){
+  const s=getStore();
+  if(!s[ds])s[ds]={};
+  s[ds].checked=c;
+  s[ds].total=tasks[dn].length;
+  s[ds].day=dn;
+  const gT={},gD={};
+  tasks[dn].forEach(t=>{gT[t.goal]=(gT[t.goal]||0)+1});
+  c.forEach(id=>{const t=tasks[dn].find(x=>x.id===id);if(t)gD[t.goal]=(gD[t.goal]||0)+1});
+  s[ds].goalTotals=gT;
+  s[ds].goalDone=gD;
+  saveStore(s);
+}
+
+let activeDay=null,checked=[],activeDateStr=null;
+
+function init(){
+  const now=new Date();
+  activeDay=DAYS[JS2IDX[now.getDay()]];
+  activeDateStr=dkey(now);
+  checked=getChecked(activeDateStr);
+  document.getElementById('hDate').textContent=now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.querySelectorAll('.tab[data-day]').forEach(tab=>{
+    if(tab.dataset.day===activeDay)tab.classList.add('today-tab');
+    tab.addEventListener('click',()=>switchDay(tab.dataset.day));
+  });
+  switchDay(activeDay);
+}
+
+function switchDay(day){
+  activeDay=day;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.day===day));
+  if(day==='stats'){renderStats();return}
+  activeDateStr=recentDateFor(day);
+  checked=getChecked(activeDateStr);
+  renderDay();
+}
+
+function renderDay(){
+  const day=activeDay,dt=tasks[day]||[];
+  const done=dt.filter(t=>checked.includes(t.id)).length,total=dt.length;
+  const pct=total?Math.round(done/total*100):0;
+  const C=2*Math.PI*22,offset=C-(pct/100)*C;
+
+  const gT={},gD={};
+  dt.forEach(t=>{gT[t.goal]=(gT[t.goal]||0)+1});
+  checked.forEach(id=>{const t=dt.find(x=>x.id===id);if(t)gD[t.goal]=(gD[t.goal]||0)+1});
+  const activeGoals=GOAL_KEYS.filter(g=>gT[g]);
+
+  let barsH=activeGoals.length?'<div class="goal-bars">':'';
+  activeGoals.forEach(g=>{
+    const gp=Math.round((gD[g]||0)/gT[g]*100);
+    barsH+=`<div class="goal-bar-row">
+      <div class="goal-bar-label">${GOALS[g].label}</div>
+      <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${gp}%;background:${GOALS[g].color}"></div></div>
+      <div class="goal-bar-pct">${gp}%</div>
+    </div>`;
+  });
+  if(activeGoals.length)barsH+='</div>';
+
+  let h=`<div class="day-header">
+    <div class="progress-area">
+      <div class="ring-wrap">
+        <svg class="ring-svg" width="52" height="52" viewBox="0 0 52 52">
+          <circle class="ring-track" cx="26" cy="26" r="22" stroke-dasharray="${C}" stroke-dashoffset="0"/>
+          <circle class="ring-fill"  cx="26" cy="26" r="22" stroke-dasharray="${C}" stroke-dashoffset="${offset}"/>
+        </svg>
+        <div class="ring-pct">${pct}%</div>
+      </div>
+      <div>
+        <div class="day-name">${DNAMES[day]}</div>
+        <div class="task-count"><span>${done}</span> / ${total} done</div>
+      </div>
+    </div>
+    <div class="day-right">
+      ${barsH}
+      ${total?`<button class="btn-reset" onclick="resetDay()">reset day</button>`:''}
+    </div>
+  </div>`;
+
+  if(!total){
+    h+=`<div class="empty-state">
+      <strong>Waiting for Calendar</strong>
+      Google Calendar integration connects in Phase 2.<br>
+      Your events will appear here automatically once linked.
+    </div>`;
+  } else {
+    h+='<div class="task-list">';
+    dt.forEach(t=>{
+      const isDone=checked.includes(t.id);
+      h+=`<div class="task-row${isDone?' done':''}" data-goal="${t.goal||''}" onclick="toggle('${t.id}')">
+        <div class="task-check">${isDone?'✓':''}</div>
+        <div class="task-time">${t.time||''}</div>
+        <div class="task-label">${t.label}</div>
+        <div class="task-meta">
+          ${t.goal?`<span class="task-goal-tag tag-${t.goal}">${GOALS[t.goal]?.label||t.goal}</span>`:''}
+          ${t.dur?`<span class="task-dur">${t.dur}</span>`:''}
+        </div>
+      </div>`;
+    });
+    h+='</div>';
+  }
+  document.getElementById('main').innerHTML=h;
+}
+
+function toggle(id){
+  if(checked.includes(id))checked=checked.filter(x=>x!==id);else checked.push(id);
+  setChecked(activeDateStr,activeDay,checked);
+  renderDay();
+}
+function resetDay(){checked=[];setChecked(activeDateStr,activeDay,[]);renderDay()}
+
+function renderStats(){
+  const store=getStore(),now=new Date();
+
+  let streak=0;
+  for(let i=0;i<365;i++){
+    const d=new Date(now);d.setDate(now.getDate()-i);
+    const e=store[dkey(d)];
+    if(e&&e.total>0&&(e.checked?.length||0)/e.total>=0.5)streak++;else break;
+  }
+  const all=Object.values(store).filter(e=>e.total>0);
+  const tracked=all.length;
+  const avgPct=tracked?Math.round(all.reduce((s,e)=>s+(e.checked?.length||0)/e.total,0)/tracked*100):0;
+  const perfectDays=all.filter(e=>(e.checked?.length||0)===e.total).length;
+
+  // this week per goal
+  const wk=new Date(now);wk.setDate(now.getDate()-now.getDay()+1);wk.setHours(0,0,0,0);
+  const wGT={},wGD={};
+  GOAL_KEYS.forEach(g=>{wGT[g]=0;wGD[g]=0});
+  for(let i=0;i<7;i++){
+    const d=new Date(wk);d.setDate(wk.getDate()+i);
+    const e=store[dkey(d)];if(!e?.goalTotals)continue;
+    GOAL_KEYS.forEach(g=>{wGT[g]+=(e.goalTotals[g]||0);wGD[g]+=(e.goalDone?.[g]||0)});
+  }
+
+  // heatmap
+  const heatDays=[];
+  for(let i=34;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);heatDays.push(d)}
+
+  // 8-week bars
+  const weekBars=[];
+  for(let w=7;w>=0;w--){
+    const ws=new Date(now);ws.setDate(now.getDate()-now.getDay()-w*7+1);
+    let tot=0,dn=0;
+    for(let d=0;d<7;d++){const wd=new Date(ws);wd.setDate(ws.getDate()+d);const e=store[dkey(wd)];if(e?.total>0){tot+=e.total;dn+=(e.checked?.length||0)}}
+    weekBars.push({pct:tot>0?Math.round(dn/tot*100):0,isCurrent:w===0});
+  }
+
+  // quarterly
+  const qDays=Math.round((Q_END-Q_START)/864e5);
+  const elapsed=Math.max(0,Math.min(qDays,Math.round((now-Q_START)/864e5)));
+  const qPct=Math.round(elapsed/qDays*100);
+  const qGT={},qGD={};GOAL_KEYS.forEach(g=>{qGT[g]=0;qGD[g]=0});
+  Object.entries(store).forEach(([ds,e])=>{
+    const d=new Date(ds);if(d<Q_START||d>Q_END||!e.goalTotals)return;
+    GOAL_KEYS.forEach(g=>{qGT[g]+=(e.goalTotals[g]||0);qGD[g]+=(e.goalDone?.[g]||0)});
+  });
+
+  // monthly
+  const months={};
+  Object.entries(store).forEach(([ds,e])=>{
+    if(!e.total)return;
+    const mo=ds.slice(0,7);
+    if(!months[mo])months[mo]={completions:[],gT:{},gD:{}};
+    months[mo].completions.push((e.checked?.length||0)/e.total*100);
+    GOAL_KEYS.forEach(g=>{months[mo].gT[g]=(months[mo].gT[g]||0)+(e.goalTotals?.[g]||0);months[mo].gD[g]=(months[mo].gD[g]||0)+(e.goalDone?.[g]||0)});
+  });
+  const monthKeys=Object.keys(months).sort().reverse();
+  const now_mo=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  function fmtMonth(ym){const[y,m]=ym.split('-');return new Date(y,m-1,1).toLocaleDateString('en-AU',{month:'short',year:'numeric'})}
+
+  let h=`<div class="actions-row">
+    <button class="btn-export" onclick="exportData()">↓ Export JSON — ${fmtMonth(now_mo)}</button>
+    <button class="btn-danger" onclick="clearAllData()">clear all data</button>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value">${streak}</div><div class="stat-sub">days ≥ 50%</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Completion</div><div class="stat-value">${avgPct}%</div><div class="stat-sub">across ${tracked} days</div></div>
+    <div class="stat-card"><div class="stat-label">Perfect Days</div><div class="stat-value">${perfectDays}</div><div class="stat-sub">100% done</div></div>
+  </div>`;
+
+  // goal cards
+  h+=`<div class="section-title">This week by goal</div><div class="goal-cards">`;
+  GOAL_KEYS.forEach(g=>{
+    const gt=wGT[g],gd=wGD[g],gp=gt?Math.round(gd/gt*100):0;
+    const C2=2*Math.PI*18,off2=C2-(gp/100)*C2;
+    h+=`<div class="goal-card">
+      <div class="goal-card-name">${GOALS[g].label}</div>
+      <div class="goal-card-ring">
+        <svg style="transform:rotate(-90deg)" width="44" height="44" viewBox="0 0 44 44">
+          <circle fill="none" stroke="var(--border)" stroke-width="3" cx="22" cy="22" r="18" stroke-dasharray="${C2}" stroke-dashoffset="0"/>
+          <circle fill="none" stroke="${GOALS[g].color}" stroke-width="3" stroke-linecap="round" cx="22" cy="22" r="18" stroke-dasharray="${C2}" stroke-dashoffset="${off2}"/>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10px;font-weight:700;color:${GOALS[g].color}">${gp}%</div>
+      </div>
+      <div class="goal-card-sub">${gd}/${gt} tasks</div>
+    </div>`;
+  });
+  h+='</div>';
+
+  // heatmap
+  h+=`<div class="heatmap-wrap"><div class="section-title">35-day map</div><div class="day-labels">`;
+  ['M','T','W','T','F','S','S'].forEach(l=>h+=`<div class="day-lbl">${l}</div>`);
+  h+=`</div><div class="heatmap">`;
+  heatDays.forEach(d=>{
+    const k=dkey(d),isFuture=d>now;let cls='hf',pct=0;
+    if(!isFuture){const e=store[k];if(!e?.total)cls='h0';else{pct=Math.round((e.checked?.length||0)/e.total*100);cls=pct>=80?'h4':pct>=60?'h3':pct>=40?'h2':pct>0?'h1':'h0'}}
+    const lbl=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+    const tip=isFuture?`${lbl} — future`:store[k]?.total?`${lbl} — ${pct}% done`:`${lbl} — no data`;
+    h+=`<div class="heat-cell ${cls}" onmouseenter="showTT(event,'${tip}')" onmouseleave="hideTT()"></div>`;
+  });
+  h+=`</div><div class="heat-legend"><span class="legend-lbl">Less</span>`;
+  ['var(--surface2)','rgba(245,158,11,0.18)','rgba(245,158,11,0.38)','rgba(245,158,11,0.62)','rgba(245,158,11,0.88)'].forEach(c=>h+=`<div class="legend-cell" style="background:${c}"></div>`);
+  h+=`<span class="legend-lbl">More</span></div></div>`;
+
+  // 8-week bars
+  h+=`<div class="bar-chart-wrap"><div class="section-title">8-week trend</div><div class="bar-chart">`;
+  weekBars.forEach((w,i)=>{const ht=Math.round(w.pct/100*80);h+=`<div class="bar-col"><div class="bar-pct-lbl">${w.pct||''}</div><div class="bar${w.isCurrent?' current':''}" style="height:${ht}px"></div><div class="bar-lbl">W${i+1}${w.isCurrent?'★':''}</div></div>`});
+  h+=`</div></div>`;
+
+  // quarterly
+  h+=`<div class="quarter-wrap"><div class="section-title">Quarter — Apr → Aug 2026</div>
+  <div class="quarter-meta">Week ${Math.ceil(elapsed/7)} of ${Math.ceil(qDays/7)} · ${qPct}% elapsed · ${qDays-elapsed} days left</div>`;
+  GOAL_KEYS.forEach(g=>{
+    const qp=qGT[g]?Math.round(qGD[g]/qGT[g]*100):0;
+    h+=`<div class="quarter-row">
+      <div class="quarter-goal-name">${GOALS[g].label}</div>
+      <div class="quarter-track"><div class="quarter-fill" style="width:${qp}%;background:${GOALS[g].color}"></div></div>
+      <div class="quarter-pct-lbl">${qp}%</div>
+    </div>`;
+  });
+  h+=`<div class="quarter-row" style="margin-top:8px;opacity:0.4">
+    <div class="quarter-goal-name" style="font-size:8px">time used</div>
+    <div class="quarter-track"><div class="quarter-fill" style="width:${qPct}%;background:var(--text-dim)"></div></div>
+    <div class="quarter-pct-lbl">${qPct}%</div>
+  </div></div>`;
+
+  // monthly table
+  h+=`<div class="section-title">Monthly summary</div>`;
+  if(!monthKeys.length){
+    h+=`<div class="no-data">No data yet. Tick tasks daily — monthly breakdown appears here once you have tracked days.</div>`;
+  } else {
+    h+=`<table class="monthly-table"><thead><tr>
+      <th>Month</th><th>Days</th><th>Overall</th>
+      <th class="c-work">Work</th><th class="c-money">Money</th>
+      <th class="c-rel">Marriage</th><th class="c-health">Health</th><th class="c-spirit">Faith</th>
+    </tr></thead><tbody>`;
+    monthKeys.forEach(mo=>{
+      const m=months[mo],avg=Math.round(m.completions.reduce((a,b)=>a+b,0)/m.completions.length);
+      const gp=g=>m.gT[g]?Math.round(m.gD[g]/m.gT[g]*100)+'%':'—';
+      h+=`<tr>
+        <td>${fmtMonth(mo)}</td><td>${m.completions.length}</td><td class="pct-c">${avg}%</td>
+        <td class="c-work">${gp('work')}</td><td class="c-money">${gp('money')}</td>
+        <td class="c-rel">${gp('relationship')}</td><td class="c-health">${gp('health')}</td><td class="c-spirit">${gp('spirituality')}</td>
+      </tr>`;
+    });
+    h+=`</tbody></table>`;
+  }
+  document.getElementById('main').innerHTML=h;
+}
+
+function exportData(){
+  const store=getStore(),now=new Date();
+  const tag=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const blob=new Blob([JSON.stringify({exported:now.toISOString(),data:store},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`gps-${tag}.json`;a.click();URL.revokeObjectURL(a.href);
+}
+function clearAllData(){if(confirm('Delete all tracked history?')){localStorage.removeItem(SK);renderStats()}}
+function showTT(e,text){const t=document.getElementById('tt');t.textContent=text;t.classList.add('show');t.style.left=(e.clientX+12)+'px';t.style.top=(e.clientY-32)+'px'}
+function hideTT(){document.getElementById('tt').classList.remove('show')}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>console.error('SW:',err));
+  });
+}
+init();
+</script>
+</body>
+</html>

@@ -182,8 +182,11 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const CLIENT_ID = '1032987809909-jo6c8a1sgncp4si85dhavbm96idr08cc.apps.googleusercontent.com';
-const SCOPES    = 'https://www.googleapis.com/auth/calendar.readonly';
+const CLIENT_ID  = '1032987809909-jo6c8a1sgncp4si85dhavbm96idr08cc.apps.googleusercontent.com';
+const SCOPES     = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/spreadsheets';
+const SHEET_ID   = '1909BqpI0IUDqYbFKPFyh2TDc99f1nUMuAgpp8MhXhrg';
+const SHEET_TAB  = 'Tracking';
+const SHEET_COLS = 'A:F'; // Date | Day | CheckedIDs | Total | GoalTotals | GoalDone
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const DAYS   = ['mon','tue','wed','thu','fri','sat','sun'];
@@ -203,13 +206,14 @@ const GOALS = {
 const GOAL_KEYS = Object.keys(GOALS);
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
-let tasks       = {mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
-let activeDay   = null;
-let checked     = [];
+let tasks         = {mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
+let activeDay     = null;
+let checked       = [];
 let activeDateStr = null;
-let accessToken = null;
-let tokenClient = null;
-let calendarIds = {}; // goal key → calendar id
+let accessToken   = null;
+let tokenClient   = null;
+let calendarIds   = {}; // goal key → calendar id
+let sheetsRowMap  = {}; // dateStr → sheet row number (1-indexed)
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
 const SK = 'gps_v1';
@@ -234,6 +238,8 @@ function setChecked(ds,dn,c){
   c.forEach(id=>{const t=tasks[dn].find(x=>x.id===id);if(t)gD[t.goal]=(gD[t.goal]||0)+1});
   s[ds].goalTotals=gT; s[ds].goalDone=gD;
   saveStore(s);
+  // async write to Sheets — don't block UI
+  sheetsWrite(ds,s[ds]).catch(err=>console.warn('Sheets write failed:',err));
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
@@ -289,6 +295,89 @@ async function apiFetch(url){
   if(res.status===401){clearToken();setSyncStatus('error');throw new Error('Token expired')}
   if(!res.ok) throw new Error(`API error ${res.status}`);
   return res.json();
+}
+
+async function apiWrite(url,method,body){
+  const res=await fetch(url,{
+    method,
+    headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  if(res.status===401){clearToken();setSyncStatus('error');throw new Error('Token expired')}
+  if(!res.ok) throw new Error(`API write error ${res.status}`);
+  return res.json();
+}
+
+// ─── SHEETS ───────────────────────────────────────────────────────────────────
+const SHEETS_BASE=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`;
+
+// Load all rows from Sheets into localStorage and build row map
+async function sheetsLoad(){
+  try{
+    const data=await apiFetch(`${SHEETS_BASE}/values/${SHEET_TAB}!${SHEET_COLS}`);
+    const rows=data.values||[];
+    sheetsRowMap={};
+    if(rows.length===0){
+      // First time: write header row
+      await apiWrite(
+        `${SHEETS_BASE}/values/${SHEET_TAB}!A1:F1?valueInputOption=RAW`,
+        'PUT',
+        {values:[['Date','Day','CheckedIDs','Total','GoalTotals','GoalDone']]}
+      );
+      return;
+    }
+    // Skip header row (row 0), process data rows
+    const store=getStore();
+    rows.forEach((row,i)=>{
+      if(i===0) return; // header
+      const ds=row[0];
+      if(!ds) return;
+      sheetsRowMap[ds]=i+1; // 1-indexed sheet row
+      // Sync Sheets data into localStorage (Sheets is source of truth)
+      try{
+        store[ds]={
+          day:row[1]||'',
+          checked:(row[2]||'').split(',').filter(Boolean),
+          total:parseInt(row[3])||0,
+          goalTotals:row[4]?JSON.parse(row[4]):{},
+          goalDone:row[5]?JSON.parse(row[5]):{},
+        };
+      }catch(e){console.warn('Row parse error:',e)}
+    });
+    saveStore(store);
+  }catch(err){
+    console.warn('Sheets load failed — using localStorage:',err);
+  }
+}
+
+// Write one day's record to Sheets (update existing row or append new)
+async function sheetsWrite(ds,entry){
+  if(!accessToken) return;
+  const row=[
+    ds,
+    entry.day||'',
+    (entry.checked||[]).join(','),
+    String(entry.total||0),
+    JSON.stringify(entry.goalTotals||{}),
+    JSON.stringify(entry.goalDone||{}),
+  ];
+  if(sheetsRowMap[ds]){
+    // Update existing row
+    const r=sheetsRowMap[ds];
+    await apiWrite(
+      `${SHEETS_BASE}/values/${SHEET_TAB}!A${r}:F${r}?valueInputOption=RAW`,
+      'PUT',{values:[row]}
+    );
+  } else {
+    // Append new row
+    const res=await apiWrite(
+      `${SHEETS_BASE}/values/${SHEET_TAB}!A:F:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+      'POST',{values:[row]}
+    );
+    // Extract row number from updatedRange e.g. "Tracking!A5:F5"
+    const match=(res.updates?.updatedRange||'').match(/(\d+):/);
+    if(match) sheetsRowMap[ds]=parseInt(match[1]);
+  }
 }
 
 async function loadCalendarData(){
@@ -416,10 +505,11 @@ function init(){
     tokenClient=google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
-      callback:(response)=>{
+      callback:async(response)=>{
         if(response.error){setSyncStatus('error');return}
         accessToken=response.access_token;
         saveToken(response.access_token, response.expires_in||3600);
+        await sheetsLoad();
         loadCalendarData();
       }
     });
@@ -428,7 +518,7 @@ function init(){
     const saved=getSavedToken();
     if(saved){
       accessToken=saved;
-      loadCalendarData();
+      sheetsLoad().then(()=>loadCalendarData());
     } else {
       setSyncStatus('off');
       switchDay(activeDay);

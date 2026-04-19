@@ -1,4 +1,4 @@
-const CACHE = 'timetable-v1';
+const CACHE = 'gps-v3';
 
 const ASSETS = [
   './',

@@ -238,8 +238,7 @@ function setChecked(ds,dn,c){
   c.forEach(id=>{const t=tasks[dn].find(x=>x.id===id);if(t)gD[t.goal]=(gD[t.goal]||0)+1});
   s[ds].goalTotals=gT; s[ds].goalDone=gD;
   saveStore(s);
-  alert('setChecked fired - checking sheets');
-  sheetsWrite(ds,s[ds]).catch(err=>alert('Sheets error: '+err.message));
+  sheetsWrite(ds,s[ds]).catch(err=>console.warn('Sheets write failed:',err));
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
@@ -620,10 +619,10 @@ function renderDay(){
       <button class="btn-connect" style="display:inline-block;font-size:11px;padding:8px 16px" onclick="loadCalendarData()">↻ Refresh Calendar</button>
     </div>`;
   } else {
-    h+='<div class="task-list">';
+    h+='<div class="task-list" id="taskList">';
     dt.forEach(t=>{
       const isDone=checked.includes(t.id);
-      h+=`<div class="task-row${isDone?' done':''}" data-goal="${t.goal||''}" onclick="toggle('${t.id}')">
+      h+=`<div class="task-row${isDone?' done':''}" data-goal="${t.goal||''}" data-id="${t.id.replace(/"/g,'&quot;')}">
         <div class="task-check">${isDone?'✓':''}</div>
         <div class="task-time">${t.time}</div>
         <div class="task-label">${t.label}</div>
@@ -639,6 +638,13 @@ function renderDay(){
     </div>`;
   }
   document.getElementById('main').innerHTML=h;
+
+  // event delegation — safe for any calendar event ID format
+  const tl=document.getElementById('taskList');
+  if(tl) tl.addEventListener('click',e=>{
+    const row=e.target.closest('.task-row');
+    if(row&&row.dataset.id) toggle(row.dataset.id);
+  });
 }
 
 function toggle(id){

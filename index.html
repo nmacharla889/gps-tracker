@@ -238,6 +238,7 @@ function setChecked(ds,dn,c){
   c.forEach(id=>{const t=tasks[dn].find(x=>x.id===id);if(t)gD[t.goal]=(gD[t.goal]||0)+1});
   s[ds].goalTotals=gT; s[ds].goalDone=gD;
   saveStore(s);
+  showToast('Syncing...','ok');
   // async write to Sheets — don't block UI
   sheetsWrite(ds,s[ds]).catch(err=>console.warn('Sheets write failed:',err));
 }
@@ -347,6 +348,7 @@ async function sheetsLoad(){
     saveStore(store);
   }catch(err){
     console.warn('Sheets load failed — using localStorage:',err);
+    showToast('Sheets load: '+err.message,'err');
   }
 }
 

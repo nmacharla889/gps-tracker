@@ -11,24 +11,34 @@
 <meta name="apple-mobile-web-app-title" content="GPS Tracker">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>GPS Tracker — Nikhil</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@400;600;700;800&display=swap');
 :root{
   --bg:#0a0a0c;--surface:#111115;--surface2:#18181e;--border:#252530;
   --accent:#f59e0b;--accent-dim:rgba(245,158,11,0.12);
   --text:#dddde8;--text-dim:#55556a;--text-mid:#9090a8;
-  --work:#4285f4;        --work-dim:rgba(66,133,244,0.12);
-  --money:#0f9d58;       --money-dim:rgba(15,157,88,0.12);
-  --rel:#e91e8c;         --rel-dim:rgba(233,30,140,0.12);
-  --health:#33b679;      --health-dim:rgba(51,182,121,0.12);
-  --spirit:#f6bf26;      --spirit-dim:rgba(246,191,38,0.12);
+  --work:#4285f4;   --work-dim:rgba(66,133,244,0.12);
+  --money:#0f9d58;  --money-dim:rgba(15,157,88,0.12);
+  --rel:#e91e8c;    --rel-dim:rgba(233,30,140,0.12);
+  --health:#33b679; --health-dim:rgba(51,182,121,0.12);
+  --spirit:#f6bf26; --spirit-dim:rgba(246,191,38,0.12);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden}
 .header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;position:sticky;top:0;z-index:100}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:14px 0 12px;border-bottom:1px solid var(--border)}
 .header-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+.header-right{display:flex;align-items:center;gap:10px}
 .header-date{font-size:10px;color:var(--text-dim)}
+.btn-connect{padding:4px 10px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.3);color:var(--accent);border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s}
+.btn-connect:hover{background:rgba(245,158,11,0.2)}
+.btn-disconnect{padding:4px 10px;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s}
+.btn-disconnect:hover{border-color:rgba(239,68,68,0.4);color:rgba(239,68,68,0.7)}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--health);flex-shrink:0}
+.sync-dot.loading{background:var(--accent);animation:pulse 1s infinite}
+.sync-dot.error{background:rgba(239,68,68,0.7)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{padding:11px 14px 9px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;position:relative}
@@ -37,6 +47,15 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .tab.today-tab::after{content:'';position:absolute;top:9px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .tab.stats-tab{margin-left:auto;border-left:1px solid var(--border);padding-left:18px}
 .main{max-width:860px;margin:0 auto;padding:20px 20px 80px}
+/* connect screen */
+.connect-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:20px}
+.connect-screen h2{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;letter-spacing:1px;color:var(--text)}
+.connect-screen p{font-size:12px;color:var(--text-dim);line-height:1.8;max-width:320px}
+.btn-connect-big{padding:14px 28px;background:var(--accent);border:none;color:#000;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .15s}
+.btn-connect-big:hover{background:#e08e00}
+.goal-pills{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.goal-pill{padding:3px 10px;border-radius:12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+/* day view */
 .day-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
 .progress-area{display:flex;align-items:center;gap:14px}
 .ring-wrap{position:relative;width:52px;height:52px;flex-shrink:0}
@@ -79,8 +98,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .tag-relationship{background:var(--rel-dim);color:var(--rel);border:1px solid rgba(233,30,140,0.25)}
 .tag-health{background:var(--health-dim);color:var(--health);border:1px solid rgba(51,182,121,0.25)}
 .tag-spirituality{background:var(--spirit-dim);color:var(--spirit);border:1px solid rgba(246,191,38,0.25)}
-.empty-state{padding:48px 20px;text-align:center;color:var(--text-dim);font-size:12px;line-height:2}
-.empty-state strong{display:block;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--text-mid);letter-spacing:1px;margin-bottom:10px}
+.empty-day{padding:40px 20px;text-align:center;color:var(--text-dim);font-size:12px;line-height:2}
+.empty-day strong{display:block;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text-mid);letter-spacing:1px;margin-bottom:8px}
+/* stats */
 .section-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-mid);margin-bottom:14px}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px}
@@ -139,7 +159,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 <div class="header">
   <div class="header-top">
     <div class="header-title">GPS Tracker</div>
-    <div class="header-date" id="hDate"></div>
+    <div class="header-right">
+      <div class="sync-dot" id="syncDot" title="Calendar status"></div>
+      <div class="header-date" id="hDate"></div>
+      <button class="btn-connect" id="btnConnect" onclick="connectCalendar()" style="display:none">Connect</button>
+      <button class="btn-disconnect" id="btnDisconnect" onclick="disconnectCalendar()" style="display:none">Disconnect</button>
+    </div>
   </div>
   <div class="tabs">
     <button class="tab" data-day="mon">MON</button>
@@ -154,32 +179,46 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 </div>
 <div class="main" id="main"></div>
 <div class="tooltip" id="tt"></div>
+
 <script>
-const DAYS=['mon','tue','wed','thu','fri','sat','sun'];
-const DNAMES={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
-const JS2IDX={0:6,1:0,2:1,3:2,4:3,5:4,6:5};
-const Q_START=new Date('2026-04-01');
-const Q_END=new Date('2026-08-31');
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const CLIENT_ID = '1032987809909-jo6c8a1sgncp4si85dhavbm96idr08cc.apps.googleusercontent.com';
+const SCOPES    = 'https://www.googleapis.com/auth/calendar.readonly';
 
-// Goal config — key must exactly match Google Calendar name in lowercase
-const GOALS={
-  work:        {label:'Work',     color:'#4285f4',cls:'c-work'},
-  money:       {label:'Money',    color:'#0f9d58',cls:'c-money'},
-  relationship:{label:'Marriage', color:'#e91e8c',cls:'c-rel'},
-  health:      {label:'Health',   color:'#33b679',cls:'c-health'},
-  spirituality:{label:'Faith',    color:'#f6bf26',cls:'c-spirit'},
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const DAYS   = ['mon','tue','wed','thu','fri','sat','sun'];
+const DNAMES = {mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
+const JS2IDX = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
+const Q_START = new Date('2026-04-01');
+const Q_END   = new Date('2026-08-31');
+
+// Goal config — key must exactly match your Google Calendar name (lowercase)
+const GOALS = {
+  work:        {label:'Work',     color:'#4285f4', cls:'c-work'},
+  money:       {label:'Money',    color:'#0f9d58', cls:'c-money'},
+  relationship:{label:'Marriage', color:'#e91e8c', cls:'c-rel'},
+  health:      {label:'Health',   color:'#33b679', cls:'c-health'},
+  spirituality:{label:'Faith',    color:'#f6bf26', cls:'c-spirit'},
 };
-const GOAL_KEYS=Object.keys(GOALS);
+const GOAL_KEYS = Object.keys(GOALS);
 
-// Tasks: empty until Google Calendar wired up in Phase 2
-// Phase 2 will populate this via: tasks[day] = calendarEvents.map(...)
-let tasks={mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let tasks       = {mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
+let activeDay   = null;
+let checked     = [];
+let activeDateStr = null;
+let accessToken = null;
+let tokenClient = null;
+let calendarIds = {}; // goal key → calendar id
 
-// Storage
-const SK='gps_v1';
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+const SK = 'gps_v1';
+const TK = 'gps_token';
+
 function getStore(){try{return JSON.parse(localStorage.getItem(SK)||'{}')}catch{return{}}}
 function saveStore(s){localStorage.setItem(SK,JSON.stringify(s))}
 function dkey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+
 function recentDateFor(dn){
   const t=new Date(),ti=JS2IDX[t.getDay()],di=DAYS.indexOf(dn);
   let df=ti-di;if(df<0)df+=7;
@@ -189,30 +228,213 @@ function getChecked(ds){return getStore()[ds]?.checked||[]}
 function setChecked(ds,dn,c){
   const s=getStore();
   if(!s[ds])s[ds]={};
-  s[ds].checked=c;
-  s[ds].total=tasks[dn].length;
-  s[ds].day=dn;
+  s[ds].checked=c; s[ds].total=tasks[dn].length; s[ds].day=dn;
   const gT={},gD={};
   tasks[dn].forEach(t=>{gT[t.goal]=(gT[t.goal]||0)+1});
   c.forEach(id=>{const t=tasks[dn].find(x=>x.id===id);if(t)gD[t.goal]=(gD[t.goal]||0)+1});
-  s[ds].goalTotals=gT;
-  s[ds].goalDone=gD;
+  s[ds].goalTotals=gT; s[ds].goalDone=gD;
   saveStore(s);
 }
 
-let activeDay=null,checked=[],activeDateStr=null;
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+function getSavedToken(){
+  try{
+    const t=JSON.parse(localStorage.getItem(TK)||'null');
+    if(t && t.expires > Date.now()+60000) return t.token; // valid for >1 min
+    return null;
+  }catch{return null}
+}
 
+function saveToken(token, expiresIn){
+  localStorage.setItem(TK,JSON.stringify({token, expires: Date.now()+(expiresIn*1000)}));
+}
+
+function clearToken(){
+  localStorage.removeItem(TK);
+  accessToken=null;
+}
+
+function setSyncStatus(state){
+  // state: 'off' | 'loading' | 'ok' | 'error'
+  const dot=document.getElementById('syncDot');
+  const btnC=document.getElementById('btnConnect');
+  const btnD=document.getElementById('btnDisconnect');
+  dot.className='sync-dot';
+  if(state==='off'){dot.style.background='var(--text-dim)';btnC.style.display='';btnD.style.display='none'}
+  else if(state==='loading'){dot.classList.add('loading');btnC.style.display='none';btnD.style.display=''}
+  else if(state==='ok'){dot.style.background='var(--health)';btnC.style.display='none';btnD.style.display=''}
+  else if(state==='error'){dot.style.background='rgba(239,68,68,0.7)';btnC.style.display='';btnD.style.display='none'}
+}
+
+function connectCalendar(){
+  if(!tokenClient){
+    alert('Google auth not ready yet — wait 2 seconds and try again.');
+    return;
+  }
+  tokenClient.requestAccessToken();
+}
+
+function disconnectCalendar(){
+  if(accessToken) google.accounts.oauth2.revoke(accessToken);
+  clearToken();
+  tasks={mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
+  calendarIds={};
+  setSyncStatus('off');
+  switchDay(activeDay==='stats'?activeDay:activeDay);
+}
+
+// ─── CALENDAR FETCH ───────────────────────────────────────────────────────────
+async function apiFetch(url){
+  const res=await fetch(url,{headers:{Authorization:`Bearer ${accessToken}`}});
+  if(res.status===401){clearToken();setSyncStatus('error');throw new Error('Token expired')}
+  if(!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+}
+
+async function loadCalendarData(){
+  setSyncStatus('loading');
+  try{
+    // 1. get calendar list, find matching calendars
+    const list=await apiFetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=50');
+    calendarIds={};
+    list.items.forEach(cal=>{
+      const key=cal.summary.toLowerCase().trim();
+      if(GOALS[key]) calendarIds[key]=cal.id;
+    });
+
+    if(Object.keys(calendarIds).length===0){
+      setSyncStatus('error');
+      document.getElementById('main').innerHTML=`<div class="connect-screen">
+        <h2>No matching calendars found</h2>
+        <p>Make sure your calendars are named exactly:<br><strong>Work, Money, Relationship, Health, Spirituality</strong></p>
+        <button class="btn-connect-big" onclick="loadCalendarData()">Retry</button>
+      </div>`;
+      return;
+    }
+
+    // 2. fetch this week's events for each found calendar
+    const now=new Date();
+    // Monday of current week
+    const mon=new Date(now);
+    mon.setDate(now.getDate()-JS2IDX[now.getDay()]);
+    mon.setHours(0,0,0,0);
+    // Sunday = mon + 6 days end of day
+    const sun=new Date(mon);
+    sun.setDate(mon.getDate()+6);
+    sun.setHours(23,59,59,999);
+
+    const timeMin=mon.toISOString();
+    const timeMax=sun.toISOString();
+
+    // reset tasks
+    tasks={mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
+
+    // fetch all calendars in parallel
+    await Promise.all(Object.entries(calendarIds).map(async([goal,calId])=>{
+      const encoded=encodeURIComponent(calId);
+      const data=await apiFetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encoded}/events`+
+        `?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`+
+        `&singleEvents=true&orderBy=startTime&maxResults=250`
+      );
+      (data.items||[]).forEach(ev=>{
+        if(!ev.start) return;
+        // all-day events have ev.start.date, timed events have ev.start.dateTime
+        const isAllDay=!!ev.start.date;
+        const startDT=isAllDay?new Date(ev.start.date+'T00:00:00'):new Date(ev.start.dateTime);
+        const endDT=isAllDay?new Date(ev.end.date+'T00:00:00'):new Date(ev.end.dateTime||ev.start.dateTime);
+
+        // which day of week?
+        const dayIdx=JS2IDX[startDT.getDay()]; // 0-6 → mon-sun index
+        const dayKey=DAYS[dayIdx];
+        if(!dayKey) return;
+
+        // format time
+        const timeStr=isAllDay?'All day':startDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true});
+
+        // duration
+        const diffMins=Math.round((endDT-startDT)/60000);
+        let durStr='';
+        if(!isAllDay && diffMins>0){
+          const h=Math.floor(diffMins/60),m=diffMins%60;
+          durStr=h&&m?`${h}h ${m}m`:h?`${h}h`:`${m}m`;
+        }
+
+        tasks[dayKey].push({
+          id: ev.id,
+          time: timeStr,
+          label: ev.summary||'(no title)',
+          dur: durStr,
+          goal: goal,
+        });
+      });
+    }));
+
+    // sort each day by start time
+    DAYS.forEach(d=>{
+      tasks[d].sort((a,b)=>{
+        if(a.time==='All day') return -1;
+        if(b.time==='All day') return 1;
+        return a.time.localeCompare(b.time);
+      });
+    });
+
+    setSyncStatus('ok');
+
+    // refresh current view
+    activeDateStr=recentDateFor(activeDay);
+    checked=getChecked(activeDateStr);
+    if(activeDay==='stats') renderStats(); else renderDay();
+
+  }catch(err){
+    console.error('Calendar load failed:',err);
+    setSyncStatus('error');
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 function init(){
   const now=new Date();
-  activeDay=DAYS[JS2IDX[now.getDay()]];
-  activeDateStr=dkey(now);
-  checked=getChecked(activeDateStr);
-  document.getElementById('hDate').textContent=now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  activeDay    = DAYS[JS2IDX[now.getDay()]];
+  activeDateStr= dkey(now);
+  checked      = getChecked(activeDateStr);
+
+  document.getElementById('hDate').textContent=
+    now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
   document.querySelectorAll('.tab[data-day]').forEach(tab=>{
-    if(tab.dataset.day===activeDay)tab.classList.add('today-tab');
+    if(tab.dataset.day===activeDay) tab.classList.add('today-tab');
     tab.addEventListener('click',()=>switchDay(tab.dataset.day));
   });
-  switchDay(activeDay);
+
+  // init GIS token client
+  // GIS lib loads async — poll until ready
+  function setupGIS(){
+    if(typeof google==='undefined'||!google.accounts){
+      setTimeout(setupGIS,200); return;
+    }
+    tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback:(response)=>{
+        if(response.error){setSyncStatus('error');return}
+        accessToken=response.access_token;
+        saveToken(response.access_token, response.expires_in||3600);
+        loadCalendarData();
+      }
+    });
+
+    // check for saved token
+    const saved=getSavedToken();
+    if(saved){
+      accessToken=saved;
+      loadCalendarData();
+    } else {
+      setSyncStatus('off');
+      switchDay(activeDay);
+    }
+  }
+  setupGIS();
 }
 
 function switchDay(day){
@@ -224,11 +446,27 @@ function switchDay(day){
   renderDay();
 }
 
+// ─── RENDER DAY ───────────────────────────────────────────────────────────────
 function renderDay(){
-  const day=activeDay,dt=tasks[day]||[];
-  const done=dt.filter(t=>checked.includes(t.id)).length,total=dt.length;
+  const day=activeDay, dt=tasks[day]||[];
+
+  // if not connected, show connect screen
+  if(!accessToken){
+    document.getElementById('main').innerHTML=`<div class="connect-screen">
+      <h2>Connect Google Calendar</h2>
+      <p>Your tasks come directly from your 5 goal calendars. Connect once and the app stays in sync.</p>
+      <div class="goal-pills">
+        ${GOAL_KEYS.map(g=>`<span class="goal-pill" style="background:${GOALS[g].color}22;color:${GOALS[g].color};border:1px solid ${GOALS[g].color}44">${GOALS[g].label}</span>`).join('')}
+      </div>
+      <button class="btn-connect-big" onclick="connectCalendar()">Connect Google Calendar</button>
+      <p style="font-size:10px;opacity:.5">Read-only access. We never modify your calendar.</p>
+    </div>`;
+    return;
+  }
+
+  const done=dt.filter(t=>checked.includes(t.id)).length, total=dt.length;
   const pct=total?Math.round(done/total*100):0;
-  const C=2*Math.PI*22,offset=C-(pct/100)*C;
+  const C=2*Math.PI*22, offset=C-(pct/100)*C;
 
   const gT={},gD={};
   dt.forEach(t=>{gT[t.goal]=(gT[t.goal]||0)+1});
@@ -244,7 +482,7 @@ function renderDay(){
       <div class="goal-bar-pct">${gp}%</div>
     </div>`;
   });
-  if(activeGoals.length)barsH+='</div>';
+  if(activeGoals.length) barsH+='</div>';
 
   let h=`<div class="day-header">
     <div class="progress-area">
@@ -267,10 +505,13 @@ function renderDay(){
   </div>`;
 
   if(!total){
-    h+=`<div class="empty-state">
-      <strong>Waiting for Calendar</strong>
-      Google Calendar integration connects in Phase 2.<br>
-      Your events will appear here automatically once linked.
+    h+=`<div class="empty-day">
+      <strong>No events today</strong>
+      No events found in your goal calendars for ${DNAMES[day]}.<br>
+      Add events in Google Calendar and tap Refresh.
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn-connect" style="display:inline-block;font-size:11px;padding:8px 16px" onclick="loadCalendarData()">↻ Refresh Calendar</button>
     </div>`;
   } else {
     h+='<div class="task-list">';
@@ -278,7 +519,7 @@ function renderDay(){
       const isDone=checked.includes(t.id);
       h+=`<div class="task-row${isDone?' done':''}" data-goal="${t.goal||''}" onclick="toggle('${t.id}')">
         <div class="task-check">${isDone?'✓':''}</div>
-        <div class="task-time">${t.time||''}</div>
+        <div class="task-time">${t.time}</div>
         <div class="task-label">${t.label}</div>
         <div class="task-meta">
           ${t.goal?`<span class="task-goal-tag tag-${t.goal}">${GOALS[t.goal]?.label||t.goal}</span>`:''}
@@ -287,20 +528,23 @@ function renderDay(){
       </div>`;
     });
     h+='</div>';
+    h+=`<div style="text-align:right;margin-top:12px">
+      <button class="btn-disconnect" style="font-size:9px" onclick="loadCalendarData()">↻ Refresh</button>
+    </div>`;
   }
   document.getElementById('main').innerHTML=h;
 }
 
 function toggle(id){
-  if(checked.includes(id))checked=checked.filter(x=>x!==id);else checked.push(id);
+  if(checked.includes(id)) checked=checked.filter(x=>x!==id); else checked.push(id);
   setChecked(activeDateStr,activeDay,checked);
   renderDay();
 }
 function resetDay(){checked=[];setChecked(activeDateStr,activeDay,[]);renderDay()}
 
+// ─── RENDER STATS ─────────────────────────────────────────────────────────────
 function renderStats(){
   const store=getStore(),now=new Date();
-
   let streak=0;
   for(let i=0;i<365;i++){
     const d=new Date(now);d.setDate(now.getDate()-i);
@@ -312,21 +556,17 @@ function renderStats(){
   const avgPct=tracked?Math.round(all.reduce((s,e)=>s+(e.checked?.length||0)/e.total,0)/tracked*100):0;
   const perfectDays=all.filter(e=>(e.checked?.length||0)===e.total).length;
 
-  // this week per goal
   const wk=new Date(now);wk.setDate(now.getDate()-now.getDay()+1);wk.setHours(0,0,0,0);
-  const wGT={},wGD={};
-  GOAL_KEYS.forEach(g=>{wGT[g]=0;wGD[g]=0});
+  const wGT={},wGD={};GOAL_KEYS.forEach(g=>{wGT[g]=0;wGD[g]=0});
   for(let i=0;i<7;i++){
     const d=new Date(wk);d.setDate(wk.getDate()+i);
     const e=store[dkey(d)];if(!e?.goalTotals)continue;
     GOAL_KEYS.forEach(g=>{wGT[g]+=(e.goalTotals[g]||0);wGD[g]+=(e.goalDone?.[g]||0)});
   }
 
-  // heatmap
   const heatDays=[];
   for(let i=34;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);heatDays.push(d)}
 
-  // 8-week bars
   const weekBars=[];
   for(let w=7;w>=0;w--){
     const ws=new Date(now);ws.setDate(now.getDate()-now.getDay()-w*7+1);
@@ -335,7 +575,6 @@ function renderStats(){
     weekBars.push({pct:tot>0?Math.round(dn/tot*100):0,isCurrent:w===0});
   }
 
-  // quarterly
   const qDays=Math.round((Q_END-Q_START)/864e5);
   const elapsed=Math.max(0,Math.min(qDays,Math.round((now-Q_START)/864e5)));
   const qPct=Math.round(elapsed/qDays*100);
@@ -345,7 +584,6 @@ function renderStats(){
     GOAL_KEYS.forEach(g=>{qGT[g]+=(e.goalTotals[g]||0);qGD[g]+=(e.goalDone?.[g]||0)});
   });
 
-  // monthly
   const months={};
   Object.entries(store).forEach(([ds,e])=>{
     if(!e.total)return;
@@ -368,7 +606,6 @@ function renderStats(){
     <div class="stat-card"><div class="stat-label">Perfect Days</div><div class="stat-value">${perfectDays}</div><div class="stat-sub">100% done</div></div>
   </div>`;
 
-  // goal cards
   h+=`<div class="section-title">This week by goal</div><div class="goal-cards">`;
   GOAL_KEYS.forEach(g=>{
     const gt=wGT[g],gd=wGD[g],gp=gt?Math.round(gd/gt*100):0;
@@ -387,7 +624,6 @@ function renderStats(){
   });
   h+='</div>';
 
-  // heatmap
   h+=`<div class="heatmap-wrap"><div class="section-title">35-day map</div><div class="day-labels">`;
   ['M','T','W','T','F','S','S'].forEach(l=>h+=`<div class="day-lbl">${l}</div>`);
   h+=`</div><div class="heatmap">`;
@@ -402,12 +638,10 @@ function renderStats(){
   ['var(--surface2)','rgba(245,158,11,0.18)','rgba(245,158,11,0.38)','rgba(245,158,11,0.62)','rgba(245,158,11,0.88)'].forEach(c=>h+=`<div class="legend-cell" style="background:${c}"></div>`);
   h+=`<span class="legend-lbl">More</span></div></div>`;
 
-  // 8-week bars
   h+=`<div class="bar-chart-wrap"><div class="section-title">8-week trend</div><div class="bar-chart">`;
   weekBars.forEach((w,i)=>{const ht=Math.round(w.pct/100*80);h+=`<div class="bar-col"><div class="bar-pct-lbl">${w.pct||''}</div><div class="bar${w.isCurrent?' current':''}" style="height:${ht}px"></div><div class="bar-lbl">W${i+1}${w.isCurrent?'★':''}</div></div>`});
   h+=`</div></div>`;
 
-  // quarterly
   h+=`<div class="quarter-wrap"><div class="section-title">Quarter — Apr → Aug 2026</div>
   <div class="quarter-meta">Week ${Math.ceil(elapsed/7)} of ${Math.ceil(qDays/7)} · ${qPct}% elapsed · ${qDays-elapsed} days left</div>`;
   GOAL_KEYS.forEach(g=>{
@@ -424,7 +658,6 @@ function renderStats(){
     <div class="quarter-pct-lbl">${qPct}%</div>
   </div></div>`;
 
-  // monthly table
   h+=`<div class="section-title">Monthly summary</div>`;
   if(!monthKeys.length){
     h+=`<div class="no-data">No data yet. Tick tasks daily — monthly breakdown appears here once you have tracked days.</div>`;
@@ -437,8 +670,7 @@ function renderStats(){
     monthKeys.forEach(mo=>{
       const m=months[mo],avg=Math.round(m.completions.reduce((a,b)=>a+b,0)/m.completions.length);
       const gp=g=>m.gT[g]?Math.round(m.gD[g]/m.gT[g]*100)+'%':'—';
-      h+=`<tr>
-        <td>${fmtMonth(mo)}</td><td>${m.completions.length}</td><td class="pct-c">${avg}%</td>
+      h+=`<tr><td>${fmtMonth(mo)}</td><td>${m.completions.length}</td><td class="pct-c">${avg}%</td>
         <td class="c-work">${gp('work')}</td><td class="c-money">${gp('money')}</td>
         <td class="c-rel">${gp('relationship')}</td><td class="c-health">${gp('health')}</td><td class="c-spirit">${gp('spirituality')}</td>
       </tr>`;

@@ -361,22 +361,24 @@ async function sheetsWrite(ds,entry){
     JSON.stringify(entry.goalTotals||{}),
     JSON.stringify(entry.goalDone||{}),
   ];
-  if(sheetsRowMap[ds]){
-    // Update existing row
-    const r=sheetsRowMap[ds];
-    await apiWrite(
-      `${SHEETS_BASE}/values/${SHEET_TAB}!A${r}:F${r}?valueInputOption=RAW`,
-      'PUT',{values:[row]}
-    );
-  } else {
-    // Append new row
-    const res=await apiWrite(
-      `${SHEETS_BASE}/values/${SHEET_TAB}!A:F:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
-      'POST',{values:[row]}
-    );
-    // Extract row number from updatedRange e.g. "Tracking!A5:F5"
-    const match=(res.updates?.updatedRange||'').match(/(\d+):/);
-    if(match) sheetsRowMap[ds]=parseInt(match[1]);
+  try{
+    if(sheetsRowMap[ds]){
+      const r=sheetsRowMap[ds];
+      await apiWrite(
+        `${SHEETS_BASE}/values/${encodeURIComponent(SHEET_TAB+'!A'+r+':F'+r)}?valueInputOption=RAW`,
+        'PUT',{values:[row]}
+      );
+    } else {
+      const res=await apiWrite(
+        `${SHEETS_BASE}/values/${encodeURIComponent(SHEET_TAB+'!A:F')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        'POST',{values:[row]}
+      );
+      const match=(res.updates?.updatedRange||'').match(/(\d+):/);
+      if(match) sheetsRowMap[ds]=parseInt(match[1]);
+    }
+    console.log('Sheets write OK:',ds);
+  }catch(err){
+    console.error('Sheets write error:',err);
   }
 }
 

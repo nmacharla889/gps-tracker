@@ -151,6 +151,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .btn-danger{padding:9px 18px;background:none;border:1px solid rgba(239,68,68,0.25);color:rgba(239,68,68,0.7);border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s}
 .btn-danger:hover{border-color:rgba(239,68,68,0.5);color:#ef4444}
 .no-data{padding:32px;text-align:center;color:var(--text-dim);font-size:12px;background:var(--surface);border-radius:9px;border:1px solid var(--border)}
+
+/* YEARLY HEATMAP */
+.year-heatmap-wrap{margin-bottom:28px;overflow-x:auto}
+.year-heatmap-inner{display:flex;gap:3px;min-width:600px}
+.year-week-col{display:flex;flex-direction:column;gap:3px}
+.year-cell{width:11px;height:11px;border-radius:2px;flex-shrink:0}
+.year-month-labels{display:flex;gap:3px;margin-bottom:4px;min-width:600px}
+.year-month-lbl{font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
 .tooltip{position:fixed;background:var(--surface2);border:1px solid var(--border);padding:5px 9px;border-radius:5px;font-size:10px;color:var(--text);pointer-events:none;opacity:0;transition:opacity .12s;z-index:9999;white-space:nowrap}
 .tooltip.show{opacity:1}
 </style>
@@ -747,6 +755,75 @@ function renderStats(){
     h+=`<div class="heat-cell ${cls}" onmouseenter="showTT(event,'${tip}')" onmouseleave="hideTT()"></div>`;
   });
   h+=`</div><div class="heat-legend"><span class="legend-lbl">Less</span>`;
+  ['var(--surface2)','rgba(245,158,11,0.18)','rgba(245,158,11,0.38)','rgba(245,158,11,0.62)','rgba(245,158,11,0.88)'].forEach(c=>h+=`<div class="legend-cell" style="background:${c}"></div>`);
+  h+=`<span class="legend-lbl">More</span></div></div>`;
+
+  // ── YEARLY HEATMAP ──
+  // Build 52 weeks × 7 days grid ending today
+  const yearDays=[];
+  const yearEnd=new Date(now);
+  // go back to start of current week's Sunday, then back 51 more weeks
+  const yearStart=new Date(now);
+  yearStart.setDate(now.getDate()-now.getDay()-51*7); // 52 weeks ago Sunday
+  yearStart.setHours(0,0,0,0);
+  for(let d=new Date(yearStart);d<=now;d.setDate(d.getDate()+1)){
+    yearDays.push(new Date(d));
+  }
+  // pad start so grid aligns to Sunday
+  const startPad=yearStart.getDay(); // days offset
+
+  // build 52 columns of 7 cells
+  let weeklyCols=[];
+  let week=[];
+  // fill empty cells at start
+  for(let i=0;i<startPad;i++) week.push(null);
+  yearDays.forEach(d=>{
+    week.push(new Date(d));
+    if(week.length===7){weeklyCols.push(week);week=[];}
+  });
+  if(week.length) weeklyCols.push(week);
+
+  // month labels — show month name at the week column where month starts
+  const monthLabels=new Array(weeklyCols.length).fill('');
+  weeklyCols.forEach((wk,wi)=>{
+    wk.forEach(d=>{
+      if(d&&d.getDate()<=7){
+        monthLabels[wi]=d.toLocaleDateString('en-AU',{month:'short'});
+      }
+    });
+  });
+
+  h+=`<div class="heatmap-wrap"><div class="section-title">Yearly map — ${now.getFullYear()}</div>
+  <div class="year-heatmap-wrap">
+  <div class="year-month-labels">`;
+  monthLabels.forEach(lbl=>{
+    h+=`<div class="year-month-lbl" style="width:14px">${lbl}</div>`;
+  });
+  h+=`</div><div class="year-heatmap-inner">`;
+  weeklyCols.forEach(wk=>{
+    h+='<div class="year-week-col">';
+    for(let di=0;di<7;di++){
+      const d=wk[di];
+      if(!d){h+='<div class="year-cell" style="background:transparent"></div>';continue;}
+      const isFuture=d>now;
+      let bg='var(--surface2)';
+      if(isFuture){bg='transparent';}
+      else{
+        const e=store[dkey(d)];
+        if(e?.total>0){
+          const pct=Math.round((e.checked?.length||0)/e.total*100);
+          bg=pct>=80?'rgba(245,158,11,0.88)':pct>=60?'rgba(245,158,11,0.62)':pct>=40?'rgba(245,158,11,0.38)':pct>0?'rgba(245,158,11,0.18)':'var(--surface2)';
+        }
+      }
+      const lbl=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+      const e=store[dkey(d)];
+      const pct=(!isFuture&&e?.total)?Math.round((e.checked?.length||0)/e.total*100):0;
+      const tip=isFuture?`${lbl} — future`:e?.total?`${lbl} — ${pct}% done`:`${lbl} — no data`;
+      h+=`<div class="year-cell" style="background:${bg}" onmouseenter="showTT(event,'${tip}')" onmouseleave="hideTT()"></div>`;
+    }
+    h+='</div>';
+  });
+  h+=`</div></div><div class="heat-legend" style="margin-top:6px"><span class="legend-lbl">Less</span>`;
   ['var(--surface2)','rgba(245,158,11,0.18)','rgba(245,158,11,0.38)','rgba(245,158,11,0.62)','rgba(245,158,11,0.88)'].forEach(c=>h+=`<div class="legend-cell" style="background:${c}"></div>`);
   h+=`<span class="legend-lbl">More</span></div></div>`;
 

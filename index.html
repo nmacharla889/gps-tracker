@@ -1192,11 +1192,13 @@ function renderHabitDash(){
   });
   const top5=Object.values(streaks).sort((a,b)=>b.streak-a.streak).slice(0,5);
 
-  // 90-day grid
+  // Quarter grid: Apr 1 → today (capped at Aug 31)
+  const gridStart=new Date("2026-04-01T00:00:00");
+  const gridEnd=now<Q_END?now:Q_END;
   const days90=[];
-  for(let i=89;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);days90.push(d);}
+  for(let d=new Date(gridStart);d<=gridEnd;d.setDate(d.getDate()+1)){days90.push(new Date(d));}
 
-  // Only show habits scheduled at least once in last 90 days
+  // Only show habits scheduled at least once in quarter
   const visHabits=HABITS.filter(h=>
     days90.some(d=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id))
   );
@@ -1253,7 +1255,7 @@ function renderHabitDash(){
         </div>
       </div>
     </div>
-    <div class="section-title">90-day consistency</div>
+    <div class="section-title">Apr → Aug 2026 consistency</div>
     <div class="hdash-legend">
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(51,182,121,0.8)"></div><span class="hdash-legend-lbl">Done</span></div>
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(245,158,11,0.7)"></div><span class="hdash-legend-lbl">Delayed</span></div>

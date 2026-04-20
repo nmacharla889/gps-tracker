@@ -1158,22 +1158,6 @@ function switchHabitDay(dk,ds){
 function renderHabitDash(){
   const store=getHabitStore(),now=new Date();
 
-  // Weekly score
-  const wkMon=new Date(now);
-  wkMon.setDate(now.getDate()-JS2IDX[now.getDay()]);
-  wkMon.setHours(0,0,0,0);
-  let wkTotal=0,wkDone=0;
-  for(let i=0;i<7;i++){
-    const d=new Date(wkMon);d.setDate(wkMon.getDate()+i);
-    if(d>now)continue;
-    const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
-    const hs=getHabitsForDay(dk,ds);
-    const st=store[ds]||{};
-    wkTotal+=hs.length;
-    wkDone+=hs.filter(h=>st[h.id]==='did'||st[h.id]==='delayed').length;
-  }
-  const wkPct=wkTotal?Math.round(wkDone/wkTotal*100):0;
-
   // Streaks — per habit, skip unscheduled days, break on scheduled+unmarked past days
   const streaks={};
   HABITS.forEach(h=>{
@@ -1190,7 +1174,15 @@ function renderHabitDash(){
     }
     streaks[h.id]={label:h.label,streak};
   });
-  const top5=Object.values(streaks).sort((a,b)=>b.streak-a.streak).slice(0,5);
+  // Only include habits scheduled at least once since Apr 1
+  const qStart=new Date('2026-04-01T00:00:00');
+  const scheduledSinceQ=HABITS.filter(h=>
+    Array.from({length:Math.ceil((now-qStart)/864e5)+1},(_,i)=>{const d=new Date(qStart);d.setDate(qStart.getDate()+i);return d;})
+    .some(d=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id))
+  ).map(h=>h.id);
+  const allSorted=Object.values(streaks).filter(x=>scheduledSinceQ.includes(x.id));
+  const top5=allSorted.sort((a,b)=>b.streak-a.streak).slice(0,5);
+  const bottom5=allSorted.sort((a,b)=>a.streak-b.streak).slice(0,5);
 
   // Quarter grid: Apr 1 → today (capped at Aug 31)
   const gridStart=new Date("2026-04-01T00:00:00");
@@ -1240,17 +1232,22 @@ function renderHabitDash(){
     <div class="section-title">Habit Dashboard — Apr → Aug 2026</div>
     <div class="hdash-top">
       <div class="hdash-card">
-        <div class="hdash-card-title">This week</div>
-        <div class="hdash-big-num">${wkPct}%</div>
-        <div class="hdash-big-sub">${wkDone} / ${wkTotal} habits</div>
-      </div>
-      <div class="hdash-card">
         <div class="hdash-card-title">Top streaks 🔥</div>
         <div class="streak-list">
           ${top5.map(x=>`<div class="streak-item">
             <div class="streak-label">${x.label}</div>
             <div class="streak-num">${x.streak}</div>
             <div class="streak-badge">${x.streak>=7?'🔥':x.streak>=3?'⚡':'·'}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="hdash-card">
+        <div class="hdash-card-title">Needs work ⚠️</div>
+        <div class="streak-list">
+          ${bottom5.map(x=>`<div class="streak-item">
+            <div class="streak-label">${x.label}</div>
+            <div class="streak-num" style="color:${x.streak===0?'rgba(239,68,68,0.8)':'var(--accent)'}">${x.streak}</div>
+            <div class="streak-badge">${x.streak===0?'✗':'·'}</div>
           </div>`).join('')}
         </div>
       </div>

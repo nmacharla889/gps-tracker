@@ -161,6 +161,64 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .year-month-lbl{font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
 .tooltip{position:fixed;background:var(--surface2);border:1px solid var(--border);padding:5px 9px;border-radius:5px;font-size:10px;color:var(--text);pointer-events:none;opacity:0;transition:opacity .12s;z-index:9999;white-space:nowrap}
 .tooltip.show{opacity:1}
+
+/* ── HABITS TAB ── */
+.habit-day-nav{display:flex;gap:4px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.habit-day-nav::-webkit-scrollbar{display:none}
+.hday-btn{padding:6px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.hday-btn.active{background:var(--accent-dim);border-color:rgba(245,158,11,0.4);color:var(--accent)}
+.hday-btn.today{border-color:rgba(245,158,11,0.25)}
+.habit-summary{display:flex;gap:8px;margin-bottom:18px}
+.habit-summary-item{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center}
+.habit-summary-num{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;line-height:1}
+.habit-summary-lbl{font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-top:4px}
+.habit-group-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:16px 0 6px;padding-left:2px}
+.habit-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border-left:3px solid var(--border);background:var(--surface);margin-bottom:3px;cursor:pointer;transition:all .12s;user-select:none}
+.habit-row:hover{background:var(--surface2)}
+.habit-row.state-did{border-left-color:#33b679;background:rgba(51,182,121,0.07)}
+.habit-row.state-delayed{border-left-color:#f59e0b;background:rgba(245,158,11,0.07)}
+.habit-row.state-didnot{border-left-color:rgba(239,68,68,0.7);background:rgba(239,68,68,0.05)}
+.habit-state-icon{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all .15s;color:var(--text-dim)}
+.habit-row.state-did .habit-state-icon{background:rgba(51,182,121,0.2);border-color:#33b679;color:#33b679}
+.habit-row.state-delayed .habit-state-icon{background:rgba(245,158,11,0.2);border-color:#f59e0b;color:#f59e0b}
+.habit-row.state-didnot .habit-state-icon{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.6);color:rgba(239,68,68,0.8)}
+.habit-info{flex:1;min-width:0}
+.habit-label{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.habit-row.state-did .habit-label{color:var(--text-dim);text-decoration:line-through}
+.habit-time-lbl{font-size:10px;color:var(--text-dim);margin-top:2px}
+.habit-state-badge{font-size:8px;padding:2px 7px;border-radius:4px;flex-shrink:0;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.habit-row.state-did .habit-state-badge{background:rgba(51,182,121,0.15);color:#33b679}
+.habit-row.state-delayed .habit-state-badge{background:rgba(245,158,11,0.15);color:#f59e0b}
+.habit-row.state-didnot .habit-state-badge{background:rgba(239,68,68,0.1);color:rgba(239,68,68,0.8)}
+
+/* ── HABIT DASHBOARD ── */
+.hdash-top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+.hdash-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px}
+.hdash-card-title{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.hdash-big-num{font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:800;color:var(--accent);line-height:1}
+.hdash-big-sub{font-size:10px;color:var(--text-dim);margin-top:5px}
+.streak-list{display:flex;flex-direction:column;gap:7px}
+.streak-item{display:flex;align-items:center;gap:6px}
+.streak-label{flex:1;font-size:10px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.streak-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--accent);flex-shrink:0;min-width:26px;text-align:right}
+.streak-badge{font-size:11px;flex-shrink:0}
+.hdash-grid-outer{overflow-x:auto;margin-bottom:24px;-webkit-overflow-scrolling:touch}
+.hdash-grid-inner{display:inline-flex;flex-direction:column;min-width:max-content}
+.hdash-header-row{display:flex;padding-left:112px;margin-bottom:3px}
+.hdash-month-block{font-size:8px;color:var(--text-dim);letter-spacing:.3px;flex-shrink:0;text-align:left}
+.hdash-grid-row{display:flex;align-items:center;margin-bottom:2px}
+.hdash-habit-name{width:110px;font-size:9px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px;flex-shrink:0;text-align:right}
+.hdash-cell{width:9px;height:13px;border-radius:1px;flex-shrink:0;margin-right:1px;cursor:default;transition:transform .1s}
+.hdash-cell:hover{transform:scale(1.4);z-index:10;position:relative}
+.hc-did{background:rgba(51,182,121,0.8)}
+.hc-delayed{background:rgba(245,158,11,0.7)}
+.hc-didnot{background:rgba(239,68,68,0.55)}
+.hc-blank{background:var(--surface2)}
+.hc-skip{background:transparent}
+.hdash-legend{display:flex;gap:14px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.hdash-legend-item{display:flex;align-items:center;gap:5px}
+.hdash-legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.hdash-legend-lbl{font-size:9px;color:var(--text-dim)}
 </style>
 </head>
 <body>
@@ -182,6 +240,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
     <button class="tab" data-day="fri">FRI</button>
     <button class="tab" data-day="sat">SAT</button>
     <button class="tab" data-day="sun">SUN</button>
+    <button class="tab" data-day="habits">HABITS</button>
+    <button class="tab" data-day="habitdash">DASH ✦</button>
     <button class="tab stats-tab" data-day="stats">STATS ▸</button>
   </div>
 </div>
@@ -533,6 +593,7 @@ function init(){
         accessToken=response.access_token;
         saveToken(response.access_token, response.expires_in||3600);
         await sheetsLoad();
+        habitsSheetInit();
         loadCalendarData();
       }
     });
@@ -541,7 +602,7 @@ function init(){
     const saved=getSavedToken();
     if(saved){
       accessToken=saved;
-      sheetsLoad().then(()=>loadCalendarData());
+      sheetsLoad().then(()=>{habitsSheetInit();loadCalendarData();});
     } else {
       setSyncStatus('off');
       switchDay(activeDay);
@@ -554,6 +615,8 @@ function switchDay(day){
   activeDay=day;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.day===day));
   if(day==='stats'){renderStats();return}
+  if(day==='habits'){renderHabits();return}
+  if(day==='habitdash'){renderHabitDash();return}
   activeDateStr=recentDateFor(day);
   checked=getChecked(activeDateStr);
   renderDay();
@@ -884,6 +947,323 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js').catch(err=>console.error('SW:',err));
   });
 }
+
+// ─── HABITS SYSTEM ─────────────────────────────────────────────────────────
+const HABITS = [
+  { id:'wake_up',         label:'Wake up',                      time:'5:30am',  days:'daily' },
+  { id:'get_ready',       label:'Get ready',                    time:'6:15am',  days:'daily' },
+  { id:'thyroxine',       label:'Take Thyroxine',               time:'6:15am',  days:'daily' },
+  { id:'wash_clothes',    label:'Wash clothes',                 time:'6:30am',  days:['mon'] },
+  { id:'deepam_tt',       label:'Deepam',                       time:'6:45am',  days:['tue','thu'] },
+  { id:'deepam_main',     label:'Deepam',                       time:'7:00am',  days:['mon','wed','fri','sat'] },
+  { id:'wash_pooja',      label:'Wash pooja samagri',           time:'7:00am',  days:['sun'] },
+  { id:'soak_nuts_tt',    label:'Soak nuts & sprouts',          time:'7:15am',  days:['tue','thu'] },
+  { id:'recite_main',     label:'Recite Lalitha Sahasranamam',  time:'7:15am',  days:['mon','tue','wed','thu','fri','sat'] },
+  { id:'deepam_sun',      label:'Deepam',                       time:'7:30am',  days:['sun'] },
+  { id:'gita_main',       label:'Read Bhagawad Gita',           time:'7:45am',  days:['mon','tue','wed','thu','fri','sat'] },
+  { id:'recite_sun',      label:'Recite Lalitha Sahasranamam',  time:'7:45am',  days:['sun'] },
+  { id:'learn_main',      label:'Learn Lalitha Sahasranamam',   time:'8:00am',  days:['mon','tue','wed','thu','fri','sat'] },
+  { id:'send_snap',       label:'Send snap',                    time:'8:30am',  days:'daily' },
+  { id:'gita_sun',        label:'Read Bhagawad Gita',           time:'8:15am',  days:['sun'] },
+  { id:'learn_sun',       label:'Learn Lalitha Sahasranamam',   time:'8:30am',  days:['sun'] },
+  { id:'soak_nuts_main',  label:'Soak nuts & sprouts',          time:'10:30am', days:['mon','wed','fri','sat','sun'] },
+  { id:'lunch',           label:'Lunch',                        time:'11:00am', days:'daily' },
+  { id:'haircut',         label:'Haircut',                      time:'12:15pm', days:['sun'], lastSundayOnly:true },
+  { id:'buy_groceries',   label:'Buy Indian groceries',         time:'1:00pm',  days:['sun'] },
+  { id:'clean_house',     label:'Clean house',                  time:'3:00pm',  days:['wed'] },
+  { id:'wash_kitchen',    label:'Wash kitchen cloth',           time:'4:00pm',  days:['mon'] },
+  { id:'dinner',          label:'Dinner',                       time:'6:00pm',  days:'daily' },
+  { id:'wash_veg',        label:'Wash vegetables & fruits',     time:'7:00pm',  days:['sun'] },
+  { id:'order_groceries', label:'Order groceries',              time:'8:00pm',  days:['fri'] },
+  { id:'fold_clothes',    label:'Fold clothes',                 time:'8:30pm',  days:['tue'] },
+  { id:'iron_shirt',      label:'Iron shirt',                   time:'9:00pm',  days:['mon','wed'] },
+  { id:'prep_next_day',   label:'Prep for next day',            time:'9:00pm',  days:'daily' },
+  { id:'veg_fridge',      label:'Put veg back in fridge',       time:'9:00pm',  days:['sun'] },
+  { id:'peel_nuts',       label:'Peel nuts',                    time:'9:15pm',  days:'daily' },
+  { id:'pack_lunch',      label:'Pack lunch',                   time:'9:20pm',  days:['mon','wed'] },
+  { id:'sleep',           label:'Sleep',                        time:'10:30pm', days:'daily' },
+];
+
+const HK='gps_habits_v1';
+const HABITS_TAB='Habits';
+let habitsSheetRowMap={};
+let habitActiveDay=null;
+let habitActiveDateStr=null;
+
+function getHabitStore(){try{return JSON.parse(localStorage.getItem(HK)||'{}')}catch{return{}}}
+function saveHabitStore(s){localStorage.setItem(HK,JSON.stringify(s))}
+
+function isLastSundayOfMonth(dateStr){
+  const d=new Date(dateStr+'T00:00:00'),next=new Date(d);
+  next.setDate(d.getDate()+7);
+  return next.getMonth()!==d.getMonth();
+}
+
+function getHabitsForDay(dayKey,dateStr){
+  return HABITS.filter(h=>{
+    const days=h.days==='daily'?DAYS:h.days;
+    if(!days.includes(dayKey)) return false;
+    if(h.lastSundayOnly&&!isLastSundayOfMonth(dateStr)) return false;
+    return true;
+  });
+}
+
+function parseTime12(t){
+  const m=t.match(/(\d+):(\d+)(am|pm)/i);if(!m)return 0;
+  let h=parseInt(m[1]),min=parseInt(m[2]),pm=m[3].toLowerCase()==='pm';
+  if(pm&&h!==12)h+=12;if(!pm&&h===12)h=0;
+  return h*60+min;
+}
+
+function getHabitStatus(ds,hid){return getHabitStore()[ds]?.[hid]||''}
+
+function setHabitStatus(ds,hid,status){
+  const s=getHabitStore();
+  if(!s[ds])s[ds]={};
+  if(status==='')delete s[ds][hid];else s[ds][hid]=status;
+  saveHabitStore(s);
+  habitsSheetWrite(ds,s[ds]||{}).catch(e=>console.warn('Habits sheet:',e));
+}
+
+function cycleHabitState(ds,hid){
+  const cur=getHabitStatus(ds,hid);
+  const next=cur===''?'did':cur==='did'?'delayed':cur==='delayed'?'didnot':'';
+  setHabitStatus(ds,hid,next);
+  renderHabits();
+}
+
+// ── Sheets for Habits ──
+async function habitsSheetInit(){
+  if(!accessToken)return;
+  try{
+    const data=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent(HABITS_TAB+'!A:C')}`);
+    const rows=data.values||[];
+    if(rows.length===0){
+      await apiWrite(
+        `${SHEETS_BASE}/values/${encodeURIComponent(HABITS_TAB+'!A1:C1')}?valueInputOption=RAW`,
+        'PUT',{values:[['Date','Day','HabitStatuses']]}
+      );
+    }else{
+      habitsSheetRowMap={};
+      rows.forEach((row,i)=>{if(i>0&&row[0])habitsSheetRowMap[row[0]]=i+1;});
+    }
+  }catch(err){console.warn('Habits sheet init:',err);}
+}
+
+async function habitsSheetWrite(ds,statuses){
+  if(!accessToken)return;
+  const d=new Date(ds+'T00:00:00');
+  const dayKey=DAYS[JS2IDX[d.getDay()]]||'';
+  const row=[ds,dayKey,JSON.stringify(statuses)];
+  try{
+    if(habitsSheetRowMap[ds]){
+      const r=habitsSheetRowMap[ds];
+      await apiWrite(
+        `${SHEETS_BASE}/values/${encodeURIComponent(HABITS_TAB+'!A'+r+':C'+r)}?valueInputOption=RAW`,
+        'PUT',{values:[row]}
+      );
+    }else{
+      const res=await apiWrite(
+        `${SHEETS_BASE}/values/${encodeURIComponent(HABITS_TAB+'!A:C')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        'POST',{values:[row]}
+      );
+      const match=(res.updates?.updatedRange||'').match(/(\d+):/);
+      if(match)habitsSheetRowMap[ds]=parseInt(match[1]);
+    }
+    showToast('Habits saved','ok');
+  }catch(err){showToast('Habits sheet: '+err.message,'err');}
+}
+
+// ── Render Habits Tab ──
+function renderHabits(){
+  const now=new Date();
+  if(!habitActiveDay){
+    habitActiveDay=DAYS[JS2IDX[now.getDay()]];
+    habitActiveDateStr=dkey(now);
+  }
+  const todayStr=dkey(now);
+  const habits=getHabitsForDay(habitActiveDay,habitActiveDateStr);
+  const store=getHabitStore();
+  const statuses=store[habitActiveDateStr]||{};
+
+  const cntDid=habits.filter(h=>statuses[h.id]==='did').length;
+  const cntDelay=habits.filter(h=>statuses[h.id]==='delayed').length;
+  const cntNot=habits.filter(h=>statuses[h.id]==='didnot').length;
+  const total=habits.length;
+  const pct=total?Math.round((cntDid+cntDelay)/total*100):0;
+
+  // Week day nav
+  const wkMon=new Date(now);
+  wkMon.setDate(now.getDate()-JS2IDX[now.getDay()]);
+  wkMon.setHours(0,0,0,0);
+  let dayNavH='<div class="habit-day-nav">';
+  DAYS.forEach((dk,i)=>{
+    const d=new Date(wkMon);d.setDate(wkMon.getDate()+i);
+    const ds=dkey(d);
+    const isToday=ds===todayStr,isActive=ds===habitActiveDateStr;
+    dayNavH+=`<button class="hday-btn${isActive?' active':''}${isToday&&!isActive?' today':''}" onclick="switchHabitDay('${dk}','${ds}')">${DNAMES[dk].slice(0,3).toUpperCase()} ${d.getDate()}</button>`;
+  });
+  dayNavH+='</div>';
+
+  const summH=`<div class="habit-summary">
+    <div class="habit-summary-item"><div class="habit-summary-num" style="color:#33b679">${cntDid}</div><div class="habit-summary-lbl">Done</div></div>
+    <div class="habit-summary-item"><div class="habit-summary-num" style="color:#f59e0b">${cntDelay}</div><div class="habit-summary-lbl">Delayed</div></div>
+    <div class="habit-summary-item"><div class="habit-summary-num" style="color:rgba(239,68,68,0.85)">${cntNot}</div><div class="habit-summary-lbl">Skipped</div></div>
+    <div class="habit-summary-item"><div class="habit-summary-num" style="color:var(--accent)">${pct}%</div><div class="habit-summary-lbl">Score</div></div>
+  </div>`;
+
+  // Group by time of day
+  const groups={Morning:[],Afternoon:[],Evening:[],Night:[]};
+  habits.forEach(h=>{
+    const m=parseTime12(h.time);
+    if(m<720)groups.Morning.push(h);
+    else if(m<1020)groups.Afternoon.push(h);
+    else if(m<1260)groups.Evening.push(h);
+    else groups.Night.push(h);
+  });
+
+  let listH='<div style="font-size:9px;color:var(--text-dim);margin-bottom:14px;line-height:1.8">Tap once → ✓ Done &nbsp;·&nbsp; Tap again → ⏰ Delayed &nbsp;·&nbsp; Tap again → ✗ Skipped &nbsp;·&nbsp; Tap again → clear</div>';
+  Object.entries(groups).forEach(([grp,hs])=>{
+    if(!hs.length)return;
+    listH+=`<div class="habit-group-title">${grp}</div>`;
+    hs.forEach(h=>{
+      const st=statuses[h.id]||'';
+      const icon=st==='did'?'✓':st==='delayed'?'⏰':st==='didnot'?'✗':'·';
+      const badge=st==='did'?'<span class="habit-state-badge">Done</span>':
+                  st==='delayed'?'<span class="habit-state-badge">Delayed</span>':
+                  st==='didnot'?'<span class="habit-state-badge">Skipped</span>':'';
+      listH+=`<div class="habit-row${st?' state-'+st:''}" onclick="cycleHabitState('${habitActiveDateStr}','${h.id}')">
+        <div class="habit-state-icon">${icon}</div>
+        <div class="habit-info">
+          <div class="habit-label">${h.label}</div>
+          <div class="habit-time-lbl">${h.time}</div>
+        </div>
+        ${badge}
+      </div>`;
+    });
+  });
+
+  const dateLabel=new Date(habitActiveDateStr+'T00:00:00').toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('main').innerHTML=
+    dayNavH+
+    `<div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:1px;margin-bottom:12px;color:var(--text-mid)">${dateLabel}</div>`+
+    summH+listH;
+}
+
+function switchHabitDay(dk,ds){
+  habitActiveDay=dk;habitActiveDateStr=ds;renderHabits();
+}
+
+// ── Render Habit Dashboard ──
+function renderHabitDash(){
+  const store=getHabitStore(),now=new Date();
+
+  // Weekly score
+  const wkMon=new Date(now);
+  wkMon.setDate(now.getDate()-JS2IDX[now.getDay()]);
+  wkMon.setHours(0,0,0,0);
+  let wkTotal=0,wkDone=0;
+  for(let i=0;i<7;i++){
+    const d=new Date(wkMon);d.setDate(wkMon.getDate()+i);
+    if(d>now)continue;
+    const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+    const hs=getHabitsForDay(dk,ds);
+    const st=store[ds]||{};
+    wkTotal+=hs.length;
+    wkDone+=hs.filter(h=>st[h.id]==='did'||st[h.id]==='delayed').length;
+  }
+  const wkPct=wkTotal?Math.round(wkDone/wkTotal*100):0;
+
+  // Streaks — per habit, skip unscheduled days, break on scheduled+unmarked past days
+  const streaks={};
+  HABITS.forEach(h=>{
+    let streak=0;
+    for(let i=0;i<90;i++){
+      const d=new Date(now);d.setDate(now.getDate()-i);
+      const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+      const scheduled=getHabitsForDay(dk,ds).find(x=>x.id===h.id);
+      if(!scheduled)continue;
+      const st=(store[ds]||{})[h.id];
+      if(st==='did'||st==='delayed'){streak++;}
+      else if(i===0){continue;} // today not yet marked — don't break
+      else{break;}
+    }
+    streaks[h.id]={label:h.label,streak};
+  });
+  const top5=Object.values(streaks).sort((a,b)=>b.streak-a.streak).slice(0,5);
+
+  // 90-day grid
+  const days90=[];
+  for(let i=89;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);days90.push(d);}
+
+  // Only show habits scheduled at least once in last 90 days
+  const visHabits=HABITS.filter(h=>
+    days90.some(d=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id))
+  );
+
+  // Month label blocks for header
+  const CELL_W=10; // cell width + gap
+  let headerH='<div class="hdash-header-row">';
+  let lastMo='',blockStart=0,blockLen=0;
+  const blocks=[];
+  days90.forEach((d,i)=>{
+    const mo=d.toLocaleDateString('en-AU',{month:'short'});
+    if(mo!==lastMo){
+      if(lastMo)blocks.push({label:lastMo,len:blockLen});
+      lastMo=mo;blockLen=1;
+    }else{blockLen++;}
+    if(i===days90.length-1)blocks.push({label:lastMo,len:blockLen});
+  });
+  blocks.forEach(b=>{
+    headerH+=`<div class="hdash-month-block" style="width:${b.len*CELL_W}px">${b.label}</div>`;
+  });
+  headerH+='</div>';
+
+  let gridH='';
+  visHabits.forEach(h=>{
+    gridH+=`<div class="hdash-grid-row"><div class="hdash-habit-name" title="${h.label}">${h.label}</div>`;
+    days90.forEach(d=>{
+      const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+      const scheduled=getHabitsForDay(dk,ds).find(x=>x.id===h.id);
+      if(!scheduled){gridH+='<div class="hdash-cell hc-skip"></div>';return;}
+      const st=(store[ds]||{})[h.id];
+      const cls=st==='did'?'hc-did':st==='delayed'?'hc-delayed':st==='didnot'?'hc-didnot':'hc-blank';
+      const tipDate=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+      gridH+=`<div class="hdash-cell ${cls}" onmouseenter="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;
+    });
+    gridH+='</div>';
+  });
+
+  document.getElementById('main').innerHTML=`
+    <div class="section-title">Habit Dashboard — Apr → Aug 2026</div>
+    <div class="hdash-top">
+      <div class="hdash-card">
+        <div class="hdash-card-title">This week</div>
+        <div class="hdash-big-num">${wkPct}%</div>
+        <div class="hdash-big-sub">${wkDone} / ${wkTotal} habits</div>
+      </div>
+      <div class="hdash-card">
+        <div class="hdash-card-title">Top streaks 🔥</div>
+        <div class="streak-list">
+          ${top5.map(x=>`<div class="streak-item">
+            <div class="streak-label">${x.label}</div>
+            <div class="streak-num">${x.streak}</div>
+            <div class="streak-badge">${x.streak>=7?'🔥':x.streak>=3?'⚡':'·'}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="section-title">90-day consistency</div>
+    <div class="hdash-legend">
+      <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(51,182,121,0.8)"></div><span class="hdash-legend-lbl">Done</span></div>
+      <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(245,158,11,0.7)"></div><span class="hdash-legend-lbl">Delayed</span></div>
+      <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(239,68,68,0.55)"></div><span class="hdash-legend-lbl">Skipped</span></div>
+      <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:var(--surface2)"></div><span class="hdash-legend-lbl">Not marked</span></div>
+    </div>
+    <div class="hdash-grid-outer"><div class="hdash-grid-inner">${headerH}${gridH}</div></div>
+  `;
+}
+
 init();
 </script>
 </body>

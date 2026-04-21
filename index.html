@@ -280,18 +280,11 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
     </div>
   </div>
   <div class="tabs">
-    <button class="tab" data-day="mon">MON</button>
-    <button class="tab" data-day="tue">TUE</button>
-    <button class="tab" data-day="wed">WED</button>
-    <button class="tab" data-day="thu">THU</button>
-    <button class="tab" data-day="fri">FRI</button>
-    <button class="tab" data-day="sat">SAT</button>
-    <button class="tab" data-day="sun">SUN</button>
     <button class="tab" data-day="goals">GOALS</button>
     <button class="tab" data-day="habits">HABITS</button>
     <button class="tab" data-day="habitdash">DASH ✦</button>
     <button class="tab" data-day="manage">MANAGE ⚙</button>
-    <button class="tab stats-tab" data-day="stats">STATS ▸</button>
+    <button class="tab stats-tab" data-day="history">HISTORY ▸</button>
   </div>
 </div>
 <div class="main" id="main"></div>
@@ -302,8 +295,6 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 const CLIENT_ID  = '1032987809909-jo6c8a1sgncp4si85dhavbm96idr08cc.apps.googleusercontent.com';
 const SCOPES     = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/spreadsheets';
 const SHEET_ID   = '1909BqpI0IUDqYbFKPFyh2TDc99f1nUMuAgpp8MhXhrg';
-const SHEET_TAB  = 'Tracking';
-const SHEET_COLS = 'A:F'; // Date | Day | CheckedIDs | Total | GoalTotals | GoalDone
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const DAYS   = ['mon','tue','wed','thu','fri','sat','sun'];
@@ -312,28 +303,12 @@ const JS2IDX = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
 const Q_START = new Date('2026-04-01');
 const Q_END   = new Date('2026-08-31');
 
-// Goal config — key must exactly match your Google Calendar name (lowercase)
-const GOALS = {
-  work:        {label:'Work',     color:'#4285f4', cls:'c-work'},
-  money:       {label:'Money',    color:'#0f9d58', cls:'c-money'},
-  relationship:{label:'Marriage', color:'#e91e8c', cls:'c-rel'},
-  health:      {label:'Health',   color:'#33b679', cls:'c-health'},
-  spirituality:{label:'Faith',    color:'#f6bf26', cls:'c-spirit'},
-};
-const GOAL_KEYS = Object.keys(GOALS);
-
 // ─── STATE ────────────────────────────────────────────────────────────────────
-let tasks         = {mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
 let activeDay     = null;
-let checked       = [];
-let activeDateStr = null;
 let accessToken   = null;
 let tokenClient   = null;
-let calendarIds   = {}; // goal key → calendar id
-let sheetsRowMap  = {}; // dateStr → sheet row number (1-indexed)
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
-const SK = 'gps_v1';
 const TK = 'gps_token';
 
 // ── Goals storage keys ──
@@ -372,27 +347,7 @@ async function goalsTargetsSheetSave(t){
   }catch(e){console.warn('Goals_Targets write failed:',e);}
 }
 
-function getStore(){try{return JSON.parse(localStorage.getItem(SK)||'{}')}catch{return{}}}
-function saveStore(s){localStorage.setItem(SK,JSON.stringify(s))}
 function dkey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
-
-function recentDateFor(dn){
-  const t=new Date(),ti=JS2IDX[t.getDay()],di=DAYS.indexOf(dn);
-  let df=ti-di;if(df<0)df+=7;
-  const d=new Date(t);d.setDate(t.getDate()-df);return dkey(d);
-}
-function getChecked(ds){return getStore()[ds]?.checked||[]}
-function setChecked(ds,dn,c){
-  const s=getStore();
-  if(!s[ds])s[ds]={};
-  s[ds].checked=c; s[ds].total=tasks[dn].length; s[ds].day=dn;
-  const gT={},gD={};
-  tasks[dn].forEach(t=>{gT[t.goal]=(gT[t.goal]||0)+1});
-  c.forEach(id=>{const t=tasks[dn].find(x=>x.id===id);if(t)gD[t.goal]=(gD[t.goal]||0)+1});
-  s[ds].goalTotals=gT; s[ds].goalDone=gD;
-  saveStore(s);
-  sheetsWrite(ds,s[ds]).catch(err=>console.warn('Sheets write failed:',err));
-}
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 function getSavedToken(){
@@ -435,10 +390,8 @@ function connectCalendar(){
 function disconnectCalendar(){
   if(accessToken) google.accounts.oauth2.revoke(accessToken);
   clearToken();
-  tasks={mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
-  calendarIds={};
   setSyncStatus('off');
-  switchDay(activeDay==='stats'?activeDay:activeDay);
+  switchDay(activeDay);
 }
 
 // ─── CALENDAR FETCH ───────────────────────────────────────────────────────────
@@ -463,78 +416,6 @@ async function apiWrite(url,method,body){
 // ─── SHEETS ───────────────────────────────────────────────────────────────────
 const SHEETS_BASE=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`;
 
-// Load all rows from Sheets into localStorage and build row map
-async function sheetsLoad(){
-  try{
-    const data=await apiFetch(`${SHEETS_BASE}/values/${SHEET_TAB}!${SHEET_COLS}`);
-    const rows=data.values||[];
-    sheetsRowMap={};
-    if(rows.length===0){
-      // First time: write header row
-      await apiWrite(
-        `${SHEETS_BASE}/values/${SHEET_TAB}!A1:F1?valueInputOption=RAW`,
-        'PUT',
-        {values:[['Date','Day','CheckedIDs','Total','GoalTotals','GoalDone']]}
-      );
-      return;
-    }
-    // Skip header row (row 0), process data rows
-    const store=getStore();
-    rows.forEach((row,i)=>{
-      if(i===0) return; // header
-      const ds=row[0];
-      if(!ds) return;
-      sheetsRowMap[ds]=i+1; // 1-indexed sheet row
-      // Sync Sheets data into localStorage (Sheets is source of truth)
-      try{
-        store[ds]={
-          day:row[1]||'',
-          checked:(row[2]||'').split(',').filter(Boolean),
-          total:parseInt(row[3])||0,
-          goalTotals:row[4]?JSON.parse(row[4]):{},
-          goalDone:row[5]?JSON.parse(row[5]):{},
-        };
-      }catch(e){console.warn('Row parse error:',e)}
-    });
-    saveStore(store);
-  }catch(err){
-    console.warn('Sheets load failed — using localStorage:',err);
-    showToast('Sheets load: '+err.message,'err');
-  }
-}
-
-// Write one day's record to Sheets (update existing row or append new)
-async function sheetsWrite(ds,entry){
-  if(!accessToken) return;
-  const row=[
-    ds,
-    entry.day||'',
-    (entry.checked||[]).join(','),
-    String(entry.total||0),
-    JSON.stringify(entry.goalTotals||{}),
-    JSON.stringify(entry.goalDone||{}),
-  ];
-  try{
-    if(sheetsRowMap[ds]){
-      const r=sheetsRowMap[ds];
-      await apiWrite(
-        `${SHEETS_BASE}/values/${encodeURIComponent(SHEET_TAB+'!A'+r+':F'+r)}?valueInputOption=RAW`,
-        'PUT',{values:[row]}
-      );
-    } else {
-      const res=await apiWrite(
-        `${SHEETS_BASE}/values/${encodeURIComponent(SHEET_TAB+'!A:F')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
-        'POST',{values:[row]}
-      );
-      const match=(res.updates?.updatedRange||'').match(/(\d+):/);
-      if(match) sheetsRowMap[ds]=parseInt(match[1]);
-    }
-    showToast('Saved to Sheets','ok');
-  }catch(err){
-    showToast('Sheets: '+err.message,'err');
-  }
-}
-
 function showToast(msg,type){
   let t=document.getElementById('toast');
   if(!t){
@@ -551,92 +432,18 @@ function showToast(msg,type){
 async function loadCalendarData(){
   setSyncStatus('loading');
   try{
-    // 1. get calendar list, find matching calendars
     const list=await apiFetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=50');
-    calendarIds={};
-    list.items.forEach(cal=>{
-      const key=cal.summary.toLowerCase().trim();
-      if(GOALS[key]) calendarIds[key]=cal.id;
-    });
 
-    if(Object.keys(calendarIds).length===0){
-      setSyncStatus('error');
-      document.getElementById('main').innerHTML=`<div class="connect-screen">
-        <h2>No matching calendars found</h2>
-        <p>Make sure your calendars are named exactly:<br><strong>Work, Money, Relationship, Health, Spirituality</strong></p>
-        <button class="btn-connect-big" onclick="loadCalendarData()">Retry</button>
-      </div>`;
-      return;
-    }
-
-    // 2. fetch this week's events for each found calendar
-    const now=new Date();
     // Monday of current week
+    const now=new Date();
     const mon=new Date(now);
     mon.setDate(now.getDate()-JS2IDX[now.getDay()]);
     mon.setHours(0,0,0,0);
-    // Sunday = mon + 6 days end of day
     const sun=new Date(mon);
     sun.setDate(mon.getDate()+6);
     sun.setHours(23,59,59,999);
 
-    const timeMin=mon.toISOString();
-    const timeMax=sun.toISOString();
-
-    // reset tasks
-    tasks={mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
-
-    // fetch all calendars in parallel
-    await Promise.all(Object.entries(calendarIds).map(async([goal,calId])=>{
-      const encoded=encodeURIComponent(calId);
-      const data=await apiFetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${encoded}/events`+
-        `?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`+
-        `&singleEvents=true&orderBy=startTime&maxResults=250`
-      );
-      (data.items||[]).forEach(ev=>{
-        if(!ev.start) return;
-        // all-day events have ev.start.date, timed events have ev.start.dateTime
-        const isAllDay=!!ev.start.date;
-        const startDT=isAllDay?new Date(ev.start.date+'T00:00:00'):new Date(ev.start.dateTime);
-        const endDT=isAllDay?new Date(ev.end.date+'T00:00:00'):new Date(ev.end.dateTime||ev.start.dateTime);
-
-        // which day of week?
-        const dayIdx=JS2IDX[startDT.getDay()]; // 0-6 → mon-sun index
-        const dayKey=DAYS[dayIdx];
-        if(!dayKey) return;
-
-        // format time
-        const timeStr=isAllDay?'All day':startDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true});
-
-        // duration
-        const diffMins=Math.round((endDT-startDT)/60000);
-        let durStr='';
-        if(!isAllDay && diffMins>0){
-          const h=Math.floor(diffMins/60),m=diffMins%60;
-          durStr=h&&m?`${h}h ${m}m`:h?`${h}h`:`${m}m`;
-        }
-
-        tasks[dayKey].push({
-          id: ev.id,
-          time: timeStr,
-          label: ev.summary||'(no title)',
-          dur: durStr,
-          goal: goal,
-        });
-      });
-    }));
-
-    // sort each day by start time
-    DAYS.forEach(d=>{
-      tasks[d].sort((a,b)=>{
-        if(a.time==='All day') return -1;
-        if(b.time==='All day') return 1;
-        return a.time.localeCompare(b.time);
-      });
-    });
-
-    // Load Habits calendar if it exists — overrides hardcoded HABITS array
+    // Load Habits calendar — overrides hardcoded HABITS array when populated
     const habitCal=list.items.find(c=>c.summary.toLowerCase().trim()==='habits');
     if(habitCal){
       const hSun2=new Date(sun);hSun2.setDate(sun.getDate()+7);
@@ -672,13 +479,11 @@ async function loadCalendarData(){
     setSyncStatus('ok');
 
     // refresh current view
-    activeDateStr=recentDateFor(activeDay);
-    checked=getChecked(activeDateStr);
-    if(activeDay==='stats') renderStats();
+    if(activeDay==='history') renderHistory();
     else if(activeDay==='goals') renderGoals();
     else if(activeDay==='habits') renderHabits();
     else if(activeDay==='habitdash') renderHabitDash();
-    else renderDay();
+    else if(activeDay==='manage') renderManage();
 
   }catch(err){
     console.error('Calendar load failed:',err);
@@ -898,20 +703,15 @@ function saveTargets(){
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init(){
   const now=new Date();
-  activeDay    = DAYS[JS2IDX[now.getDay()]];
-  activeDateStr= dkey(now);
-  checked      = getChecked(activeDateStr);
+  activeDay = 'goals';
 
   document.getElementById('hDate').textContent=
     now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
   document.querySelectorAll('.tab[data-day]').forEach(tab=>{
-    if(tab.dataset.day===activeDay) tab.classList.add('today-tab');
     tab.addEventListener('click',()=>switchDay(tab.dataset.day));
   });
 
-  // init GIS token client
-  // GIS lib loads async — poll until ready
   function setupGIS(){
     if(typeof google==='undefined'||!google.accounts){
       setTimeout(setupGIS,200); return;
@@ -923,17 +723,16 @@ function init(){
         if(response.error){setSyncStatus('error');return}
         accessToken=response.access_token;
         saveToken(response.access_token, response.expires_in||3600);
-        await sheetsLoad();
         habitsSheetInit();
         loadCalendarData();
       }
     });
 
-    // check for saved token
     const saved=getSavedToken();
     if(saved){
       accessToken=saved;
-      sheetsLoad().then(()=>{habitsSheetInit();loadCalendarData();});
+      habitsSheetInit();
+      loadCalendarData();
     } else {
       setSyncStatus('off');
       switchDay(activeDay);
@@ -945,14 +744,11 @@ function init(){
 function switchDay(day){
   activeDay=day;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.day===day));
-  if(day==='stats'){renderStats();return}
+  if(day==='history'){renderHistory();return}
   if(day==='goals'){renderGoals();return}
   if(day==='habits'){renderHabits();return}
   if(day==='habitdash'){renderHabitDash();return}
   if(day==='manage'){manageEditId=null;renderManage();return}
-  activeDateStr=recentDateFor(day);
-  checked=getChecked(activeDateStr);
-  renderDay();
 }
 
 // ── Render Goals Tab ──
@@ -1089,370 +885,125 @@ function renderGoals(){
     </div>`;
 }
 
-// ─── RENDER DAY ───────────────────────────────────────────────────────────────
-function renderDay(){
-  const day=activeDay, dt=tasks[day]||[];
 
-  // if not connected, show connect screen
-  if(!accessToken){
-    document.getElementById('main').innerHTML=`<div class="connect-screen">
-      <h2>Connect Google Calendar</h2>
-      <p>Your tasks come directly from your 5 goal calendars. Connect once and the app stays in sync.</p>
-      <div class="goal-pills">
-        ${GOAL_KEYS.map(g=>`<span class="goal-pill" style="background:${GOALS[g].color}22;color:${GOALS[g].color};border:1px solid ${GOALS[g].color}44">${GOALS[g].label}</span>`).join('')}
-      </div>
-      <button class="btn-connect-big" onclick="connectCalendar()">Connect Google Calendar</button>
-      <p style="font-size:10px;opacity:.5">Read-only access. We never modify your calendar.</p>
-    </div>`;
-    return;
-  }
+// ─── RENDER HISTORY ───────────────────────────────────────────────────────────
+function renderHistory(){
+  const now=new Date();
+  const qTotalDays=Math.round((Q_END-Q_START)/864e5)+1;
+  const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
+  const qPct=Math.round(qElapsed/qTotalDays*100);
+  const daysLeft=qTotalDays-qElapsed;
 
-  const done=dt.filter(t=>checked.includes(t.id)).length, total=dt.length;
-  const pct=total?Math.round(done/total*100):0;
-  const C=2*Math.PI*22, offset=C-(pct/100)*C;
+  // Goals snapshot
+  const targets=getGoalsTargets();
+  const healthData=getGoalsHealth().sort((a,b)=>a.date.localeCompare(b.date));
+  const moneyData=getGoalsMoney();
+  const faithData=getGoalsFaith();
+  const latestWt=healthData.length?healthData[healthData.length-1].weight:null;
+  const firstWt=healthData.length?healthData[0].weight:null;
+  const totalSav=moneyData.filter(e=>e.type==='savings').reduce((s,e)=>s+e.amount,0);
+  const totalGld=moneyData.filter(e=>e.type==='gold').reduce((s,e)=>s+e.amount,0);
+  const totalFth=faithData.reduce((s,e)=>s+e.shlokas,0);
+  const hRange=firstWt&&firstWt!==targets.health?firstWt-targets.health:10;
+  const hPct=latestWt?Math.min(100,Math.max(0,Math.round((firstWt-latestWt)/hRange*100))):0;
+  const sPct=Math.min(100,Math.round(totalSav/targets.savings*100));
+  const gPct=Math.min(100,Math.round(totalGld/targets.gold*100));
+  const fPct=Math.min(100,Math.round(totalFth/targets.faith*100));
+  const sExp=Math.round(targets.savings*qElapsed/qTotalDays);
+  const fExp=Math.round(targets.faith*qElapsed/qTotalDays);
+  function miniBar(pct,col){return `<div class="goal-bar-outer" style="margin:3px 0"><div class="goal-bar-inner" style="width:${pct}%;background:${col}"></div></div>`;}
+  const cG='rgba(51,182,121,0.8)',cR='rgba(239,68,68,0.7)',cA='rgba(245,158,11,0.8)';
 
-  const gT={},gD={};
-  dt.forEach(t=>{gT[t.goal]=(gT[t.goal]||0)+1});
-  checked.forEach(id=>{const t=dt.find(x=>x.id===id);if(t)gD[t.goal]=(gD[t.goal]||0)+1});
-  const activeGoals=GOAL_KEYS.filter(g=>gT[g]);
+  // Habit consistency rates since Q_START
+  const hStore=getHabitStore();
+  const groups={};
+  HABITS.forEach(h=>{const key=h.group||h.id;if(!groups[key])groups[key]={key,label:h.label,members:[]};groups[key].members.push(h);});
+  const habitStats=Object.values(groups).map(g=>{
+    let sched=0,done=0,delayed=0,skipped=0;
+    for(let i=0;i<qElapsed;i++){
+      const d=new Date(Q_START);d.setDate(Q_START.getDate()+i);
+      const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+      const members=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
+      if(!members.length)continue;
+      sched++;
+      const sts=members.map(h=>(hStore[ds]||{})[h.id]);
+      if(sts.some(s=>s==='did'))done++;
+      else if(sts.some(s=>s==='delayed'))delayed++;
+      else if(sts.some(s=>s==='didnot'))skipped++;
+    }
+    const pct=sched?Math.round((done+delayed)/sched*100):0;
+    return {label:g.label,sched,done,delayed,skipped,pct};
+  }).filter(x=>x.sched>0).sort((a,b)=>b.pct-a.pct);
 
-  let barsH=activeGoals.length?'<div class="goal-bars">':'';
-  activeGoals.forEach(g=>{
-    const gp=Math.round((gD[g]||0)/gT[g]*100);
-    barsH+=`<div class="goal-bar-row">
-      <div class="goal-bar-label">${GOALS[g].label}</div>
-      <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${gp}%;background:${GOALS[g].color}"></div></div>
-      <div class="goal-bar-pct">${gp}%</div>
-    </div>`;
-  });
-  if(activeGoals.length) barsH+='</div>';
+  let h=`<div class="section-title">History — Apr → Aug 2026</div>`;
 
-  let h=`<div class="day-header">
-    <div class="progress-area">
-      <div class="ring-wrap">
-        <svg class="ring-svg" width="52" height="52" viewBox="0 0 52 52">
-          <circle class="ring-track" cx="26" cy="26" r="22" stroke-dasharray="${C}" stroke-dashoffset="0"/>
-          <circle class="ring-fill"  cx="26" cy="26" r="22" stroke-dasharray="${C}" stroke-dashoffset="${offset}"/>
-        </svg>
-        <div class="ring-pct">${pct}%</div>
-      </div>
-      <div>
-        <div class="day-name">${DNAMES[day]}</div>
-        <div class="task-count"><span>${done}</span> / ${total} done</div>
-      </div>
+  // Quarter progress bar
+  h+=`<div class="goal-card" style="margin-bottom:16px">
+    <div class="goal-card-header">
+      <span class="goal-card-title">Quarter progress</span>
+      <span class="goal-trend warn">${daysLeft} days left</span>
     </div>
-    <div class="day-right">
-      ${barsH}
-      ${total?`<button class="btn-reset" onclick="resetDay()">reset day</button>`:''}
-    </div>
+    <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${qPct}%;background:${cA}"></div></div>
+    <div class="goal-metric-row"><span>Week ${Math.ceil(qElapsed/7)} of ${Math.ceil(qTotalDays/7)}</span><span>${qPct}% elapsed</span></div>
   </div>`;
 
-  if(!total){
-    h+=`<div class="empty-day">
-      <strong>No events today</strong>
-      No events found in your goal calendars for ${DNAMES[day]}.<br>
-      Add events in Google Calendar and tap Refresh.
-    </div>
-    <div style="text-align:center;margin-top:16px">
-      <button class="btn-connect" style="display:inline-block;font-size:11px;padding:8px 16px" onclick="loadCalendarData()">↻ Refresh Calendar</button>
-    </div>`;
-  } else {
-    h+='<div class="task-list" id="taskList">';
-    dt.forEach(t=>{
-      const isDone=checked.includes(t.id);
-      h+=`<div class="task-row${isDone?' done':''}" data-goal="${t.goal||''}" data-id="${t.id.replace(/"/g,'&quot;')}">
-        <div class="task-check">${isDone?'✓':''}</div>
-        <div class="task-time">${t.time}</div>
-        <div class="task-label">${t.label}</div>
-        <div class="task-meta">
-          ${t.goal?`<span class="task-goal-tag tag-${t.goal}">${GOALS[t.goal]?.label||t.goal}</span>`:''}
-          ${t.dur?`<span class="task-dur">${t.dur}</span>`:''}
-        </div>
-      </div>`;
-    });
-    h+='</div>';
-    h+=`<div style="text-align:right;margin-top:12px">
-      <button class="btn-disconnect" style="font-size:9px" onclick="loadCalendarData()">↻ Refresh</button>
-    </div>`;
-  }
-  document.getElementById('main').innerHTML=h;
-
-  // event delegation — safe for any calendar event ID format
-  const tl=document.getElementById('taskList');
-  if(tl) tl.addEventListener('click',e=>{
-    const row=e.target.closest('.task-row');
-    if(row&&row.dataset.id) toggle(row.dataset.id);
-  });
-}
-
-function toggle(id){
-  if(checked.includes(id)) checked=checked.filter(x=>x!==id); else checked.push(id);
-  setChecked(activeDateStr,activeDay,checked);
-  renderDay();
-}
-function resetDay(){checked=[];setChecked(activeDateStr,activeDay,[]);renderDay()}
-
-// ─── RENDER STATS ─────────────────────────────────────────────────────────────
-function renderStats(){
-  const store=getStore(),now=new Date();
-  let streak=0;
-  for(let i=0;i<365;i++){
-    const d=new Date(now);d.setDate(now.getDate()-i);
-    const e=store[dkey(d)];
-    if(e&&e.total>0&&(e.checked?.length||0)/e.total>=0.5)streak++;else break;
-  }
-  const all=Object.values(store).filter(e=>e.total>0);
-  const tracked=all.length;
-  const avgPct=tracked?Math.round(all.reduce((s,e)=>s+(e.checked?.length||0)/e.total,0)/tracked*100):0;
-  const perfectDays=all.filter(e=>(e.checked?.length||0)===e.total).length;
-
-  const wk=new Date(now);wk.setDate(now.getDate()-now.getDay()+1);wk.setHours(0,0,0,0);
-  const wGT={},wGD={};GOAL_KEYS.forEach(g=>{wGT[g]=0;wGD[g]=0});
-  for(let i=0;i<7;i++){
-    const d=new Date(wk);d.setDate(wk.getDate()+i);
-    const e=store[dkey(d)];if(!e?.goalTotals)continue;
-    GOAL_KEYS.forEach(g=>{wGT[g]+=(e.goalTotals[g]||0);wGD[g]+=(e.goalDone?.[g]||0)});
-  }
-
-  const heatDays=[];
-  for(let i=34;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);heatDays.push(d)}
-
-  const weekBars=[];
-  for(let w=7;w>=0;w--){
-    const ws=new Date(now);ws.setDate(now.getDate()-now.getDay()-w*7+1);
-    let tot=0,dn=0;
-    for(let d=0;d<7;d++){const wd=new Date(ws);wd.setDate(ws.getDate()+d);const e=store[dkey(wd)];if(e?.total>0){tot+=e.total;dn+=(e.checked?.length||0)}}
-    weekBars.push({pct:tot>0?Math.round(dn/tot*100):0,isCurrent:w===0});
-  }
-
-  const qDays=Math.round((Q_END-Q_START)/864e5);
-  const elapsed=Math.max(0,Math.min(qDays,Math.round((now-Q_START)/864e5)));
-  const qPct=Math.round(elapsed/qDays*100);
-  const qGT={},qGD={};GOAL_KEYS.forEach(g=>{qGT[g]=0;qGD[g]=0});
-  Object.entries(store).forEach(([ds,e])=>{
-    const d=new Date(ds);if(d<Q_START||d>Q_END||!e.goalTotals)return;
-    GOAL_KEYS.forEach(g=>{qGT[g]+=(e.goalTotals[g]||0);qGD[g]+=(e.goalDone?.[g]||0)});
-  });
-
-  const months={};
-  Object.entries(store).forEach(([ds,e])=>{
-    if(!e.total)return;
-    const mo=ds.slice(0,7);
-    if(!months[mo])months[mo]={completions:[],gT:{},gD:{}};
-    months[mo].completions.push((e.checked?.length||0)/e.total*100);
-    GOAL_KEYS.forEach(g=>{months[mo].gT[g]=(months[mo].gT[g]||0)+(e.goalTotals?.[g]||0);months[mo].gD[g]=(months[mo].gD[g]||0)+(e.goalDone?.[g]||0)});
-  });
-  const monthKeys=Object.keys(months).sort().reverse();
-  const now_mo=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  function fmtMonth(ym){const[y,m]=ym.split('-');return new Date(y,m-1,1).toLocaleDateString('en-AU',{month:'short',year:'numeric'})}
-
-  // Goals summary
-  const gTargets=getGoalsTargets();
-  const gHealthD=getGoalsHealth();
-  const gMoneyD=getGoalsMoney();
-  const gFaithD=getGoalsFaith();
-  const qTotalDays2=Math.round((Q_END-Q_START)/864e5)+1;
-  const qElapsed2=Math.max(1,Math.min(qTotalDays2,Math.round((now-Q_START)/864e5)+1));
-  const latestWt=gHealthD.length?gHealthD[gHealthD.length-1].weight:null;
-  const totalSav=gMoneyD.filter(e=>e.type==='savings').reduce((s,e)=>s+e.amount,0);
-  const totalGld=gMoneyD.filter(e=>e.type==='gold').reduce((s,e)=>s+e.amount,0);
-  const totalFth=gFaithD.reduce((s,e)=>s+e.shlokas,0);
-  function miniBar(pct,col){return `<div class="goal-bar-outer" style="margin:3px 0"><div class="goal-bar-inner" style="width:${pct}%;background:${col}"></div></div>`;}
-  const sPct2=Math.min(100,Math.round(totalSav/gTargets.savings*100));
-  const gPct2=Math.min(100,Math.round(totalGld/gTargets.gold*100));
-  const fPct2=Math.min(100,Math.round(totalFth/gTargets.faith*100));
-  const hPct2=gHealthD.length&&gHealthD[0].weight!==gTargets.health?Math.min(100,Math.max(0,Math.round((gHealthD[0].weight-latestWt)/(gHealthD[0].weight-gTargets.health)*100))):0;
-  const accentG='rgba(51,182,121,0.8)',accentR='rgba(239,68,68,0.7)',accentA='rgba(245,158,11,0.8)';
-  const sExp2=Math.round(gTargets.savings*qElapsed2/qTotalDays2);
-  const fExp2=Math.round(gTargets.faith*qElapsed2/qTotalDays2);
-
-  let h=`<div class="section-title">Goals — Apr → Aug 2026</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+  // Goals summary grid
+  h+=`<div class="section-title">Goals snapshot</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
     <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
       <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Health 💪</div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">${latestWt??'—'}kg</div>
-      ${miniBar(hPct2,hPct2>=50?accentG:accentR)}
-      <div style="font-size:9px;color:var(--text-dim)">Target ${gTargets.health}kg · ${hPct2}%</div>
+      ${miniBar(hPct,hPct>=50?cG:cR)}
+      <div style="font-size:9px;color:var(--text-dim)">Target ${targets.health}kg · ${hPct}%</div>
     </div>
     <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
       <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Savings 💰</div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">$${totalSav.toFixed(0)}</div>
-      ${miniBar(sPct2,totalSav>=sExp2?accentG:accentR)}
-      <div style="font-size:9px;color:var(--text-dim)">Target $${gTargets.savings} · ${sPct2}%</div>
+      ${miniBar(sPct,totalSav>=sExp?cG:cR)}
+      <div style="font-size:9px;color:var(--text-dim)">Target $${targets.savings} · ${sPct}%</div>
     </div>
     <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
       <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Gold 🥇</div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">$${totalGld.toFixed(0)}</div>
-      ${miniBar(gPct2,accentA)}
-      <div style="font-size:9px;color:var(--text-dim)">Target $${gTargets.gold} · ${gPct2}%</div>
+      ${miniBar(gPct,cA)}
+      <div style="font-size:9px;color:var(--text-dim)">Target $${targets.gold} · ${gPct}%</div>
     </div>
     <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
       <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Faith 🙏</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">${totalFth} / ${gTargets.faith}</div>
-      ${miniBar(fPct2,totalFth>=fExp2?accentG:accentA)}
-      <div style="font-size:9px;color:var(--text-dim)">Shlokas · ${fPct2}%</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">${totalFth} / ${targets.faith}</div>
+      ${miniBar(fPct,totalFth>=fExp?cG:cA)}
+      <div style="font-size:9px;color:var(--text-dim)">Shlokas · ${fPct}%</div>
     </div>
-  </div>
-  <div class="actions-row">
-    <button class="btn-export" onclick="exportData()">↓ Export JSON — ${fmtMonth(now_mo)}</button>
-    <button class="btn-danger" onclick="clearAllData()">clear all data</button>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value">${streak}</div><div class="stat-sub">days ≥ 50%</div></div>
-    <div class="stat-card"><div class="stat-label">Avg Completion</div><div class="stat-value">${avgPct}%</div><div class="stat-sub">across ${tracked} days</div></div>
-    <div class="stat-card"><div class="stat-label">Perfect Days</div><div class="stat-value">${perfectDays}</div><div class="stat-sub">100% done</div></div>
   </div>`;
 
-  h+=`<div class="section-title">This week by goal</div><div class="goal-cards">`;
-  GOAL_KEYS.forEach(g=>{
-    const gt=wGT[g],gd=wGD[g],gp=gt?Math.round(gd/gt*100):0;
-    const C2=2*Math.PI*18,off2=C2-(gp/100)*C2;
-    h+=`<div class="goal-card">
-      <div class="goal-card-name">${GOALS[g].label}</div>
-      <div class="goal-card-ring">
-        <svg style="transform:rotate(-90deg)" width="44" height="44" viewBox="0 0 44 44">
-          <circle fill="none" stroke="var(--border)" stroke-width="3" cx="22" cy="22" r="18" stroke-dasharray="${C2}" stroke-dashoffset="0"/>
-          <circle fill="none" stroke="${GOALS[g].color}" stroke-width="3" stroke-linecap="round" cx="22" cy="22" r="18" stroke-dasharray="${C2}" stroke-dashoffset="${off2}"/>
-        </svg>
-        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10px;font-weight:700;color:${GOALS[g].color}">${gp}%</div>
-      </div>
-      <div class="goal-card-sub">${gd}/${gt} tasks</div>
-    </div>`;
-  });
-  h+='</div>';
-
-  h+=`<div class="heatmap-wrap"><div class="section-title">35-day map</div><div class="day-labels">`;
-  ['M','T','W','T','F','S','S'].forEach(l=>h+=`<div class="day-lbl">${l}</div>`);
-  h+=`</div><div class="heatmap">`;
-  heatDays.forEach(d=>{
-    const k=dkey(d),isFuture=d>now;let cls='hf',pct=0;
-    if(!isFuture){const e=store[k];if(!e?.total)cls='h0';else{pct=Math.round((e.checked?.length||0)/e.total*100);cls=pct>=80?'h4':pct>=60?'h3':pct>=40?'h2':pct>0?'h1':'h0'}}
-    const lbl=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
-    const tip=isFuture?`${lbl} — future`:store[k]?.total?`${lbl} — ${pct}% done`:`${lbl} — no data`;
-    h+=`<div class="heat-cell ${cls}" onmouseenter="showTT(event,'${tip}')" onmouseleave="hideTT()"></div>`;
-  });
-  h+=`</div><div class="heat-legend"><span class="legend-lbl">Less</span>`;
-  ['var(--surface2)','rgba(245,158,11,0.18)','rgba(245,158,11,0.38)','rgba(245,158,11,0.62)','rgba(245,158,11,0.88)'].forEach(c=>h+=`<div class="legend-cell" style="background:${c}"></div>`);
-  h+=`<span class="legend-lbl">More</span></div></div>`;
-
-  // ── YEARLY HEATMAP ──
-  // Build 52 weeks × 7 days grid ending today
-  const yearDays=[];
-  const yearEnd=new Date(now);
-  // go back to start of current week's Sunday, then back 51 more weeks
-  const yearStart=new Date(now);
-  yearStart.setDate(now.getDate()-now.getDay()-51*7); // 52 weeks ago Sunday
-  yearStart.setHours(0,0,0,0);
-  for(let d=new Date(yearStart);d<=now;d.setDate(d.getDate()+1)){
-    yearDays.push(new Date(d));
-  }
-  // pad start so grid aligns to Sunday
-  const startPad=yearStart.getDay(); // days offset
-
-  // build 52 columns of 7 cells
-  let weeklyCols=[];
-  let week=[];
-  // fill empty cells at start
-  for(let i=0;i<startPad;i++) week.push(null);
-  yearDays.forEach(d=>{
-    week.push(new Date(d));
-    if(week.length===7){weeklyCols.push(week);week=[];}
-  });
-  if(week.length) weeklyCols.push(week);
-
-  // month labels — show month name at the week column where month starts
-  const monthLabels=new Array(weeklyCols.length).fill('');
-  weeklyCols.forEach((wk,wi)=>{
-    wk.forEach(d=>{
-      if(d&&d.getDate()<=7){
-        monthLabels[wi]=d.toLocaleDateString('en-AU',{month:'short'});
-      }
-    });
-  });
-
-  h+=`<div class="heatmap-wrap"><div class="section-title">Yearly map — ${now.getFullYear()}</div>
-  <div class="year-heatmap-wrap">
-  <div class="year-month-labels">`;
-  monthLabels.forEach(lbl=>{
-    h+=`<div class="year-month-lbl" style="width:14px">${lbl}</div>`;
-  });
-  h+=`</div><div class="year-heatmap-inner">`;
-  weeklyCols.forEach(wk=>{
-    h+='<div class="year-week-col">';
-    for(let di=0;di<7;di++){
-      const d=wk[di];
-      if(!d){h+='<div class="year-cell" style="background:transparent"></div>';continue;}
-      const isFuture=d>now;
-      let bg='var(--surface2)';
-      if(isFuture){bg='transparent';}
-      else{
-        const e=store[dkey(d)];
-        if(e?.total>0){
-          const pct=Math.round((e.checked?.length||0)/e.total*100);
-          bg=pct>=80?'rgba(245,158,11,0.88)':pct>=60?'rgba(245,158,11,0.62)':pct>=40?'rgba(245,158,11,0.38)':pct>0?'rgba(245,158,11,0.18)':'var(--surface2)';
-        }
-      }
-      const lbl=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
-      const e=store[dkey(d)];
-      const pct=(!isFuture&&e?.total)?Math.round((e.checked?.length||0)/e.total*100):0;
-      const tip=isFuture?`${lbl} — future`:e?.total?`${lbl} — ${pct}% done`:`${lbl} — no data`;
-      h+=`<div class="year-cell" style="background:${bg}" onmouseenter="showTT(event,'${tip}')" onmouseleave="hideTT()"></div>`;
-    }
-    h+='</div>';
-  });
-  h+=`</div></div><div class="heat-legend" style="margin-top:6px"><span class="legend-lbl">Less</span>`;
-  ['var(--surface2)','rgba(245,158,11,0.18)','rgba(245,158,11,0.38)','rgba(245,158,11,0.62)','rgba(245,158,11,0.88)'].forEach(c=>h+=`<div class="legend-cell" style="background:${c}"></div>`);
-  h+=`<span class="legend-lbl">More</span></div></div>`;
-
-  h+=`<div class="bar-chart-wrap"><div class="section-title">8-week trend</div><div class="bar-chart">`;
-  weekBars.forEach((w,i)=>{const ht=Math.round(w.pct/100*80);h+=`<div class="bar-col"><div class="bar-pct-lbl">${w.pct||''}</div><div class="bar${w.isCurrent?' current':''}" style="height:${ht}px"></div><div class="bar-lbl">W${i+1}${w.isCurrent?'★':''}</div></div>`});
-  h+=`</div></div>`;
-
-  h+=`<div class="quarter-wrap"><div class="section-title">Quarter — Apr → Aug 2026</div>
-  <div class="quarter-meta">Week ${Math.ceil(elapsed/7)} of ${Math.ceil(qDays/7)} · ${qPct}% elapsed · ${qDays-elapsed} days left</div>`;
-  GOAL_KEYS.forEach(g=>{
-    const qp=qGT[g]?Math.round(qGD[g]/qGT[g]*100):0;
-    h+=`<div class="quarter-row">
-      <div class="quarter-goal-name">${GOALS[g].label}</div>
-      <div class="quarter-track"><div class="quarter-fill" style="width:${qp}%;background:${GOALS[g].color}"></div></div>
-      <div class="quarter-pct-lbl">${qp}%</div>
-    </div>`;
-  });
-  h+=`<div class="quarter-row" style="margin-top:8px;opacity:0.4">
-    <div class="quarter-goal-name" style="font-size:8px">time used</div>
-    <div class="quarter-track"><div class="quarter-fill" style="width:${qPct}%;background:var(--text-dim)"></div></div>
-    <div class="quarter-pct-lbl">${qPct}%</div>
-  </div></div>`;
-
-  h+=`<div class="section-title">Monthly summary</div>`;
-  if(!monthKeys.length){
-    h+=`<div class="no-data">No data yet. Tick tasks daily — monthly breakdown appears here once you have tracked days.</div>`;
+  // Habit consistency table
+  h+=`<div class="section-title">Habit consistency — since Apr 1</div>`;
+  if(!habitStats.length){
+    h+=`<div class="no-data">No habit data yet. Mark habits in the Habits tab to see consistency here.</div>`;
   } else {
     h+=`<table class="monthly-table"><thead><tr>
-      <th>Month</th><th>Days</th><th>Overall</th>
-      <th class="c-work">Work</th><th class="c-money">Money</th>
-      <th class="c-rel">Marriage</th><th class="c-health">Health</th><th class="c-spirit">Faith</th>
+      <th>Habit</th><th>Sched</th><th style="color:#33b679">Done</th><th style="color:#f59e0b">Delayed</th><th style="color:rgba(239,68,68,0.8)">Skipped</th><th class="pct-c">Rate</th>
     </tr></thead><tbody>`;
-    monthKeys.forEach(mo=>{
-      const m=months[mo],avg=Math.round(m.completions.reduce((a,b)=>a+b,0)/m.completions.length);
-      const gp=g=>m.gT[g]?Math.round(m.gD[g]/m.gT[g]*100)+'%':'—';
-      h+=`<tr><td>${fmtMonth(mo)}</td><td>${m.completions.length}</td><td class="pct-c">${avg}%</td>
-        <td class="c-work">${gp('work')}</td><td class="c-money">${gp('money')}</td>
-        <td class="c-rel">${gp('relationship')}</td><td class="c-health">${gp('health')}</td><td class="c-spirit">${gp('spirituality')}</td>
+    habitStats.forEach(x=>{
+      const barCol=x.pct>=80?cG:x.pct>=50?cA:cR;
+      h+=`<tr>
+        <td>${x.label}</td>
+        <td>${x.sched}</td>
+        <td style="color:#33b679">${x.done}</td>
+        <td style="color:#f59e0b">${x.delayed}</td>
+        <td style="color:rgba(239,68,68,0.8)">${x.skipped}</td>
+        <td><div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;min-width:40px"><div style="height:4px;border-radius:2px;background:${barCol};width:${x.pct}%"></div></div>
+          <span class="pct-c">${x.pct}%</span>
+        </div></td>
       </tr>`;
     });
     h+=`</tbody></table>`;
   }
+
+  h+=`<div class="no-data" style="margin-top:16px;opacity:0.5">Previous quarters — coming soon</div>`;
   document.getElementById('main').innerHTML=h;
 }
-
-function exportData(){
-  const store=getStore(),now=new Date();
-  const tag=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const blob=new Blob([JSON.stringify({exported:now.toISOString(),data:store},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`gps-${tag}.json`;a.click();URL.revokeObjectURL(a.href);
-}
-function clearAllData(){if(confirm('Delete all tracked history?')){localStorage.removeItem(SK);renderStats()}}
 function showTT(e,text){const t=document.getElementById('tt');t.textContent=text;t.classList.add('show');t.style.left=(e.clientX+12)+'px';t.style.top=(e.clientY-32)+'px'}
 function hideTT(){document.getElementById('tt').classList.remove('show')}
 

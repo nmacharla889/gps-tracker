@@ -15,7 +15,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@400;600;700;800&display=swap');
 :root{
-  --bg:#0a0a0c;--surface:#111115;--surface2:#18181e;--border:#252530;
+  --bg:#07070e;--surface:#0f0f1a;--surface2:#14141e;--border:#1c1c2a;
   --accent:#f59e0b;--accent-dim:rgba(245,158,11,0.12);
   --text:#dddde8;--text-dim:#55556a;--text-mid:#9090a8;
   --work:#4285f4;   --work-dim:rgba(66,133,244,0.12);
@@ -26,7 +26,8 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden}
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;position:sticky;top:0;z-index:100}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 90% 60% at 5% 0%,rgba(66,133,244,0.07) 0%,transparent 55%),radial-gradient(ellipse 70% 55% at 95% 100%,rgba(245,158,11,0.08) 0%,transparent 55%),radial-gradient(ellipse 50% 45% at 50% 50%,rgba(233,30,140,0.03) 0%,transparent 60%)}
+.header{background:rgba(7,7,14,0.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.055);padding:0 20px;position:sticky;top:0;z-index:100}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:14px 0 12px;border-bottom:1px solid var(--border)}
 .header-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
 .header-right{display:flex;align-items:center;gap:10px}
@@ -43,10 +44,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .tabs::-webkit-scrollbar{display:none}
 .tab{padding:11px 14px 9px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;position:relative}
 .tab:hover{color:var(--text-mid)}
-.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 14px rgba(245,158,11,0.55)}
 .tab.today-tab::after{content:'';position:absolute;top:9px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .tab.stats-tab{margin-left:auto;border-left:1px solid var(--border);padding-left:18px}
-.main{max-width:860px;margin:0 auto;padding:20px 20px 80px}
+.main{max-width:860px;margin:0 auto;padding:20px 20px 80px;position:relative;z-index:1}
 /* connect screen */
 .connect-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:20px}
 .connect-screen h2{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;letter-spacing:1px;color:var(--text)}
@@ -103,7 +104,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 /* stats */
 .section-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-mid);margin-bottom:14px}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px}
+.stat-card{background:linear-gradient(145deg,rgba(15,15,24,0.98),rgba(9,9,16,0.98));border:1px solid rgba(255,255,255,0.055);border-radius:9px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
 .stat-label{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 .stat-value{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--accent);line-height:1}
 .stat-sub{font-size:10px;color:var(--text-dim);margin-top:5px}
@@ -173,8 +174,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .habit-summary-num{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;line-height:1}
 .habit-summary-lbl{font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-top:4px}
 .habit-group-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:16px 0 6px;padding-left:2px}
-.habit-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border-left:3px solid var(--border);background:var(--surface);margin-bottom:3px;cursor:pointer;transition:all .12s;user-select:none}
-.habit-row:hover{background:var(--surface2)}
+.habit-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border-left:3px solid var(--border);background:linear-gradient(135deg,rgba(15,15,24,0.9),rgba(10,10,17,0.9));margin-bottom:3px;cursor:pointer;transition:all .18s;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.habit-row:hover{background:rgba(22,22,32,0.95);transform:translateX(3px)}
 .habit-row.state-did{border-left-color:#33b679;background:rgba(51,182,121,0.07)}
 .habit-row.state-delayed{border-left-color:#f59e0b;background:rgba(245,158,11,0.07)}
 .habit-row.state-didnot{border-left-color:rgba(239,68,68,0.7);background:rgba(239,68,68,0.05)}
@@ -193,7 +194,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 
 /* ── HABIT DASHBOARD ── */
 .hdash-top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
-.hdash-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px}
+.hdash-card{background:linear-gradient(145deg,rgba(15,15,24,0.98),rgba(9,9,16,0.98));border:1px solid rgba(255,255,255,0.055);border-radius:9px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
 .hdash-card-title{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
 .hdash-big-num{font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:800;color:var(--accent);line-height:1}
 .hdash-big-sub{font-size:10px;color:var(--text-dim);margin-top:5px}
@@ -233,7 +234,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .manage-form-btns{display:flex;gap:8px;margin-top:16px}
 .manage-save-btn{flex:1;padding:9px;background:var(--accent);border:none;border-radius:6px;color:#000;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer}
 .manage-cancel-btn{padding:9px 16px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer}
-.manage-cat-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.manage-cat-section{background:linear-gradient(145deg,rgba(15,15,24,0.98),rgba(9,9,16,0.98));border:1px solid rgba(255,255,255,0.055);border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
 .manage-cat-header{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;margin-bottom:12px}
 .manage-goal-row{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
 .manage-goal-label{font-size:12px;color:var(--text);flex:1}
@@ -248,14 +249,16 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 
 /* ── GOALS TAB ── */
 .goals-section-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 8px}
-.goal-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+.goal-card{background:linear-gradient(145deg,rgba(15,15,24,0.98),rgba(9,9,16,0.98));border:1px solid rgba(255,255,255,0.055);border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 4px 24px rgba(0,0,0,0.6),0 1px 0 rgba(255,255,255,0.035) inset}
 .goal-card.placeholder{opacity:.5}
 .goal-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .goal-card-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;color:var(--text)}
 .goal-metric-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--text);line-height:1}
 .goal-metric-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin:4px 0}
-.goal-bar-outer{height:5px;background:var(--surface2);border-radius:3px;margin:8px 0 4px}
-.goal-bar-inner{height:5px;border-radius:3px;transition:width .3s}
+.goal-bar-outer{height:6px;background:rgba(255,255,255,0.055);border-radius:3px;margin:8px 0 4px}
+.goal-bar-inner{height:6px;border-radius:3px;transition:width .55s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
+.goal-bar-inner::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.2) 50%,transparent 100%);transform:translateX(-100%);animation:barShine 2.8s ease-in-out infinite}
+@keyframes barShine{0%,100%{transform:translateX(-100%)}60%{transform:translateX(200%)}}
 .goal-trend{font-size:9px;padding:2px 7px;border-radius:3px;display:inline-block;margin-top:4px;font-weight:500}
 .goal-trend.good{background:rgba(51,182,121,0.15);color:rgba(51,182,121,0.9)}
 .goal-trend.warn{background:rgba(245,158,11,0.15);color:rgba(245,158,11,0.9)}
@@ -264,11 +267,16 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .goal-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;-moz-appearance:textfield}
 .goal-input::-webkit-outer-spin-button,.goal-input::-webkit-inner-spin-button{-webkit-appearance:none}
 .goal-input:focus{border-color:rgba(245,158,11,0.4)}
-.goal-input-btn{padding:7px 14px;background:var(--accent);border:none;border-radius:5px;color:#000;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.goal-input-btn{padding:7px 14px;background:linear-gradient(135deg,#f5a623,#e08d00);border:none;border-radius:5px;color:#000;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 10px rgba(245,158,11,0.35)}
 .goal-log-list{margin-top:10px}
 .goal-log-item{display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);padding:4px 0;border-bottom:1px solid var(--border)}
 .goal-log-item:last-child{border-bottom:none}
 .goal-log-val{color:var(--text-mid);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600}
+.goal-cat-health{border-left:3px solid rgba(51,182,121,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(51,182,121,0.13)!important}
+.goal-cat-money{border-left:3px solid rgba(15,157,88,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(15,157,88,0.13)!important}
+.goal-cat-work{border-left:3px solid rgba(66,133,244,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(66,133,244,0.13)!important}
+.goal-cat-rel{border-left:3px solid rgba(233,30,140,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(233,30,140,0.13)!important}
+.goal-cat-faith{border-left:3px solid rgba(246,191,38,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(246,191,38,0.13)!important}
 </style>
 </head>
 <body>
@@ -730,7 +738,8 @@ function renderCustomGoalCards(category){
     const barCol=pct>=75?'rgba(51,182,121,0.8)':pct>=40?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.7)';
     const trendCls=pct>=75?'good':pct>=40?'warn':'bad';
     const recentLogs=logs.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+${e.value} ${g.unit}</span></div>`).join('');
-    return`<div class="goal-card">
+    const catCls=category==='work'?'goal-cat-work':category==='relationship'?'goal-cat-rel':category==='health'?'goal-cat-health':category==='money'?'goal-cat-money':'goal-cat-faith';
+    return`<div class="goal-card ${catCls}">
       <div class="goal-card-header">
         <span class="goal-card-title">${g.name}</span>
         <span class="goal-trend ${trendCls}">${pct}%</span>
@@ -813,7 +822,10 @@ function renderGoals(){
   const hTarget=targets.health;
   const hRange=firstW&&firstW!==hTarget?firstW-hTarget:10;
   const hPct=latestW?Math.min(100,Math.max(0,Math.round((firstW-latestW)/hRange*100))):0;
-  const hBarCol=hPct>=75?'rgba(51,182,121,0.8)':hPct>=40?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.7)';
+  const barG='linear-gradient(90deg,rgba(51,182,121,0.5),rgba(51,182,121,1))';
+  const barW='linear-gradient(90deg,rgba(245,158,11,0.5),rgba(245,158,11,1))';
+  const barB='linear-gradient(90deg,rgba(239,68,68,0.4),rgba(239,68,68,0.85))';
+  const hBarCol=hPct>=75?barG:hPct>=40?barW:barB;
   // Trend: compare last 7 entries avg vs prev 7
   let hTrendCls='warn',hTrendTxt='No data yet';
   if(healthData.length>=2){
@@ -859,7 +871,7 @@ function renderGoals(){
     <div class="section-title">Goals — Apr → Aug 2026</div>
 
     <div class="goals-section-title">Health 💪</div>
-    <div class="goal-card">
+    <div class="goal-card goal-cat-health">
       <div class="goal-card-header">
         <span class="goal-card-title">${latestW??'—'}kg</span>
         <span class="goal-trend ${hTrendCls}">${hTrendTxt}</span>
@@ -875,13 +887,13 @@ function renderGoals(){
     </div>
 
     <div class="goals-section-title">Money 💰</div>
-    <div class="goal-card">
+    <div class="goal-card goal-cat-money">
       <div class="goal-card-header">
         <span class="goal-card-title">Savings · $${totalSavings.toFixed(0)}</span>
         <span class="goal-trend ${sTrendCls}">${sTrendTxt}</span>
       </div>
       <div class="goal-metric-row"><span>Target</span><span>$${targets.savings}/quarter</span></div>
-      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${sPct}%;background:${sTrendCls==='good'?'rgba(51,182,121,0.8)':'rgba(239,68,68,0.7)'}"></div></div>
+      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${sPct}%;background:${sTrendCls==='good'?barG:barB}"></div></div>
       <div class="goal-metric-row"><span>Progress</span><span>$${totalSavings.toFixed(0)} / $${targets.savings} (${sPct}%)</span></div>
       <div class="goal-input-row">
         <input id="savingsInput" class="goal-input" type="number" step="1" min="1" placeholder="Amount saved ($)">
@@ -889,13 +901,13 @@ function renderGoals(){
       </div>
       ${sLogs?`<div class="goal-log-list">${sLogs}</div>`:''}
     </div>
-    <div class="goal-card">
+    <div class="goal-card goal-cat-money">
       <div class="goal-card-header">
         <span class="goal-card-title">Gold · $${totalGold.toFixed(0)}</span>
         <span class="goal-trend ${gTrendCls}">${gTrendTxt}</span>
       </div>
       <div class="goal-metric-row"><span>Target</span><span>$${targets.gold}/quarter</span></div>
-      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${gPct}%;background:${gTrendCls==='good'?'rgba(51,182,121,0.8)':'rgba(239,68,68,0.7)'}"></div></div>
+      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${gPct}%;background:${gTrendCls==='good'?barG:barB}"></div></div>
       <div class="goal-metric-row"><span>Progress</span><span>$${totalGold.toFixed(0)} / $${targets.gold} (${gPct}%)</span></div>
       <div class="goal-input-row">
         <input id="goldInput" class="goal-input" type="number" step="1" min="1" placeholder="Amount invested ($)">
@@ -905,13 +917,13 @@ function renderGoals(){
     </div>
 
     <div class="goals-section-title">Faith 🙏</div>
-    <div class="goal-card">
+    <div class="goal-card goal-cat-faith">
       <div class="goal-card-header">
         <span class="goal-card-title">${totalShlokas} / ${targets.faith} shlokas</span>
         <span class="goal-trend ${fTrendCls}">${fTrendTxt}</span>
       </div>
       <div class="goal-metric-row"><span>Target</span><span>${targets.faith} shlokas by Aug 31 (of 182.5 total)</span></div>
-      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${fPct}%;background:${fTrendCls==='good'?'rgba(51,182,121,0.8)':fTrendCls==='warn'?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.7)'}"></div></div>
+      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${fPct}%;background:${fTrendCls==='good'?barG:fTrendCls==='warn'?barW:barB}"></div></div>
       <div class="goal-metric-row"><span>Expected by today</span><span>${fExpected} shlokas</span></div>
       <div class="goal-input-row">
         <input id="faithInput" class="goal-input" type="number" step="1" min="1" placeholder="Shlokas read today">

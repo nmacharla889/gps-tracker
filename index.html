@@ -221,27 +221,30 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .hdash-legend-lbl{font-size:9px;color:var(--text-dim)}
 
 /* ── MANAGE TAB ── */
-.manage-info{font-size:11px;color:var(--text-dim);margin-bottom:20px;line-height:1.7;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
-.manage-habit-row{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:4px}
-.manage-habit-label{flex:1;font-size:12px;color:var(--text)}
-.manage-habit-meta{font-size:9px;color:var(--text-dim);margin-top:2px}
 .manage-btn{padding:4px 10px;border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:none;color:var(--text-dim)}
 .manage-btn:hover{border-color:var(--text-mid);color:var(--text-mid)}
 .manage-btn.danger:hover{border-color:rgba(239,68,68,0.5);color:rgba(239,68,68,0.8)}
-.manage-form{background:var(--surface);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:18px;margin-bottom:20px}
+.manage-form{background:var(--surface);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:18px;margin-bottom:12px}
 .manage-form-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;color:var(--accent);margin-bottom:14px}
 .manage-field{margin-bottom:12px}
 .manage-field label{display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
 .manage-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none}
 .manage-field input:focus{border-color:rgba(245,158,11,0.4)}
-.manage-days-grid{display:flex;gap:5px;flex-wrap:wrap}
-.manage-day-cb{display:flex;align-items:center;gap:4px;padding:4px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:10px;color:var(--text-dim);user-select:none;transition:all .12s}
-.manage-day-cb.sel{background:var(--accent-dim);border-color:rgba(245,158,11,0.4);color:var(--accent)}
 .manage-form-btns{display:flex;gap:8px;margin-top:16px}
 .manage-save-btn{flex:1;padding:9px;background:var(--accent);border:none;border-radius:6px;color:#000;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer}
 .manage-cancel-btn{padding:9px 16px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer}
-.manage-section-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--text-mid);text-transform:uppercase;margin:20px 0 10px}
-.manage-saving{font-size:10px;color:var(--accent);margin-top:8px;display:none}
+.manage-cat-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.manage-cat-header{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;margin-bottom:12px}
+.manage-goal-row{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.manage-goal-label{font-size:12px;color:var(--text);flex:1}
+.manage-goal-meta{font-size:9px;color:var(--text-dim);margin-top:2px}
+.manage-builtin-row{padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.manage-builtin-label{font-size:10px;color:var(--text-dim);letter-spacing:.5px;margin-bottom:7px}
+.manage-target-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim)}
+.manage-target-input{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none;width:76px}
+.manage-target-input:focus{border-color:rgba(245,158,11,0.4)}
+.manage-add-btn{width:100%;padding:8px;margin-top:6px;background:none;border:1px dashed var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s}
+.manage-add-btn:hover{border-color:rgba(245,158,11,0.4);color:var(--accent)}
 
 /* ── GOALS TAB ── */
 .goals-section-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 8px}
@@ -317,6 +320,12 @@ const GK_MONEY   = 'gps_goals_money';
 const GK_FAITH   = 'gps_goals_faith';
 const GK_TARGETS = 'gps_goals_targets';
 const DEFAULT_TARGETS = {health:68, savings:2500, gold:300, faith:90};
+const GK_CUSTOM_DEFS = 'gps_goals_custom';
+const GK_CUSTOM_LOGS = 'gps_goals_custom_logs';
+function getCustomGoals(){try{return JSON.parse(localStorage.getItem(GK_CUSTOM_DEFS)||'[]');}catch{return[];}}
+function saveCustomGoals(g){localStorage.setItem(GK_CUSTOM_DEFS,JSON.stringify(g));}
+function getCustomLogs(){try{return JSON.parse(localStorage.getItem(GK_CUSTOM_LOGS)||'{}');}catch{return{};}}
+function saveCustomLogs(l){localStorage.setItem(GK_CUSTOM_LOGS,JSON.stringify(l));}
 
 function getGoalsTargets(){try{return {...DEFAULT_TARGETS,...JSON.parse(localStorage.getItem(GK_TARGETS)||'{}')};}catch{return{...DEFAULT_TARGETS};}}
 function saveGoalsTargets(t){localStorage.setItem(GK_TARGETS,JSON.stringify(t));}
@@ -516,135 +525,130 @@ async function habitsConfigSaveAll(){
 }
 
 // ── Manage Tab ──
-let manageEditId=null;
+let manageGoalForm=null; // {category, editId} or null
 
 function renderManage(){
   if(!accessToken){
     document.getElementById('main').innerHTML=`<div class="connect-screen">
       <h2>Not Connected</h2>
-      <p>Connect Google Calendar to manage habits.</p>
+      <p>Connect Google to manage your goals.</p>
       <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
     </div>`;
     return;
   }
-  const editing=manageEditId?HABITS.find(h=>h.id===manageEditId):null;
-  const daysArr=editing?(Array.isArray(editing.days)?editing.days:(editing.days==='daily'?DAYS:[])):[];
-  const isDaily=editing&&editing.days==='daily';
-  const dayBtns=DAYS.map(d=>`
-    <div class="manage-day-cb${(isDaily||daysArr.includes(d))?' sel':''}" data-d="${d}" onclick="toggleManageDay(this)">
-      ${d.toUpperCase()}
-    </div>`).join('');
-  const formHTML=`
-    <div class="manage-form" id="manageForm">
-      <div class="manage-form-title">${editing?'Edit habit':'Add new habit'}</div>
-      <div class="manage-field">
-        <label>Habit name</label>
-        <input id="mLabel" type="text" placeholder="e.g. Morning walk" value="${editing?editing.label:''}">
-      </div>
-      <div class="manage-field">
-        <label>Time</label>
-        <input id="mTime" type="text" placeholder="e.g. 7:00am" value="${editing?editing.time:''}">
-      </div>
-      <div class="manage-field">
-        <label>Days</label>
-        <div class="manage-days-grid" id="manageDays">
-          <div class="manage-day-cb${isDaily?' sel':''}" data-d="daily" onclick="toggleManageDay(this)">DAILY</div>
-          ${dayBtns}
-        </div>
-      </div>
-      <div class="manage-field">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" id="mLastSun" ${editing?.lastSundayOnly?'checked':''}> Last Sunday of month only
-        </label>
-      </div>
-      <div class="manage-form-btns">
-        <button class="manage-save-btn" onclick="saveManageHabit()">${editing?'Save changes':'Add habit'}</button>
-        ${editing?`<button class="manage-cancel-btn" onclick="cancelManageEdit()">Cancel</button>`:''}
-      </div>
-      <div class="manage-saving" id="manageSaving">Saving to sheet…</div>
-    </div>`;
-  let listHTML='<div class="manage-section-title">All habits ('+HABITS.length+')</div>';
-  HABITS.forEach(h=>{
-    const days=h.days==='daily'?'every day':Array.isArray(h.days)?h.days.join(', '):h.days;
-    listHTML+=`<div class="manage-habit-row">
-      <div style="flex:1;min-width:0">
-        <div class="manage-habit-label">${h.label}</div>
-        <div class="manage-habit-meta">${h.time} · ${days}${h.lastSundayOnly?' · last Sun only':''}${h.group?' · group: '+h.group:''}</div>
-      </div>
-      <button class="manage-btn" onclick="startManageEdit('${h.id}')">edit</button>
-      <button class="manage-btn danger" onclick="deleteManageHabit('${h.id}')">delete</button>
-    </div>`;
-  });
   const t=getGoalsTargets();
-  const targetsForm=`
-    <div class="manage-section-title">Goal Targets — Apr → Aug 2026</div>
-    <div class="manage-form">
-      <div class="manage-form-title">Quarter Targets</div>
-      <div class="manage-field"><label>Weight target (kg)</label><input id="tHealth" class="goal-input" type="number" step="0.1" value="${t.health}"></div>
-      <div class="manage-field"><label>Savings target ($)</label><input id="tSavings" class="goal-input" type="number" step="1" value="${t.savings}"></div>
-      <div class="manage-field"><label>Gold investment target ($)</label><input id="tGold" class="goal-input" type="number" step="1" value="${t.gold}"></div>
-      <div class="manage-field"><label>Shlokas target (Lalitha Sahasranamam)</label><input id="tFaith" class="goal-input" type="number" step="1" value="${t.faith}"></div>
-      <div class="manage-form-btns"><button class="manage-save-btn" onclick="saveTargets()">Save Targets</button></div>
-    </div>`;
-  document.getElementById('main').innerHTML=`
-    ${targetsForm}
-    <div class="manage-section-title">Habits</div>
-    <div class="manage-info">
-      Changes here update your <strong>HabitsConfig</strong> sheet and take effect immediately.<br>
-      Renaming a habit is safe — streak data is preserved. Deleting is permanent.
-    </div>
-    ${formHTML}
-    ${listHTML}`;
-}
-
-function toggleManageDay(el){
-  const d=el.dataset.d;
-  const grid=document.getElementById('manageDays');
-  if(d==='daily'){
-    grid.querySelectorAll('.manage-day-cb').forEach(x=>x.classList.remove('sel'));
-    el.classList.add('sel');
-  } else {
-    grid.querySelector('[data-d=daily]').classList.remove('sel');
-    el.classList.toggle('sel');
-  }
-}
-function startManageEdit(id){manageEditId=id;renderManage();document.getElementById('manageForm').scrollIntoView({behavior:'smooth'});}
-function cancelManageEdit(){manageEditId=null;renderManage();}
-
-async function saveManageHabit(){
-  const label=document.getElementById('mLabel').value.trim();
-  const time=document.getElementById('mTime').value.trim();
-  const lastSun=document.getElementById('mLastSun').checked;
-  if(!label||!time){alert('Name and time are required.');return;}
-  const grid=document.getElementById('manageDays');
-  const sel=[...grid.querySelectorAll('.manage-day-cb.sel')].map(x=>x.dataset.d);
-  if(!sel.length){alert('Select at least one day.');return;}
-  const days=sel.includes('daily')?'daily':sel;
-  document.getElementById('manageSaving').style.display='block';
-  if(manageEditId){
-    const idx=HABITS.findIndex(h=>h.id===manageEditId);
-    if(idx>-1){
-      HABITS[idx]={...HABITS[idx],label,time,days};
-      if(lastSun)HABITS[idx].lastSundayOnly=true;
-      else delete HABITS[idx].lastSundayOnly;
+  const customs=getCustomGoals();
+  const CATS=[
+    {key:'health',       label:'Health',       emoji:'💪', color:'var(--health)'},
+    {key:'money',        label:'Money',        emoji:'💰', color:'var(--money)'},
+    {key:'work',         label:'Work',         emoji:'💼', color:'var(--work)'},
+    {key:'relationship', label:'Relationship', emoji:'🤝', color:'var(--rel)'},
+    {key:'faith',        label:'Faith',        emoji:'🙏', color:'var(--spirit)'},
+  ];
+  let html=`<div class="section-title">Manage Goals</div>`;
+  CATS.forEach(cat=>{
+    html+=`<div class="manage-cat-section">
+      <div class="manage-cat-header" style="color:${cat.color}">${cat.emoji} ${cat.label}</div>`;
+    if(cat.key==='health'){
+      html+=`<div class="manage-builtin-row">
+        <div class="manage-builtin-label">WEIGHT — BUILT-IN</div>
+        <div class="manage-target-row"><span>Target</span>
+          <input id="tHealth" class="manage-target-input" type="number" step="0.1" value="${t.health}">
+          <span>kg</span><button class="manage-btn" onclick="saveTargets()">Save</button>
+        </div></div>`;
     }
+    if(cat.key==='money'){
+      html+=`<div class="manage-builtin-row">
+        <div class="manage-builtin-label">SAVINGS — BUILT-IN</div>
+        <div class="manage-target-row"><span>Target</span>
+          <input id="tSavings" class="manage-target-input" type="number" step="1" value="${t.savings}">
+          <span>$/qtr</span><button class="manage-btn" onclick="saveTargets()">Save</button>
+        </div></div>
+      <div class="manage-builtin-row" style="margin-top:6px">
+        <div class="manage-builtin-label">GOLD — BUILT-IN</div>
+        <div class="manage-target-row"><span>Target</span>
+          <input id="tGold" class="manage-target-input" type="number" step="1" value="${t.gold}">
+          <span>$/qtr</span><button class="manage-btn" onclick="saveTargets()">Save</button>
+        </div></div>`;
+    }
+    if(cat.key==='faith'){
+      html+=`<div class="manage-builtin-row">
+        <div class="manage-builtin-label">SHLOKAS (LALITHA SAHASRANAMAM) — BUILT-IN</div>
+        <div class="manage-target-row"><span>Target</span>
+          <input id="tFaith" class="manage-target-input" type="number" step="1" value="${t.faith}">
+          <button class="manage-btn" onclick="saveTargets()">Save</button>
+        </div></div>`;
+    }
+    const catGoals=customs.filter(g=>g.category===cat.key);
+    catGoals.forEach(g=>{
+      const logs=getCustomLogs()[g.id]||[];
+      const total=logs.reduce((s,e)=>s+e.value,0);
+      html+=`<div class="manage-goal-row">
+        <div style="flex:1;min-width:0">
+          <div class="manage-goal-label">${g.name}</div>
+          <div class="manage-goal-meta">Target: ${g.target} ${g.unit} · Progress: ${total} ${g.unit}</div>
+        </div>
+        <button class="manage-btn" onclick="openGoalForm('${cat.key}','${g.id}')">edit</button>
+        <button class="manage-btn danger" onclick="deleteCustomGoal('${g.id}')">delete</button>
+      </div>`;
+    });
+    if(manageGoalForm&&manageGoalForm.category===cat.key){
+      const editing=manageGoalForm.editId?customs.find(g=>g.id===manageGoalForm.editId):null;
+      html+=`<div class="manage-form" id="goalForm">
+        <div class="manage-form-title">${editing?'Edit goal':'Add goal — '+cat.label}</div>
+        <div class="manage-field"><label>Goal name</label>
+          <input id="gfName" type="text" placeholder="e.g. Read 5 books" value="${editing?editing.name:''}">
+        </div>
+        <div class="manage-field"><label>Target (number)</label>
+          <input id="gfTarget" type="number" step="any" min="0" placeholder="e.g. 5" value="${editing?editing.target:''}">
+        </div>
+        <div class="manage-field"><label>Unit</label>
+          <input id="gfUnit" type="text" placeholder="e.g. books, hours, calls" value="${editing?editing.unit:''}">
+        </div>
+        <div class="manage-form-btns">
+          <button class="manage-save-btn" onclick="saveCustomGoal()">Save</button>
+          <button class="manage-cancel-btn" onclick="closeGoalForm()">Cancel</button>
+        </div>
+      </div>`;
+    } else {
+      html+=`<button class="manage-add-btn" onclick="openGoalForm('${cat.key}')">+ Add ${cat.label} goal</button>`;
+    }
+    html+=`</div>`;
+  });
+  document.getElementById('main').innerHTML=html;
+  if(manageGoalForm){const f=document.getElementById('goalForm');if(f)f.scrollIntoView({behavior:'smooth'});}
+}
+
+function openGoalForm(category,editId=null){manageGoalForm={category,editId};renderManage();}
+function closeGoalForm(){manageGoalForm=null;renderManage();}
+
+function saveCustomGoal(){
+  const name=document.getElementById('gfName').value.trim();
+  const target=parseFloat(document.getElementById('gfTarget').value);
+  const unit=document.getElementById('gfUnit').value.trim();
+  if(!name){showToast('Goal name required','err');return;}
+  if(isNaN(target)||target<=0){showToast('Enter a valid target','err');return;}
+  if(!unit){showToast('Unit required','err');return;}
+  const goals=getCustomGoals();
+  if(manageGoalForm.editId){
+    const idx=goals.findIndex(g=>g.id===manageGoalForm.editId);
+    if(idx>-1)goals[idx]={...goals[idx],name,target,unit};
   } else {
-    const id=slugify(label)+'_'+Date.now().toString(36);
-    const h={id,label,time,days};
-    if(lastSun)h.lastSundayOnly=true;
-    HABITS.push(h);
+    goals.push({id:manageGoalForm.category+'_'+Date.now().toString(36),category:manageGoalForm.category,name,target,unit});
   }
-  try{await habitsConfigSaveAll();}catch(e){alert('Saved locally but sheet write failed. Try again when connected.');}
-  manageEditId=null;
+  saveCustomGoals(goals);
+  manageGoalForm=null;
+  showToast('Goal saved','ok');
   renderManage();
 }
 
-async function deleteManageHabit(id){
-  const h=HABITS.find(x=>x.id===id);
-  if(!h)return;
-  if(!confirm(`Delete "${h.label}"?\n\nThis removes it from your habit list. Past streak data stays but won't be shown.`))return;
-  HABITS=HABITS.filter(x=>x.id!==id);
-  try{await habitsConfigSaveAll();}catch(e){console.warn('Config save failed:',e);}
+function deleteCustomGoal(id){
+  const goals=getCustomGoals();
+  const g=goals.find(x=>x.id===id);
+  if(!g)return;
+  if(!confirm(`Delete "${g.name}"?\nProgress data will also be removed.`))return;
+  saveCustomGoals(goals.filter(x=>x.id!==id));
+  const logs=getCustomLogs();delete logs[id];saveCustomLogs(logs);
   renderManage();
 }
 
@@ -700,6 +704,48 @@ function saveTargets(){
   renderManage();
 }
 
+function logCustomGoal(id){
+  const el=document.getElementById('cgl_'+id);
+  if(!el)return;
+  const val=parseFloat(el.value);
+  if(isNaN(val)||val<=0){showToast('Enter a valid amount','err');return;}
+  const logs=getCustomLogs();
+  if(!logs[id])logs[id]=[];
+  logs[id].push({date:dkey(new Date()),value:val});
+  saveCustomLogs(logs);
+  el.value='';
+  const goal=getCustomGoals().find(g=>g.id===id);
+  if(goal)goalsSheetAppend('Goals_Custom',[dkey(new Date()),id,goal.category,goal.name,val]);
+  showToast('Progress logged','ok');
+  renderGoals();
+}
+
+function renderCustomGoalCards(category){
+  const goals=getCustomGoals().filter(g=>g.category===category);
+  if(!goals.length)return`<div class="goal-card placeholder"><div class="goal-card-title" style="font-size:12px;color:var(--text-dim)">No goals yet — add in Manage tab</div></div>`;
+  return goals.map(g=>{
+    const logs=getCustomLogs()[g.id]||[];
+    const total=logs.reduce((s,e)=>s+e.value,0);
+    const pct=g.target>0?Math.min(100,Math.round(total/g.target*100)):0;
+    const barCol=pct>=75?'rgba(51,182,121,0.8)':pct>=40?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.7)';
+    const trendCls=pct>=75?'good':pct>=40?'warn':'bad';
+    const recentLogs=logs.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+${e.value} ${g.unit}</span></div>`).join('');
+    return`<div class="goal-card">
+      <div class="goal-card-header">
+        <span class="goal-card-title">${g.name}</span>
+        <span class="goal-trend ${trendCls}">${pct}%</span>
+      </div>
+      <div class="goal-metric-row"><span>Progress</span><span>${total} / ${g.target} ${g.unit}</span></div>
+      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${pct}%;background:${barCol}"></div></div>
+      <div class="goal-input-row">
+        <input id="cgl_${g.id}" class="goal-input" type="number" step="any" min="0" placeholder="Add progress (${g.unit})">
+        <button class="goal-input-btn" onclick="logCustomGoal('${g.id}')">Log</button>
+      </div>
+      ${recentLogs?`<div class="goal-log-list">${recentLogs}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init(){
   const now=new Date();
@@ -748,7 +794,7 @@ function switchDay(day){
   if(day==='goals'){renderGoals();return}
   if(day==='habits'){renderHabits();return}
   if(day==='habitdash'){renderHabitDash();return}
-  if(day==='manage'){manageEditId=null;renderManage();return}
+  if(day==='manage'){manageGoalForm=null;renderManage();return}
 }
 
 // ── Render Goals Tab ──
@@ -875,14 +921,10 @@ function renderGoals(){
     </div>
 
     <div class="goals-section-title">Work 💼</div>
-    <div class="goal-card placeholder">
-      <div class="goal-card-title">Coming soon</div>
-    </div>
+    ${renderCustomGoalCards('work')}
 
     <div class="goals-section-title">Relationship 🤝</div>
-    <div class="goal-card placeholder">
-      <div class="goal-card-title">Coming soon</div>
-    </div>`;
+    ${renderCustomGoalCards('relationship')}`;
 }
 
 

@@ -954,19 +954,19 @@ const HABITS = [
   { id:'get_ready',       label:'Get ready',                    time:'6:15am',  days:'daily' },
   { id:'thyroxine',       label:'Take Thyroxine',               time:'6:15am',  days:'daily' },
   { id:'wash_clothes',    label:'Wash clothes',                 time:'6:30am',  days:['mon'] },
-  { id:'deepam_tt',       label:'Deepam',                       time:'6:45am',  days:['tue','thu'] },
-  { id:'deepam_main',     label:'Deepam',                       time:'7:00am',  days:['mon','wed','fri','sat'] },
+  { id:'deepam_tt',       label:'Deepam',                       time:'6:45am',  days:['tue','thu'],                         group:'deepam' },
+  { id:'deepam_main',     label:'Deepam',                       time:'7:00am',  days:['mon','wed','fri','sat'],              group:'deepam' },
   { id:'wash_pooja',      label:'Wash pooja samagri',           time:'7:00am',  days:['sun'] },
-  { id:'soak_nuts_tt',    label:'Soak nuts & sprouts',          time:'7:15am',  days:['tue','thu'] },
-  { id:'recite_main',     label:'Recite Lalitha Sahasranamam',  time:'7:15am',  days:['mon','tue','wed','thu','fri','sat'] },
-  { id:'deepam_sun',      label:'Deepam',                       time:'7:30am',  days:['sun'] },
-  { id:'gita_main',       label:'Read Bhagawad Gita',           time:'7:45am',  days:['mon','tue','wed','thu','fri','sat'] },
-  { id:'recite_sun',      label:'Recite Lalitha Sahasranamam',  time:'7:45am',  days:['sun'] },
-  { id:'learn_main',      label:'Learn Lalitha Sahasranamam',   time:'8:00am',  days:['mon','tue','wed','thu','fri','sat'] },
+  { id:'soak_nuts_tt',    label:'Soak nuts & sprouts',          time:'7:15am',  days:['tue','thu'],                         group:'soak_nuts' },
+  { id:'recite_main',     label:'Recite Lalitha Sahasranamam',  time:'7:15am',  days:['mon','tue','wed','thu','fri','sat'],  group:'recite' },
+  { id:'deepam_sun',      label:'Deepam',                       time:'7:30am',  days:['sun'],                               group:'deepam' },
+  { id:'gita_main',       label:'Read Bhagawad Gita',           time:'7:45am',  days:['mon','tue','wed','thu','fri','sat'],  group:'gita' },
+  { id:'recite_sun',      label:'Recite Lalitha Sahasranamam',  time:'7:45am',  days:['sun'],                               group:'recite' },
+  { id:'learn_main',      label:'Learn Lalitha Sahasranamam',   time:'8:00am',  days:['mon','tue','wed','thu','fri','sat'],  group:'learn' },
   { id:'send_snap',       label:'Send snap',                    time:'8:30am',  days:'daily' },
-  { id:'gita_sun',        label:'Read Bhagawad Gita',           time:'8:15am',  days:['sun'] },
-  { id:'learn_sun',       label:'Learn Lalitha Sahasranamam',   time:'8:30am',  days:['sun'] },
-  { id:'soak_nuts_main',  label:'Soak nuts & sprouts',          time:'10:30am', days:['mon','wed','fri','sat','sun'] },
+  { id:'gita_sun',        label:'Read Bhagawad Gita',           time:'8:15am',  days:['sun'],                               group:'gita' },
+  { id:'learn_sun',       label:'Learn Lalitha Sahasranamam',   time:'8:30am',  days:['sun'],                               group:'learn' },
+  { id:'soak_nuts_main',  label:'Soak nuts & sprouts',          time:'10:30am', days:['mon','wed','fri','sat','sun'],        group:'soak_nuts' },
   { id:'lunch',           label:'Lunch',                        time:'11:00am', days:'daily' },
   { id:'haircut',         label:'Haircut',                      time:'12:15pm', days:['sun'], lastSundayOnly:true },
   { id:'buy_groceries',   label:'Buy Indian groceries',         time:'1:00pm',  days:['sun'] },
@@ -1158,28 +1158,36 @@ function switchHabitDay(dk,ds){
 function renderHabitDash(){
   const store=getHabitStore(),now=new Date();
 
-  // Streaks — per habit, skip unscheduled days, break on scheduled+unmarked past days
-  const streaks={};
+  // Build groups: habits sharing a group field are merged; ungrouped use their own id as key
+  const groups={};
   HABITS.forEach(h=>{
+    const key=h.group||h.id;
+    if(!groups[key])groups[key]={key,label:h.label,members:[]};
+    groups[key].members.push(h);
+  });
+
+  // Streaks — per group, skip days where no member is scheduled, break on scheduled+unmarked past days
+  const streaks={};
+  Object.values(groups).forEach(g=>{
     let streak=0;
     for(let i=0;i<90;i++){
       const d=new Date(now);d.setDate(now.getDate()-i);
       const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
-      const scheduled=getHabitsForDay(dk,ds).find(x=>x.id===h.id);
-      if(!scheduled)continue;
-      const st=(store[ds]||{})[h.id];
-      if(st==='did'||st==='delayed'){streak++;}
+      const scheduled=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
+      if(!scheduled.length)continue;
+      const marked=scheduled.some(h=>{const st=(store[ds]||{})[h.id];return st==='did'||st==='delayed';});
+      if(marked){streak++;}
       else if(i===0){continue;} // today not yet marked — don't break
       else{break;}
     }
-    streaks[h.id]={id:h.id,label:h.label,streak};
+    streaks[g.key]={id:g.key,label:g.label,streak};
   });
-  // Only include habits scheduled at least once since Apr 1
+  // Only include groups scheduled at least once since Apr 1
   const qStart=new Date('2026-04-01T00:00:00');
-  const scheduledSinceQ=HABITS.filter(h=>
+  const scheduledSinceQ=Object.values(groups).filter(g=>
     Array.from({length:Math.ceil((now-qStart)/864e5)+1},(_,i)=>{const d=new Date(qStart);d.setDate(qStart.getDate()+i);return d;})
-    .some(d=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id))
-  ).map(h=>h.id);
+    .some(d=>g.members.some(h=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id)))
+  ).map(g=>g.key);
   const allSorted=Object.values(streaks).filter(x=>scheduledSinceQ.includes(x.id));
   const top5=allSorted.sort((a,b)=>b.streak-a.streak).slice(0,5);
   const bottom5=allSorted.sort((a,b)=>a.streak-b.streak).slice(0,5);
@@ -1190,15 +1198,15 @@ function renderHabitDash(){
   const days90=[];
   for(let d=new Date(gridStart);d<=gridEnd;d.setDate(d.getDate()+1)){days90.push(new Date(d));}
 
-  // Only show habits scheduled at least once in quarter
-  const visHabits=HABITS.filter(h=>
-    days90.some(d=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id))
+  // Only show groups scheduled at least once in quarter
+  const visGroups=Object.values(groups).filter(g=>
+    days90.some(d=>g.members.some(h=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id)))
   );
 
   // Month label blocks for header
   const CELL_W=10; // cell width + gap
   let headerH='<div class="hdash-header-row">';
-  let lastMo='',blockStart=0,blockLen=0;
+  let lastMo='',blockLen=0;
   const blocks=[];
   days90.forEach((d,i)=>{
     const mo=d.toLocaleDateString('en-AU',{month:'short'});
@@ -1214,13 +1222,15 @@ function renderHabitDash(){
   headerH+='</div>';
 
   let gridH='';
-  visHabits.forEach(h=>{
-    gridH+=`<div class="hdash-grid-row"><div class="hdash-habit-name" title="${h.label}">${h.label}</div>`;
+  visGroups.forEach(g=>{
+    gridH+=`<div class="hdash-grid-row"><div class="hdash-habit-name" title="${g.label}">${g.label}</div>`;
     days90.forEach(d=>{
       const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
-      const scheduled=getHabitsForDay(dk,ds).find(x=>x.id===h.id);
-      if(!scheduled){gridH+='<div class="hdash-cell hc-skip"></div>';return;}
-      const st=(store[ds]||{})[h.id];
+      const scheduledMembers=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
+      if(!scheduledMembers.length){gridH+='<div class="hdash-cell hc-skip"></div>';return;}
+      // Use status of the first marked member, or blank
+      let st='';
+      for(const h of scheduledMembers){const s=(store[ds]||{})[h.id];if(s){st=s;break;}}
       const cls=st==='did'?'hc-did':st==='delayed'?'hc-delayed':st==='didnot'?'hc-didnot':'hc-blank';
       const tipDate=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
       gridH+=`<div class="hdash-cell ${cls}" onmouseenter="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;

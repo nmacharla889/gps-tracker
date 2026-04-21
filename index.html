@@ -219,6 +219,29 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .hdash-legend-item{display:flex;align-items:center;gap:5px}
 .hdash-legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 .hdash-legend-lbl{font-size:9px;color:var(--text-dim)}
+
+/* ── MANAGE TAB ── */
+.manage-info{font-size:11px;color:var(--text-dim);margin-bottom:20px;line-height:1.7;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.manage-habit-row{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:4px}
+.manage-habit-label{flex:1;font-size:12px;color:var(--text)}
+.manage-habit-meta{font-size:9px;color:var(--text-dim);margin-top:2px}
+.manage-btn{padding:4px 10px;border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:none;color:var(--text-dim)}
+.manage-btn:hover{border-color:var(--text-mid);color:var(--text-mid)}
+.manage-btn.danger:hover{border-color:rgba(239,68,68,0.5);color:rgba(239,68,68,0.8)}
+.manage-form{background:var(--surface);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:18px;margin-bottom:20px}
+.manage-form-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;color:var(--accent);margin-bottom:14px}
+.manage-field{margin-bottom:12px}
+.manage-field label{display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.manage-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none}
+.manage-field input:focus{border-color:rgba(245,158,11,0.4)}
+.manage-days-grid{display:flex;gap:5px;flex-wrap:wrap}
+.manage-day-cb{display:flex;align-items:center;gap:4px;padding:4px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:10px;color:var(--text-dim);user-select:none;transition:all .12s}
+.manage-day-cb.sel{background:var(--accent-dim);border-color:rgba(245,158,11,0.4);color:var(--accent)}
+.manage-form-btns{display:flex;gap:8px;margin-top:16px}
+.manage-save-btn{flex:1;padding:9px;background:var(--accent);border:none;border-radius:6px;color:#000;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer}
+.manage-cancel-btn{padding:9px 16px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer}
+.manage-section-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--text-mid);text-transform:uppercase;margin:20px 0 10px}
+.manage-saving{font-size:10px;color:var(--accent);margin-top:8px;display:none}
 </style>
 </head>
 <body>
@@ -242,6 +265,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
     <button class="tab" data-day="sun">SUN</button>
     <button class="tab" data-day="habits">HABITS</button>
     <button class="tab" data-day="habitdash">DASH ✦</button>
+    <button class="tab" data-day="manage">MANAGE ⚙</button>
     <button class="tab stats-tab" data-day="stats">STATS ▸</button>
   </div>
 </div>
@@ -564,6 +588,150 @@ async function loadCalendarData(){
   }
 }
 
+// ── HabitsConfig Sheet helpers ──
+function habitToRow(h){
+  const days=Array.isArray(h.days)?h.days.join(','):h.days;
+  const flags=h.lastSundayOnly?'lastSundayOnly':'';
+  return [h.id,h.label,h.time,days,flags];
+}
+function rowToHabit(row){
+  const [id,label,time,daysStr,flags]=[row[0],row[1],row[2],row[3]||'',row[4]||''];
+  const days=daysStr==='daily'?'daily':daysStr.split(',').map(s=>s.trim()).filter(Boolean);
+  const h={id,label,time,days};
+  if(flags.includes('lastSundayOnly'))h.lastSundayOnly=true;
+  return h;
+}
+function slugify(label){
+  return label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+}
+const HABITS_CFG_TAB='HabitsConfig';
+async function habitsConfigSaveAll(){
+  const header=[['id','label','time','days','flags']];
+  const dataRows=HABITS.map(habitToRow);
+  await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent(HABITS_CFG_TAB+'!A:E')}:clear`,'POST',{});
+  await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent(HABITS_CFG_TAB+'!A1')}?valueInputOption=RAW`,'PUT',{values:[...header,...dataRows]});
+}
+
+// ── Manage Tab ──
+let manageEditId=null;
+
+function renderManage(){
+  if(!accessToken){
+    document.getElementById('main').innerHTML=`<div class="connect-screen">
+      <h2>Not Connected</h2>
+      <p>Connect Google Calendar to manage habits.</p>
+      <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
+    </div>`;
+    return;
+  }
+  const editing=manageEditId?HABITS.find(h=>h.id===manageEditId):null;
+  const daysArr=editing?(Array.isArray(editing.days)?editing.days:(editing.days==='daily'?DAYS:[])):[];
+  const isDaily=editing&&editing.days==='daily';
+  const dayBtns=DAYS.map(d=>`
+    <div class="manage-day-cb${(isDaily||daysArr.includes(d))?' sel':''}" data-d="${d}" onclick="toggleManageDay(this)">
+      ${d.toUpperCase()}
+    </div>`).join('');
+  const formHTML=`
+    <div class="manage-form" id="manageForm">
+      <div class="manage-form-title">${editing?'Edit habit':'Add new habit'}</div>
+      <div class="manage-field">
+        <label>Habit name</label>
+        <input id="mLabel" type="text" placeholder="e.g. Morning walk" value="${editing?editing.label:''}">
+      </div>
+      <div class="manage-field">
+        <label>Time</label>
+        <input id="mTime" type="text" placeholder="e.g. 7:00am" value="${editing?editing.time:''}">
+      </div>
+      <div class="manage-field">
+        <label>Days</label>
+        <div class="manage-days-grid" id="manageDays">
+          <div class="manage-day-cb${isDaily?' sel':''}" data-d="daily" onclick="toggleManageDay(this)">DAILY</div>
+          ${dayBtns}
+        </div>
+      </div>
+      <div class="manage-field">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="mLastSun" ${editing?.lastSundayOnly?'checked':''}> Last Sunday of month only
+        </label>
+      </div>
+      <div class="manage-form-btns">
+        <button class="manage-save-btn" onclick="saveManageHabit()">${editing?'Save changes':'Add habit'}</button>
+        ${editing?`<button class="manage-cancel-btn" onclick="cancelManageEdit()">Cancel</button>`:''}
+      </div>
+      <div class="manage-saving" id="manageSaving">Saving to sheet…</div>
+    </div>`;
+  let listHTML='<div class="manage-section-title">All habits ('+HABITS.length+')</div>';
+  HABITS.forEach(h=>{
+    const days=h.days==='daily'?'every day':Array.isArray(h.days)?h.days.join(', '):h.days;
+    listHTML+=`<div class="manage-habit-row">
+      <div style="flex:1;min-width:0">
+        <div class="manage-habit-label">${h.label}</div>
+        <div class="manage-habit-meta">${h.time} · ${days}${h.lastSundayOnly?' · last Sun only':''}${h.group?' · group: '+h.group:''}</div>
+      </div>
+      <button class="manage-btn" onclick="startManageEdit('${h.id}')">edit</button>
+      <button class="manage-btn danger" onclick="deleteManageHabit('${h.id}')">delete</button>
+    </div>`;
+  });
+  document.getElementById('main').innerHTML=`
+    <div class="manage-info">
+      Changes here update your <strong>HabitsConfig</strong> sheet and take effect immediately.<br>
+      Renaming a habit is safe — streak data is preserved. Deleting is permanent.
+    </div>
+    ${formHTML}
+    ${listHTML}`;
+}
+
+function toggleManageDay(el){
+  const d=el.dataset.d;
+  const grid=document.getElementById('manageDays');
+  if(d==='daily'){
+    grid.querySelectorAll('.manage-day-cb').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel');
+  } else {
+    grid.querySelector('[data-d=daily]').classList.remove('sel');
+    el.classList.toggle('sel');
+  }
+}
+function startManageEdit(id){manageEditId=id;renderManage();document.getElementById('manageForm').scrollIntoView({behavior:'smooth'});}
+function cancelManageEdit(){manageEditId=null;renderManage();}
+
+async function saveManageHabit(){
+  const label=document.getElementById('mLabel').value.trim();
+  const time=document.getElementById('mTime').value.trim();
+  const lastSun=document.getElementById('mLastSun').checked;
+  if(!label||!time){alert('Name and time are required.');return;}
+  const grid=document.getElementById('manageDays');
+  const sel=[...grid.querySelectorAll('.manage-day-cb.sel')].map(x=>x.dataset.d);
+  if(!sel.length){alert('Select at least one day.');return;}
+  const days=sel.includes('daily')?'daily':sel;
+  document.getElementById('manageSaving').style.display='block';
+  if(manageEditId){
+    const idx=HABITS.findIndex(h=>h.id===manageEditId);
+    if(idx>-1){
+      HABITS[idx]={...HABITS[idx],label,time,days};
+      if(lastSun)HABITS[idx].lastSundayOnly=true;
+      else delete HABITS[idx].lastSundayOnly;
+    }
+  } else {
+    const id=slugify(label)+'_'+Date.now().toString(36);
+    const h={id,label,time,days};
+    if(lastSun)h.lastSundayOnly=true;
+    HABITS.push(h);
+  }
+  try{await habitsConfigSaveAll();}catch(e){alert('Saved locally but sheet write failed. Try again when connected.');}
+  manageEditId=null;
+  renderManage();
+}
+
+async function deleteManageHabit(id){
+  const h=HABITS.find(x=>x.id===id);
+  if(!h)return;
+  if(!confirm(`Delete "${h.label}"?\n\nThis removes it from your habit list. Past streak data stays but won't be shown.`))return;
+  HABITS=HABITS.filter(x=>x.id!==id);
+  try{await habitsConfigSaveAll();}catch(e){console.warn('Config save failed:',e);}
+  renderManage();
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init(){
   const now=new Date();
@@ -617,6 +785,7 @@ function switchDay(day){
   if(day==='stats'){renderStats();return}
   if(day==='habits'){renderHabits();return}
   if(day==='habitdash'){renderHabitDash();return}
+  if(day==='manage'){manageEditId=null;renderManage();return}
   activeDateStr=recentDateFor(day);
   checked=getChecked(activeDateStr);
   renderDay();
@@ -949,7 +1118,7 @@ if('serviceWorker' in navigator){
 }
 
 // ─── HABITS SYSTEM ─────────────────────────────────────────────────────────
-const HABITS = [
+let HABITS = [
   { id:'wake_up',         label:'Wake up',                      time:'5:30am',  days:'daily' },
   { id:'get_ready',       label:'Get ready',                    time:'6:15am',  days:'daily' },
   { id:'thyroxine',       label:'Take Thyroxine',               time:'6:15am',  days:'daily' },

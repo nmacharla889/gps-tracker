@@ -242,6 +242,30 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .manage-cancel-btn{padding:9px 16px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer}
 .manage-section-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--text-mid);text-transform:uppercase;margin:20px 0 10px}
 .manage-saving{font-size:10px;color:var(--accent);margin-top:8px;display:none}
+
+/* ── GOALS TAB ── */
+.goals-section-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 8px}
+.goal-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+.goal-card.placeholder{opacity:.5}
+.goal-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.goal-card-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;color:var(--text)}
+.goal-metric-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--text);line-height:1}
+.goal-metric-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin:4px 0}
+.goal-bar-outer{height:5px;background:var(--surface2);border-radius:3px;margin:8px 0 4px}
+.goal-bar-inner{height:5px;border-radius:3px;transition:width .3s}
+.goal-trend{font-size:9px;padding:2px 7px;border-radius:3px;display:inline-block;margin-top:4px;font-weight:500}
+.goal-trend.good{background:rgba(51,182,121,0.15);color:rgba(51,182,121,0.9)}
+.goal-trend.warn{background:rgba(245,158,11,0.15);color:rgba(245,158,11,0.9)}
+.goal-trend.bad{background:rgba(239,68,68,0.15);color:rgba(239,68,68,0.8)}
+.goal-input-row{display:flex;gap:8px;margin-top:12px}
+.goal-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;-moz-appearance:textfield}
+.goal-input::-webkit-outer-spin-button,.goal-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.goal-input:focus{border-color:rgba(245,158,11,0.4)}
+.goal-input-btn{padding:7px 14px;background:var(--accent);border:none;border-radius:5px;color:#000;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.goal-log-list{margin-top:10px}
+.goal-log-item{display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);padding:4px 0;border-bottom:1px solid var(--border)}
+.goal-log-item:last-child{border-bottom:none}
+.goal-log-val{color:var(--text-mid);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600}
 </style>
 </head>
 <body>
@@ -263,6 +287,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
     <button class="tab" data-day="fri">FRI</button>
     <button class="tab" data-day="sat">SAT</button>
     <button class="tab" data-day="sun">SUN</button>
+    <button class="tab" data-day="goals">GOALS</button>
     <button class="tab" data-day="habits">HABITS</button>
     <button class="tab" data-day="habitdash">DASH ✦</button>
     <button class="tab" data-day="manage">MANAGE ⚙</button>
@@ -310,6 +335,42 @@ let sheetsRowMap  = {}; // dateStr → sheet row number (1-indexed)
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
 const SK = 'gps_v1';
 const TK = 'gps_token';
+
+// ── Goals storage keys ──
+const GK_HEALTH  = 'gps_goals_health';
+const GK_MONEY   = 'gps_goals_money';
+const GK_FAITH   = 'gps_goals_faith';
+const GK_TARGETS = 'gps_goals_targets';
+const DEFAULT_TARGETS = {health:68, savings:2500, gold:300, faith:90};
+
+function getGoalsTargets(){try{return {...DEFAULT_TARGETS,...JSON.parse(localStorage.getItem(GK_TARGETS)||'{}')};}catch{return{...DEFAULT_TARGETS};}}
+function saveGoalsTargets(t){localStorage.setItem(GK_TARGETS,JSON.stringify(t));}
+function getGoalsHealth(){try{return JSON.parse(localStorage.getItem(GK_HEALTH)||'[]');}catch{return[];}}
+function getGoalsMoney(){try{return JSON.parse(localStorage.getItem(GK_MONEY)||'[]');}catch{return[];}}
+function getGoalsFaith(){try{return JSON.parse(localStorage.getItem(GK_FAITH)||'[]');}catch{return[];}}
+
+async function goalsSheetAppend(sheetName,row){
+  if(!accessToken)return;
+  try{
+    await apiWrite(
+      `${SHEETS_BASE}/values/${encodeURIComponent(sheetName+'!A:Z')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+      'POST',{values:[row]}
+    );
+  }catch(e){console.warn(sheetName+' write failed:',e);}
+}
+async function goalsTargetsSheetSave(t){
+  if(!accessToken)return;
+  const rows=[['quarter','goal','target'],
+    ['Apr-Aug 2026','health',t.health],
+    ['Apr-Aug 2026','savings',t.savings],
+    ['Apr-Aug 2026','gold',t.gold],
+    ['Apr-Aug 2026','faith',t.faith],
+  ];
+  try{
+    await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Targets!A:C')}:clear`,'POST',{});
+    await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Targets!A1')}?valueInputOption=RAW`,'PUT',{values:rows});
+  }catch(e){console.warn('Goals_Targets write failed:',e);}
+}
 
 function getStore(){try{return JSON.parse(localStorage.getItem(SK)||'{}')}catch{return{}}}
 function saveStore(s){localStorage.setItem(SK,JSON.stringify(s))}
@@ -575,12 +636,49 @@ async function loadCalendarData(){
       });
     });
 
+    // Load Habits calendar if it exists — overrides hardcoded HABITS array
+    const habitCal=list.items.find(c=>c.summary.toLowerCase().trim()==='habits');
+    if(habitCal){
+      const hSun2=new Date(sun);hSun2.setDate(sun.getDate()+7);
+      const hData=await apiFetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(habitCal.id)}/events`+
+        `?timeMin=${encodeURIComponent(mon.toISOString())}&timeMax=${encodeURIComponent(hSun2.toISOString())}`+
+        `&singleEvents=true&orderBy=startTime&maxResults=500`
+      );
+      const hEvents=hData.items||[];
+      if(hEvents.length>0){
+        const habitMap={};
+        hEvents.forEach(ev=>{
+          if(!ev.start||!ev.summary)return;
+          const isAllDay=!!ev.start.date;
+          const startDT=isAllDay?new Date(ev.start.date+'T00:00:00'):new Date(ev.start.dateTime);
+          const dayKey=DAYS[JS2IDX[startDT.getDay()]];
+          if(!dayKey)return;
+          const rawTime=isAllDay?'All day':startDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toLowerCase();
+          const label=ev.summary.trim();
+          const group=label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+          const key=group+'__'+rawTime;
+          if(!habitMap[key])habitMap[key]={id:key,label,time:rawTime,days:new Set(),group};
+          habitMap[key].days.add(dayKey);
+        });
+        const calHabits=Object.values(habitMap).map(h=>({
+          id:h.id,label:h.label,time:h.time,group:h.group,
+          days:h.days.size===7?'daily':[...h.days].sort((a,b)=>DAYS.indexOf(a)-DAYS.indexOf(b)),
+        }));
+        if(calHabits.length>0)HABITS=calHabits;
+      }
+    }
+
     setSyncStatus('ok');
 
     // refresh current view
     activeDateStr=recentDateFor(activeDay);
     checked=getChecked(activeDateStr);
-    if(activeDay==='stats') renderStats(); else renderDay();
+    if(activeDay==='stats') renderStats();
+    else if(activeDay==='goals') renderGoals();
+    else if(activeDay==='habits') renderHabits();
+    else if(activeDay==='habitdash') renderHabitDash();
+    else renderDay();
 
   }catch(err){
     console.error('Calendar load failed:',err);
@@ -672,7 +770,20 @@ function renderManage(){
       <button class="manage-btn danger" onclick="deleteManageHabit('${h.id}')">delete</button>
     </div>`;
   });
+  const t=getGoalsTargets();
+  const targetsForm=`
+    <div class="manage-section-title">Goal Targets — Apr → Aug 2026</div>
+    <div class="manage-form">
+      <div class="manage-form-title">Quarter Targets</div>
+      <div class="manage-field"><label>Weight target (kg)</label><input id="tHealth" class="goal-input" type="number" step="0.1" value="${t.health}"></div>
+      <div class="manage-field"><label>Savings target ($)</label><input id="tSavings" class="goal-input" type="number" step="1" value="${t.savings}"></div>
+      <div class="manage-field"><label>Gold investment target ($)</label><input id="tGold" class="goal-input" type="number" step="1" value="${t.gold}"></div>
+      <div class="manage-field"><label>Shlokas target (Lalitha Sahasranamam)</label><input id="tFaith" class="goal-input" type="number" step="1" value="${t.faith}"></div>
+      <div class="manage-form-btns"><button class="manage-save-btn" onclick="saveTargets()">Save Targets</button></div>
+    </div>`;
   document.getElementById('main').innerHTML=`
+    ${targetsForm}
+    <div class="manage-section-title">Habits</div>
     <div class="manage-info">
       Changes here update your <strong>HabitsConfig</strong> sheet and take effect immediately.<br>
       Renaming a habit is safe — streak data is preserved. Deleting is permanent.
@@ -732,6 +843,58 @@ async function deleteManageHabit(id){
   renderManage();
 }
 
+// ── Goal log functions ──
+function logHealth(){
+  const val=parseFloat(document.getElementById('healthInput').value);
+  if(isNaN(val)||val<30||val>200){showToast('Enter a valid weight','err');return;}
+  const today=dkey(new Date());
+  const data=getGoalsHealth();
+  const idx=data.findIndex(e=>e.date===today);
+  const entry={date:today,weight:val};
+  if(idx>-1)data[idx]=entry;else data.push(entry);
+  localStorage.setItem(GK_HEALTH,JSON.stringify(data));
+  goalsSheetAppend('Goals_Health',[today,val]);
+  showToast('Weight logged','ok');
+  renderGoals();
+}
+function logMoney(type){
+  const inputId=type==='savings'?'savingsInput':'goldInput';
+  const val=parseFloat(document.getElementById(inputId).value);
+  if(isNaN(val)||val<=0){showToast('Enter a valid amount','err');return;}
+  const entry={date:dkey(new Date()),type,amount:val};
+  const data=getGoalsMoney();
+  data.push(entry);
+  localStorage.setItem(GK_MONEY,JSON.stringify(data));
+  goalsSheetAppend('Goals_Money',[entry.date,type,val]);
+  showToast(type==='savings'?'Savings logged':'Gold logged','ok');
+  renderGoals();
+}
+function logFaith(){
+  const val=parseInt(document.getElementById('faithInput').value);
+  if(isNaN(val)||val<1||val>182){showToast('Enter a valid shloka count','err');return;}
+  const today=dkey(new Date());
+  const data=getGoalsFaith();
+  const idx=data.findIndex(e=>e.date===today);
+  const entry={date:today,shlokas:val};
+  if(idx>-1){data[idx].shlokas+=val;}else data.push(entry);
+  localStorage.setItem(GK_FAITH,JSON.stringify(data));
+  goalsSheetAppend('Goals_Faith',[today,data.find(e=>e.date===today).shlokas]);
+  showToast('Shlokas logged','ok');
+  renderGoals();
+}
+function saveTargets(){
+  const h=parseFloat(document.getElementById('tHealth').value);
+  const s=parseFloat(document.getElementById('tSavings').value);
+  const g=parseFloat(document.getElementById('tGold').value);
+  const f=parseInt(document.getElementById('tFaith').value);
+  if([h,s,g,f].some(v=>isNaN(v)||v<=0)){showToast('All targets must be positive numbers','err');return;}
+  const t={health:h,savings:s,gold:g,faith:f};
+  saveGoalsTargets(t);
+  goalsTargetsSheetSave(t);
+  showToast('Targets saved','ok');
+  renderManage();
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init(){
   const now=new Date();
@@ -783,12 +946,147 @@ function switchDay(day){
   activeDay=day;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.day===day));
   if(day==='stats'){renderStats();return}
+  if(day==='goals'){renderGoals();return}
   if(day==='habits'){renderHabits();return}
   if(day==='habitdash'){renderHabitDash();return}
   if(day==='manage'){manageEditId=null;renderManage();return}
   activeDateStr=recentDateFor(day);
   checked=getChecked(activeDateStr);
   renderDay();
+}
+
+// ── Render Goals Tab ──
+function renderGoals(){
+  const targets=getGoalsTargets();
+  const healthData=getGoalsHealth().sort((a,b)=>a.date.localeCompare(b.date));
+  const moneyData=getGoalsMoney().sort((a,b)=>a.date.localeCompare(b.date));
+  const faithData=getGoalsFaith().sort((a,b)=>a.date.localeCompare(b.date));
+  const now=new Date();
+  const qTotalDays=Math.round((Q_END-Q_START)/864e5)+1;
+  const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
+
+  // ── Health ──
+  const latestW=healthData.length?healthData[healthData.length-1].weight:null;
+  const firstW=healthData.length?healthData[0].weight:null;
+  const hTarget=targets.health;
+  const hRange=firstW&&firstW!==hTarget?firstW-hTarget:10;
+  const hPct=latestW?Math.min(100,Math.max(0,Math.round((firstW-latestW)/hRange*100))):0;
+  const hBarCol=hPct>=75?'rgba(51,182,121,0.8)':hPct>=40?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.7)';
+  // Trend: compare last 7 entries avg vs prev 7
+  let hTrendCls='warn',hTrendTxt='No data yet';
+  if(healthData.length>=2){
+    const last7=healthData.slice(-7).map(e=>e.weight);
+    const prev7=healthData.slice(-14,-7).map(e=>e.weight);
+    const avgL=last7.reduce((s,v)=>s+v,0)/last7.length;
+    const avgP=prev7.length?prev7.reduce((s,v)=>s+v,0)/prev7.length:avgL;
+    const diff=avgL-avgP;
+    if(diff<-0.05){hTrendCls='good';hTrendTxt=`↓ Losing ${Math.abs(diff).toFixed(1)}kg/week`;}
+    else if(diff>0.05){hTrendCls='bad';hTrendTxt=`↑ Gaining ${diff.toFixed(1)}kg/week`;}
+    else{hTrendCls='warn';hTrendTxt='→ Holding steady';}
+  }
+  const hLogs=healthData.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">${e.weight}kg</span></div>`).join('');
+
+  // ── Savings ──
+  const savingsEntries=moneyData.filter(e=>e.type==='savings');
+  const totalSavings=savingsEntries.reduce((s,e)=>s+e.amount,0);
+  const sPct=Math.min(100,Math.round(totalSavings/targets.savings*100));
+  const sExpected=Math.round(targets.savings*qElapsed/qTotalDays);
+  const sTrendCls=totalSavings>=sExpected?'good':'bad';
+  const sTrendTxt=totalSavings>=sExpected?`On track (+$${(totalSavings-sExpected).toFixed(0)} ahead)`:`Behind by $${(sExpected-totalSavings).toFixed(0)}`;
+  const sLogs=savingsEntries.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+$${e.amount}</span></div>`).join('');
+
+  // ── Gold ──
+  const goldEntries=moneyData.filter(e=>e.type==='gold');
+  const totalGold=goldEntries.reduce((s,e)=>s+e.amount,0);
+  const gPct=Math.min(100,Math.round(totalGold/targets.gold*100));
+  const gExpected=Math.round(targets.gold*qElapsed/qTotalDays);
+  const gTrendCls=totalGold>=gExpected?'good':'bad';
+  const gTrendTxt=totalGold>=gExpected?`On track (+$${(totalGold-gExpected).toFixed(0)} ahead)`:`Behind by $${(gExpected-totalGold).toFixed(0)}`;
+  const gLogs=goldEntries.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+$${e.amount}</span></div>`).join('');
+
+  // ── Faith ──
+  const totalShlokas=faithData.reduce((s,e)=>s+e.shlokas,0);
+  const fPct=Math.min(100,Math.round(totalShlokas/targets.faith*100));
+  const fExpected=Math.round(targets.faith*qElapsed/qTotalDays);
+  const fDiff=totalShlokas-fExpected;
+  const fTrendCls=fDiff>=0?'good':fDiff>=-5?'warn':'bad';
+  const fTrendTxt=fDiff>=0?`Ahead by ${fDiff} shloka${fDiff!==1?'s':''}`:`Behind by ${Math.abs(fDiff)} shloka${Math.abs(fDiff)!==1?'s':''}`;
+  const fLogs=faithData.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+${e.shlokas}</span></div>`).join('');
+
+  document.getElementById('main').innerHTML=`
+    <div class="section-title">Goals — Apr → Aug 2026</div>
+
+    <div class="goals-section-title">Health 💪</div>
+    <div class="goal-card">
+      <div class="goal-card-header">
+        <span class="goal-card-title">${latestW??'—'}kg</span>
+        <span class="goal-trend ${hTrendCls}">${hTrendTxt}</span>
+      </div>
+      <div class="goal-metric-row"><span>Target</span><span>${hTarget}kg</span></div>
+      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${hPct}%;background:${hBarCol}"></div></div>
+      <div class="goal-metric-row"><span>Progress</span><span>${hPct}%${firstW?' · started '+firstW+'kg':''}</span></div>
+      <div class="goal-input-row">
+        <input id="healthInput" class="goal-input" type="number" step="0.1" min="30" max="200" placeholder="Weight (kg)">
+        <button class="goal-input-btn" onclick="logHealth()">Log</button>
+      </div>
+      ${hLogs?`<div class="goal-log-list">${hLogs}</div>`:''}
+    </div>
+
+    <div class="goals-section-title">Money 💰</div>
+    <div class="goal-card">
+      <div class="goal-card-header">
+        <span class="goal-card-title">Savings · $${totalSavings.toFixed(0)}</span>
+        <span class="goal-trend ${sTrendCls}">${sTrendTxt}</span>
+      </div>
+      <div class="goal-metric-row"><span>Target</span><span>$${targets.savings}/quarter</span></div>
+      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${sPct}%;background:${sTrendCls==='good'?'rgba(51,182,121,0.8)':'rgba(239,68,68,0.7)'}"></div></div>
+      <div class="goal-metric-row"><span>Progress</span><span>$${totalSavings.toFixed(0)} / $${targets.savings} (${sPct}%)</span></div>
+      <div class="goal-input-row">
+        <input id="savingsInput" class="goal-input" type="number" step="1" min="1" placeholder="Amount saved ($)">
+        <button class="goal-input-btn" onclick="logMoney('savings')">Log</button>
+      </div>
+      ${sLogs?`<div class="goal-log-list">${sLogs}</div>`:''}
+    </div>
+    <div class="goal-card">
+      <div class="goal-card-header">
+        <span class="goal-card-title">Gold · $${totalGold.toFixed(0)}</span>
+        <span class="goal-trend ${gTrendCls}">${gTrendTxt}</span>
+      </div>
+      <div class="goal-metric-row"><span>Target</span><span>$${targets.gold}/quarter</span></div>
+      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${gPct}%;background:${gTrendCls==='good'?'rgba(51,182,121,0.8)':'rgba(239,68,68,0.7)'}"></div></div>
+      <div class="goal-metric-row"><span>Progress</span><span>$${totalGold.toFixed(0)} / $${targets.gold} (${gPct}%)</span></div>
+      <div class="goal-input-row">
+        <input id="goldInput" class="goal-input" type="number" step="1" min="1" placeholder="Amount invested ($)">
+        <button class="goal-input-btn" onclick="logMoney('gold')">Log</button>
+      </div>
+      ${gLogs?`<div class="goal-log-list">${gLogs}</div>`:''}
+    </div>
+
+    <div class="goals-section-title">Faith 🙏</div>
+    <div class="goal-card">
+      <div class="goal-card-header">
+        <span class="goal-card-title">${totalShlokas} / ${targets.faith} shlokas</span>
+        <span class="goal-trend ${fTrendCls}">${fTrendTxt}</span>
+      </div>
+      <div class="goal-metric-row"><span>Target</span><span>${targets.faith} shlokas by Aug 31 (of 182.5 total)</span></div>
+      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${fPct}%;background:${fTrendCls==='good'?'rgba(51,182,121,0.8)':fTrendCls==='warn'?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.7)'}"></div></div>
+      <div class="goal-metric-row"><span>Expected by today</span><span>${fExpected} shlokas</span></div>
+      <div class="goal-input-row">
+        <input id="faithInput" class="goal-input" type="number" step="1" min="1" placeholder="Shlokas read today">
+        <button class="goal-input-btn" onclick="logFaith()">Log</button>
+      </div>
+      ${fLogs?`<div class="goal-log-list">${fLogs}</div>`:''}
+    </div>
+
+    <div class="goals-section-title">Work 💼</div>
+    <div class="goal-card placeholder">
+      <div class="goal-card-title">Coming soon</div>
+    </div>
+
+    <div class="goals-section-title">Relationship 🤝</div>
+    <div class="goal-card placeholder">
+      <div class="goal-card-title">Coming soon</div>
+    </div>`;
 }
 
 // ─── RENDER DAY ───────────────────────────────────────────────────────────────
@@ -948,7 +1246,54 @@ function renderStats(){
   const now_mo=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   function fmtMonth(ym){const[y,m]=ym.split('-');return new Date(y,m-1,1).toLocaleDateString('en-AU',{month:'short',year:'numeric'})}
 
-  let h=`<div class="actions-row">
+  // Goals summary
+  const gTargets=getGoalsTargets();
+  const gHealthD=getGoalsHealth();
+  const gMoneyD=getGoalsMoney();
+  const gFaithD=getGoalsFaith();
+  const qTotalDays2=Math.round((Q_END-Q_START)/864e5)+1;
+  const qElapsed2=Math.max(1,Math.min(qTotalDays2,Math.round((now-Q_START)/864e5)+1));
+  const latestWt=gHealthD.length?gHealthD[gHealthD.length-1].weight:null;
+  const totalSav=gMoneyD.filter(e=>e.type==='savings').reduce((s,e)=>s+e.amount,0);
+  const totalGld=gMoneyD.filter(e=>e.type==='gold').reduce((s,e)=>s+e.amount,0);
+  const totalFth=gFaithD.reduce((s,e)=>s+e.shlokas,0);
+  function miniBar(pct,col){return `<div class="goal-bar-outer" style="margin:3px 0"><div class="goal-bar-inner" style="width:${pct}%;background:${col}"></div></div>`;}
+  const sPct2=Math.min(100,Math.round(totalSav/gTargets.savings*100));
+  const gPct2=Math.min(100,Math.round(totalGld/gTargets.gold*100));
+  const fPct2=Math.min(100,Math.round(totalFth/gTargets.faith*100));
+  const hPct2=gHealthD.length&&gHealthD[0].weight!==gTargets.health?Math.min(100,Math.max(0,Math.round((gHealthD[0].weight-latestWt)/(gHealthD[0].weight-gTargets.health)*100))):0;
+  const accentG='rgba(51,182,121,0.8)',accentR='rgba(239,68,68,0.7)',accentA='rgba(245,158,11,0.8)';
+  const sExp2=Math.round(gTargets.savings*qElapsed2/qTotalDays2);
+  const fExp2=Math.round(gTargets.faith*qElapsed2/qTotalDays2);
+
+  let h=`<div class="section-title">Goals — Apr → Aug 2026</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+    <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
+      <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Health 💪</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">${latestWt??'—'}kg</div>
+      ${miniBar(hPct2,hPct2>=50?accentG:accentR)}
+      <div style="font-size:9px;color:var(--text-dim)">Target ${gTargets.health}kg · ${hPct2}%</div>
+    </div>
+    <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
+      <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Savings 💰</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">$${totalSav.toFixed(0)}</div>
+      ${miniBar(sPct2,totalSav>=sExp2?accentG:accentR)}
+      <div style="font-size:9px;color:var(--text-dim)">Target $${gTargets.savings} · ${sPct2}%</div>
+    </div>
+    <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
+      <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Gold 🥇</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">$${totalGld.toFixed(0)}</div>
+      ${miniBar(gPct2,accentA)}
+      <div style="font-size:9px;color:var(--text-dim)">Target $${gTargets.gold} · ${gPct2}%</div>
+    </div>
+    <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
+      <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Faith 🙏</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">${totalFth} / ${gTargets.faith}</div>
+      ${miniBar(fPct2,totalFth>=fExp2?accentG:accentA)}
+      <div style="font-size:9px;color:var(--text-dim)">Shlokas · ${fPct2}%</div>
+    </div>
+  </div>
+  <div class="actions-row">
     <button class="btn-export" onclick="exportData()">↓ Export JSON — ${fmtMonth(now_mo)}</button>
     <button class="btn-danger" onclick="clearAllData()">clear all data</button>
   </div>
@@ -1338,18 +1683,19 @@ function renderHabitDash(){
   // Streaks — per group, skip days where no member is scheduled, break on scheduled+unmarked past days
   const streaks={};
   Object.values(groups).forEach(g=>{
-    let streak=0;
+    let streak=0,didCount=0;
     for(let i=0;i<90;i++){
       const d=new Date(now);d.setDate(now.getDate()-i);
       const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
       const scheduled=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
       if(!scheduled.length)continue;
-      const marked=scheduled.some(h=>{const st=(store[ds]||{})[h.id];return st==='did'||st==='delayed';});
-      if(marked){streak++;}
+      const sts=scheduled.map(h=>(store[ds]||{})[h.id]);
+      const did=sts.some(s=>s==='did'),delayed=sts.some(s=>s==='delayed');
+      if(did||delayed){streak++;if(did)didCount++;}
       else if(i===0){continue;} // today not yet marked — don't break
       else{break;}
     }
-    streaks[g.key]={id:g.key,label:g.label,streak};
+    streaks[g.key]={id:g.key,label:g.label,streak,didCount};
   });
   // Only include groups scheduled at least once since Apr 1
   const qStart=new Date('2026-04-01T00:00:00');
@@ -1358,8 +1704,22 @@ function renderHabitDash(){
     .some(d=>g.members.some(h=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id)))
   ).map(g=>g.key);
   const allSorted=Object.values(streaks).filter(x=>scheduledSinceQ.includes(x.id));
-  const top5=allSorted.sort((a,b)=>b.streak-a.streak).slice(0,5);
-  const bottom5=allSorted.sort((a,b)=>a.streak-b.streak).slice(0,5);
+  // Top: highest streak, tiebreak by most 'did' (done beats delayed)
+  const top5=[...allSorted].sort((a,b)=>b.streak-a.streak||b.didCount-a.didCount).slice(0,5);
+  // Needs work: habits with recent skips (didnot), sorted by skip count in last 30 days
+  const skipCounts={};
+  Object.values(groups).forEach(g=>{
+    let skips=0;
+    for(let i=0;i<30;i++){
+      const d=new Date(now);d.setDate(now.getDate()-i);
+      const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+      const scheduled=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
+      if(!scheduled.length)continue;
+      if(scheduled.some(h=>(store[ds]||{})[h.id]==='didnot'))skips++;
+    }
+    skipCounts[g.key]=skips;
+  });
+  const bottom5=allSorted.filter(x=>skipCounts[x.id]>0).sort((a,b)=>skipCounts[b.id]-skipCounts[a.id]).slice(0,5);
 
   // Quarter grid: Apr 1 → today (capped at Aug 31)
   const gridStart=new Date("2026-04-01T00:00:00");
@@ -1423,11 +1783,11 @@ function renderHabitDash(){
       <div class="hdash-card">
         <div class="hdash-card-title">Needs work ⚠️</div>
         <div class="streak-list">
-          ${bottom5.map(x=>`<div class="streak-item">
+          ${bottom5.length?bottom5.map(x=>`<div class="streak-item">
             <div class="streak-label">${x.label}</div>
-            <div class="streak-num" style="color:${x.streak===0?'rgba(239,68,68,0.8)':'var(--accent)'}">${x.streak}</div>
-            <div class="streak-badge">${x.streak===0?'✗':'·'}</div>
-          </div>`).join('')}
+            <div class="streak-num" style="color:rgba(239,68,68,0.8)">${skipCounts[x.id]}</div>
+            <div class="streak-badge">✗</div>
+          </div>`).join(''):'<div style="font-size:10px;color:var(--text-dim);padding:6px 0">No skipped habits 🎉</div>'}
         </div>
       </div>
     </div>

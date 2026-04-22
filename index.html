@@ -18,7 +18,7 @@
   --bg:#07070e;--surface:#0f0f1a;--surface2:#14141e;--border:#1c1c2a;
   --accent:#22d3ee;--accent-dim:rgba(34,211,238,0.12);
   --text:#dddde8;--text-dim:#55556a;--text-mid:#9090a8;
-  --work:#4285f4;   --work-dim:rgba(66,133,244,0.12);
+  --work:#7c3aed;   --work-dim:rgba(124,58,237,0.12);
   --money:#0f9d58;  --money-dim:rgba(15,157,88,0.12);
   --rel:#e91e8c;    --rel-dim:rgba(233,30,140,0.12);
   --health:#33b679; --health-dim:rgba(51,182,121,0.12);
@@ -26,7 +26,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 90% 60% at 5% 0%,rgba(66,133,244,0.07) 0%,transparent 55%),radial-gradient(ellipse 70% 55% at 95% 100%,rgba(34,211,238,0.06) 0%,transparent 55%),radial-gradient(ellipse 50% 45% at 50% 50%,rgba(233,30,140,0.03) 0%,transparent 60%)}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 90% 60% at 5% 0%,rgba(124,58,237,0.06) 0%,transparent 55%),radial-gradient(ellipse 70% 55% at 95% 100%,rgba(34,211,238,0.06) 0%,transparent 55%),radial-gradient(ellipse 50% 45% at 50% 50%,rgba(233,30,140,0.03) 0%,transparent 60%)}
 .header{background:rgba(7,7,14,0.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.055);padding:0 20px;position:sticky;top:0;z-index:100}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:14px 0 12px;border-bottom:1px solid var(--border)}
 .header-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(120deg,#e0e0f0 30%,#22d3ee 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -94,7 +94,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .task-meta{display:flex;gap:6px;align-items:center;flex-shrink:0}
 .task-goal-tag{font-size:8px;padding:2px 6px;border-radius:3px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
 .task-dur{font-size:10px;color:var(--text-dim)}
-.tag-work{background:var(--work-dim);color:var(--work);border:1px solid rgba(66,133,244,0.25)}
+.tag-work{background:var(--work-dim);color:var(--work);border:1px solid rgba(124,58,237,0.25)}
 .tag-money{background:var(--money-dim);color:var(--money);border:1px solid rgba(15,157,88,0.25)}
 .tag-relationship{background:var(--rel-dim);color:var(--rel);border:1px solid rgba(233,30,140,0.25)}
 .tag-health{background:var(--health-dim);color:var(--health);border:1px solid rgba(51,182,121,0.25)}
@@ -500,7 +500,8 @@ async function loadCalendarData(){
     }
 
     setSyncStatus('ok');
-    calendarEventsCache=null; // reset so tasks tab reloads fresh
+    calendarEventsCache=null;
+    await restoreGoalsFromSheet();
 
     // refresh current view
     if(activeDay==='history') renderHistory();
@@ -1111,7 +1112,16 @@ async function habitsSheetInit(){
       );
     }else{
       habitsSheetRowMap={};
-      rows.forEach((row,i)=>{if(i>0&&row[0])habitsSheetRowMap[row[0]]=i+1;});
+      const store=getHabitStore();
+      let changed=false;
+      rows.forEach((row,i)=>{
+        if(i===0||!row[0])return;
+        habitsSheetRowMap[row[0]]=i+1;
+        if(!store[row[0]]&&row[2]){
+          try{store[row[0]]=JSON.parse(row[2]);changed=true;}catch{}
+        }
+      });
+      if(changed){saveHabitStore(store);showToast('Habit data restored from Sheets','ok');}
     }
   }catch(err){console.warn('Habits sheet init:',err);}
 }
@@ -1422,6 +1432,46 @@ function renderHabitDash(){
   `;
 }
 
+// ─── RESTORE GOALS FROM SHEETS ───────────────────────────────────────────────
+async function restoreGoalsFromSheet(){
+  try{
+    if(!getGoalsHealth().length){
+      try{
+        const h=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Health!A:B')}`);
+        const rows=(h.values||[]).filter(r=>r[0]&&r[1]);
+        if(rows.length){
+          const byDate={};
+          rows.forEach(r=>{byDate[r[0]]={date:r[0],weight:parseFloat(r[1])};});
+          localStorage.setItem(GK_HEALTH,JSON.stringify(Object.values(byDate)));
+          showToast('Weight data restored from Sheets','ok');
+        }
+      }catch{}
+    }
+    if(!getGoalsMoney().length){
+      try{
+        const m=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Money!A:C')}`);
+        const rows=(m.values||[]).filter(r=>r[0]&&r[1]&&r[2]);
+        if(rows.length){
+          localStorage.setItem(GK_MONEY,JSON.stringify(rows.map(r=>({date:r[0],type:r[1],amount:parseFloat(r[2])}))));
+          showToast('Money data restored from Sheets','ok');
+        }
+      }catch{}
+    }
+    if(!getGoalsFaith().length){
+      try{
+        const f=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Faith!A:B')}`);
+        const rows=(f.values||[]).filter(r=>r[0]&&r[1]);
+        if(rows.length){
+          const byDate={};
+          rows.forEach(r=>{byDate[r[0]]={date:r[0],shlokas:parseInt(r[1])};});
+          localStorage.setItem(GK_FAITH,JSON.stringify(Object.values(byDate)));
+          showToast('Faith data restored from Sheets','ok');
+        }
+      }catch{}
+    }
+  }catch(e){console.warn('Restore goals failed:',e);}
+}
+
 // ─── NO-PORN STREAK ──────────────────────────────────────────────────────────
 const NK='gps_noporn';
 function getNoPornInfo(){
@@ -1542,7 +1592,8 @@ async function renderTasks(){
   });
 
   if(!events.length){
-    bodyHtml+=`<div class="no-data">No events on this day.</div>`;
+    const totalThisWeek=(calendarEventsCache||[]).length;
+    bodyHtml+=`<div class="no-data">No events on this day.<br><span style="font-size:9px;color:var(--text-dim);line-height:2">${totalThisWeek>0?`${totalThisWeek} event${totalThisWeek!==1?'s':''} found elsewhere this week — check other days above.`:'No events found in any calendar this week.<br>Tasks pulls from all Google Calendars except "Habits".<br>Add events directly in Google Calendar to see them here.'}</span></div>`;
   } else {
     const doneIds=done[activeDate]||[];
     bodyHtml+=`<div style="display:flex;flex-direction:column;gap:4px">`;

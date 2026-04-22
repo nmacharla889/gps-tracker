@@ -201,7 +201,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .streak-list{display:flex;flex-direction:column;gap:7px}
 .streak-item{display:flex;align-items:center;gap:6px}
 .streak-label{flex:1;font-size:10px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.streak-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--accent);flex-shrink:0;min-width:26px;text-align:right}
+.streak-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#33b679;flex-shrink:0;min-width:26px;text-align:right}
 .streak-badge{font-size:11px;flex-shrink:0}
 .hdash-grid-outer{overflow-x:auto;margin-bottom:24px;-webkit-overflow-scrolling:touch}
 .hdash-grid-inner{display:inline-flex;flex-direction:column;min-width:max-content}
@@ -299,6 +299,7 @@ body::before{animation:ambientDrift 9s ease-in-out infinite}
     <button class="tab" data-day="goals">GOALS</button>
     <button class="tab" data-day="habits">HABITS</button>
     <button class="tab" data-day="habitdash">DASH ✦</button>
+    <button class="tab" data-day="tasks">TASKS</button>
     <button class="tab" data-day="manage">MANAGE ⚙</button>
     <button class="tab stats-tab" data-day="history">HISTORY ▸</button>
   </div>
@@ -317,7 +318,7 @@ const DAYS   = ['mon','tue','wed','thu','fri','sat','sun'];
 const DNAMES = {mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
 const JS2IDX = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
 const Q_START = new Date('2026-04-01');
-const Q_END   = new Date('2026-08-31');
+const Q_END   = new Date('2026-06-30');
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let activeDay     = null;
@@ -358,10 +359,10 @@ async function goalsSheetAppend(sheetName,row){
 async function goalsTargetsSheetSave(t){
   if(!accessToken)return;
   const rows=[['quarter','goal','target'],
-    ['Apr-Aug 2026','health',t.health],
-    ['Apr-Aug 2026','savings',t.savings],
-    ['Apr-Aug 2026','gold',t.gold],
-    ['Apr-Aug 2026','faith',t.faith],
+    ['Apr-Jun 2026','health',t.health],
+    ['Apr-Jun 2026','savings',t.savings],
+    ['Apr-Jun 2026','gold',t.gold],
+    ['Apr-Jun 2026','faith',t.faith],
   ];
   try{
     await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Targets!A:C')}:clear`,'POST',{});
@@ -499,12 +500,14 @@ async function loadCalendarData(){
     }
 
     setSyncStatus('ok');
+    calendarEventsCache=null; // reset so tasks tab reloads fresh
 
     // refresh current view
     if(activeDay==='history') renderHistory();
     else if(activeDay==='goals') renderGoals();
     else if(activeDay==='habits') renderHabits();
     else if(activeDay==='habitdash') renderHabitDash();
+    else if(activeDay==='tasks') renderTasks();
     else if(activeDay==='manage') renderManage();
 
   }catch(err){
@@ -809,6 +812,7 @@ function switchDay(day){
   if(day==='goals'){renderGoals();return}
   if(day==='habits'){renderHabits();return}
   if(day==='habitdash'){renderHabitDash();return}
+  if(day==='tasks'){renderTasks();return}
   if(day==='manage'){manageGoalForm=null;renderManage();return}
 }
 
@@ -844,7 +848,7 @@ function renderGoals(){
     else if(diff>0.05){hTrendCls='bad';hTrendTxt=`↑ Gaining ${diff.toFixed(1)}kg/week`;}
     else{hTrendCls='warn';hTrendTxt='→ Holding steady';}
   }
-  const hLogs=healthData.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">${e.weight}kg</span></div>`).join('');
+  const hLogs=healthData.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">${e.weight}kg</span></div>`).join('');
 
   // ── Savings ──
   const savingsEntries=moneyData.filter(e=>e.type==='savings');
@@ -853,7 +857,7 @@ function renderGoals(){
   const sExpected=Math.round(targets.savings*qElapsed/qTotalDays);
   const sTrendCls=totalSavings>=sExpected?'good':'bad';
   const sTrendTxt=totalSavings>=sExpected?`On track (+$${(totalSavings-sExpected).toFixed(0)} ahead)`:`Behind by $${(sExpected-totalSavings).toFixed(0)}`;
-  const sLogs=savingsEntries.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+$${e.amount}</span></div>`).join('');
+  const sLogs=savingsEntries.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+$${e.amount}</span></div>`).join('');
 
   // ── Gold ──
   const goldEntries=moneyData.filter(e=>e.type==='gold');
@@ -862,7 +866,7 @@ function renderGoals(){
   const gExpected=Math.round(targets.gold*qElapsed/qTotalDays);
   const gTrendCls=totalGold>=gExpected?'good':'bad';
   const gTrendTxt=totalGold>=gExpected?`On track (+$${(totalGold-gExpected).toFixed(0)} ahead)`:`Behind by $${(gExpected-totalGold).toFixed(0)}`;
-  const gLogs=goldEntries.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+$${e.amount}</span></div>`).join('');
+  const gLogs=goldEntries.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+$${e.amount}</span></div>`).join('');
 
   // ── Faith ──
   const totalShlokas=faithData.reduce((s,e)=>s+e.shlokas,0);
@@ -871,10 +875,10 @@ function renderGoals(){
   const fDiff=totalShlokas-fExpected;
   const fTrendCls=fDiff>=0?'good':fDiff>=-5?'warn':'bad';
   const fTrendTxt=fDiff>=0?`Ahead by ${fDiff} shloka${fDiff!==1?'s':''}`:`Behind by ${Math.abs(fDiff)} shloka${Math.abs(fDiff)!==1?'s':''}`;
-  const fLogs=faithData.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+${e.shlokas}</span></div>`).join('');
+  const fLogs=faithData.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+${e.shlokas}</span></div>`).join('');
 
   document.getElementById('main').innerHTML=`
-    <div class="section-title">Goals — Apr → Aug 2026</div>
+    <div class="section-title">Goals — Apr → Jun 2026</div>
 
     <div class="goals-section-title">Health 💪</div>
     <div class="goal-card goal-cat-health">
@@ -928,7 +932,7 @@ function renderGoals(){
         <span class="goal-card-title">${totalShlokas} / ${targets.faith} shlokas</span>
         <span class="goal-trend ${fTrendCls}">${fTrendTxt}</span>
       </div>
-      <div class="goal-metric-row"><span>Target</span><span>${targets.faith} shlokas by Aug 31 (of 182.5 total)</span></div>
+      <div class="goal-metric-row"><span>Target</span><span>${targets.faith} shlokas by Jun 30</span></div>
       <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${fPct}%;background:${fTrendCls==='good'?barG:fTrendCls==='warn'?barW:barB}"></div></div>
       <div class="goal-metric-row"><span>Expected by today</span><span>${fExpected} shlokas</span></div>
       <div class="goal-input-row">
@@ -953,115 +957,52 @@ function renderHistory(){
   const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
   const qPct=Math.round(qElapsed/qTotalDays*100);
   const daysLeft=qTotalDays-qElapsed;
+  const cA='rgba(245,158,11,0.8)';
 
-  // Goals snapshot
-  const targets=getGoalsTargets();
-  const healthData=getGoalsHealth().sort((a,b)=>a.date.localeCompare(b.date));
-  const moneyData=getGoalsMoney();
-  const faithData=getGoalsFaith();
-  const latestWt=healthData.length?healthData[healthData.length-1].weight:null;
-  const firstWt=healthData.length?healthData[0].weight:null;
-  const totalSav=moneyData.filter(e=>e.type==='savings').reduce((s,e)=>s+e.amount,0);
-  const totalGld=moneyData.filter(e=>e.type==='gold').reduce((s,e)=>s+e.amount,0);
-  const totalFth=faithData.reduce((s,e)=>s+e.shlokas,0);
-  const hRange=firstWt&&firstWt!==targets.health?firstWt-targets.health:10;
-  const hPct=latestWt?Math.min(100,Math.max(0,Math.round((firstWt-latestWt)/hRange*100))):0;
-  const sPct=Math.min(100,Math.round(totalSav/targets.savings*100));
-  const gPct=Math.min(100,Math.round(totalGld/targets.gold*100));
-  const fPct=Math.min(100,Math.round(totalFth/targets.faith*100));
-  const sExp=Math.round(targets.savings*qElapsed/qTotalDays);
-  const fExp=Math.round(targets.faith*qElapsed/qTotalDays);
-  function miniBar(pct,col){return `<div class="goal-bar-outer" style="margin:3px 0"><div class="goal-bar-inner" style="width:${pct}%;background:${col}"></div></div>`;}
-  const cG='rgba(51,182,121,0.8)',cR='rgba(239,68,68,0.7)',cA='rgba(245,158,11,0.8)';
-
-  // Habit consistency rates since Q_START
-  const hStore=getHabitStore();
-  const groups={};
-  HABITS.forEach(h=>{const key=h.group||h.id;if(!groups[key])groups[key]={key,label:h.label,members:[]};groups[key].members.push(h);});
-  const habitStats=Object.values(groups).map(g=>{
-    let sched=0,done=0,delayed=0,skipped=0;
-    for(let i=0;i<qElapsed;i++){
-      const d=new Date(Q_START);d.setDate(Q_START.getDate()+i);
-      const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
-      const members=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
-      if(!members.length)continue;
-      sched++;
-      const sts=members.map(h=>(hStore[ds]||{})[h.id]);
-      if(sts.some(s=>s==='did'))done++;
-      else if(sts.some(s=>s==='delayed'))delayed++;
-      else if(sts.some(s=>s==='didnot'))skipped++;
-    }
-    const pct=sched?Math.round((done+delayed)/sched*100):0;
-    return {label:g.label,sched,done,delayed,skipped,pct};
-  }).filter(x=>x.sched>0).sort((a,b)=>b.pct-a.pct);
-
-  let h=`<div class="section-title">History — Apr → Aug 2026</div>`;
+  let h=`<div class="section-title">History — Apr → Jun 2026</div>`;
 
   // Quarter progress bar
-  h+=`<div class="goal-card" style="margin-bottom:16px">
+  h+=`<div class="goal-card" style="margin-bottom:20px">
     <div class="goal-card-header">
-      <span class="goal-card-title">Quarter progress</span>
+      <span class="goal-card-title">Q2 2026 progress</span>
       <span class="goal-trend warn">${daysLeft} days left</span>
     </div>
     <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${qPct}%;background:${cA}"></div></div>
-    <div class="goal-metric-row"><span>Week ${Math.ceil(qElapsed/7)} of ${Math.ceil(qTotalDays/7)}</span><span>${qPct}% elapsed</span></div>
+    <div class="goal-metric-row"><span>Week ${Math.ceil(qElapsed/7)} of ${Math.ceil(qTotalDays/7)}</span><span>${qPct}% elapsed · Apr 1 → Jun 30</span></div>
   </div>`;
 
-  // Goals summary grid
-  h+=`<div class="section-title">Goals snapshot</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
-    <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
-      <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Health 💪</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">${latestWt??'—'}kg</div>
-      ${miniBar(hPct,hPct>=50?cG:cR)}
-      <div style="font-size:9px;color:var(--text-dim)">Target ${targets.health}kg · ${hPct}%</div>
-    </div>
-    <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
-      <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Savings 💰</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">$${totalSav.toFixed(0)}</div>
-      ${miniBar(sPct,totalSav>=sExp?cG:cR)}
-      <div style="font-size:9px;color:var(--text-dim)">Target $${targets.savings} · ${sPct}%</div>
-    </div>
-    <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
-      <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Gold 🥇</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">$${totalGld.toFixed(0)}</div>
-      ${miniBar(gPct,cA)}
-      <div style="font-size:9px;color:var(--text-dim)">Target $${targets.gold} · ${gPct}%</div>
-    </div>
-    <div class="goal-card" style="padding:12px;cursor:pointer" onclick="switchDay('goals')">
-      <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Faith 🙏</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">${totalFth} / ${targets.faith}</div>
-      ${miniBar(fPct,totalFth>=fExp?cG:cA)}
-      <div style="font-size:9px;color:var(--text-dim)">Shlokas · ${fPct}%</div>
-    </div>
-  </div>`;
+  // Build unified goal entry log (all types, sorted by date desc)
+  const healthData=getGoalsHealth().map(e=>({date:e.date,type:'Weight',val:`${e.weight}kg`,col:'var(--health)'}));
+  const moneyData=getGoalsMoney().map(e=>({date:e.date,type:e.type==='savings'?'Savings':'Gold',val:`+$${e.amount}`,col:'var(--money)'}));
+  const faithData=getGoalsFaith().map(e=>({date:e.date,type:'Shlokas',val:`+${e.shlokas}`,col:'var(--spirit)'}));
+  const allEntries=[...healthData,...moneyData,...faithData].sort((a,b)=>b.date.localeCompare(a.date));
 
-  // Habit consistency table
-  h+=`<div class="section-title">Habit consistency — since Apr 1</div>`;
-  if(!habitStats.length){
-    h+=`<div class="no-data">No habit data yet. Mark habits in the Habits tab to see consistency here.</div>`;
+  h+=`<div class="section-title">Goal entry log</div>`;
+  if(!allEntries.length){
+    h+=`<div class="no-data">No entries yet. Log your goals in the Goals tab.</div>`;
   } else {
-    h+=`<table class="monthly-table"><thead><tr>
-      <th>Habit</th><th>Sched</th><th style="color:#33b679">Done</th><th style="color:#f59e0b">Delayed</th><th style="color:rgba(239,68,68,0.8)">Skipped</th><th class="pct-c">Rate</th>
-    </tr></thead><tbody>`;
-    habitStats.forEach(x=>{
-      const barCol=x.pct>=80?cG:x.pct>=50?cA:cR;
-      h+=`<tr>
-        <td>${x.label}</td>
-        <td>${x.sched}</td>
-        <td style="color:#33b679">${x.done}</td>
-        <td style="color:#f59e0b">${x.delayed}</td>
-        <td style="color:rgba(239,68,68,0.8)">${x.skipped}</td>
-        <td><div style="display:flex;align-items:center;gap:6px">
-          <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;min-width:40px"><div style="height:4px;border-radius:2px;background:${barCol};width:${x.pct}%"></div></div>
-          <span class="pct-c">${x.pct}%</span>
-        </div></td>
-      </tr>`;
+    // Group by date
+    const byDate={};
+    allEntries.forEach(e=>{if(!byDate[e.date])byDate[e.date]=[];byDate[e.date].push(e);});
+    h+=`<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">`;
+    Object.keys(byDate).sort((a,b)=>b.localeCompare(a)).forEach(date=>{
+      const entries=byDate[date];
+      const d=new Date(date+'T00:00:00');
+      const label=d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+      h+=`<div class="goal-card" style="padding:12px">
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;font-weight:600">${label}</div>
+        <div style="display:flex;flex-direction:column;gap:5px">`;
+      entries.forEach(e=>{
+        h+=`<div style="display:flex;justify-content:space-between;font-size:11px">
+          <span style="color:${e.col};font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-size:9px">${e.type}</span>
+          <span style="color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700">${e.val}</span>
+        </div>`;
+      });
+      h+=`</div></div>`;
     });
-    h+=`</tbody></table>`;
+    h+=`</div>`;
   }
 
-  h+=`<div class="no-data" style="margin-top:16px;opacity:0.5">Previous quarters — coming soon</div>`;
   document.getElementById('main').innerHTML=h;
 }
 function showTT(e,text){const t=document.getElementById('tt');t.textContent=text;t.classList.add('show');t.style.left=(e.clientX+12)+'px';t.style.top=(e.clientY-32)+'px'}
@@ -1378,8 +1319,58 @@ function renderHabitDash(){
     gridH+='</div>';
   });
 
+  // Habit consistency table (same data as old History tab)
+  const qTotalDays=Math.round((Q_END-Q_START)/864e5)+1;
+  const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
+  const cG='rgba(51,182,121,0.8)',cR='rgba(239,68,68,0.7)',cA='rgba(245,158,11,0.8)';
+  const consistGroups={};
+  HABITS.forEach(h=>{const key=h.group||h.id;if(!consistGroups[key])consistGroups[key]={key,label:h.label,members:[]};consistGroups[key].members.push(h);});
+  const habitStats=Object.values(consistGroups).map(g=>{
+    let sched=0,done=0,delayed=0,skipped=0;
+    for(let i=0;i<qElapsed;i++){
+      const d=new Date(Q_START);d.setDate(Q_START.getDate()+i);
+      const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+      const members=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
+      if(!members.length)continue;
+      sched++;
+      const sts=members.map(h=>(store[ds]||{})[h.id]);
+      if(sts.some(s=>s==='did'))done++;
+      else if(sts.some(s=>s==='delayed'))delayed++;
+      else if(sts.some(s=>s==='didnot'))skipped++;
+    }
+    const pct=sched?Math.round((done+delayed)/sched*100):0;
+    return {label:g.label,sched,done,delayed,skipped,pct};
+  }).filter(x=>x.sched>0).sort((a,b)=>b.pct-a.pct);
+
+  let consistTableH='';
+  if(habitStats.length){
+    consistTableH=`<table class="monthly-table"><thead><tr>
+      <th>Habit</th><th>Sched</th><th style="color:#33b679">Done</th><th style="color:#f59e0b">Delayed</th><th style="color:rgba(239,68,68,0.8)">Skipped</th><th class="pct-c">Rate</th>
+    </tr></thead><tbody>`;
+    habitStats.forEach(x=>{
+      const barCol=x.pct>=80?cG:x.pct>=50?cA:cR;
+      consistTableH+=`<tr>
+        <td>${x.label}</td><td>${x.sched}</td>
+        <td style="color:#33b679">${x.done}</td>
+        <td style="color:#f59e0b">${x.delayed}</td>
+        <td style="color:rgba(239,68,68,0.8)">${x.skipped}</td>
+        <td><div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;min-width:40px"><div style="height:4px;border-radius:2px;background:${barCol};width:${x.pct}%"></div></div>
+          <span class="pct-c">${x.pct}%</span>
+        </div></td>
+      </tr>`;
+    });
+    consistTableH+=`</tbody></table>`;
+  } else {
+    consistTableH=`<div class="no-data">No habit data yet.</div>`;
+  }
+
+  // No-porn streak
+  const npInfo=getNoPornInfo();
+  const npStreakCol=npInfo.streak>=30?'#33b679':npInfo.streak>=7?'#f59e0b':'rgba(239,68,68,0.8)';
+
   document.getElementById('main').innerHTML=`
-    <div class="section-title">Habit Dashboard — Apr → Aug 2026</div>
+    <div class="section-title">Habit Dashboard — Apr → Jun 2026</div>
     <div class="hdash-top">
       <div class="hdash-card">
         <div class="hdash-card-title">Top streaks 🔥</div>
@@ -1402,7 +1393,22 @@ function renderHabitDash(){
         </div>
       </div>
     </div>
-    <div class="section-title">Apr → Aug 2026 consistency</div>
+
+    <div class="hdash-card" style="margin-bottom:22px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div class="hdash-card-title">No-Porn Streak 🧘</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:800;color:${npStreakCol};line-height:1">${npInfo.streak}</div>
+          <div style="font-size:10px;color:var(--text-dim);margin-top:4px">days clean · best: ${npInfo.best} days</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+          <button onclick="noPornReset()" style="padding:8px 16px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:rgba(239,68,68,0.85);border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer">I broke it today</button>
+          ${npInfo.resetDate?`<div style="font-size:9px;color:var(--text-dim)">Last reset: ${npInfo.resetDate}</div>`:'<div style="font-size:9px;color:var(--text-dim)">Tracking since Apr 1</div>'}
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Apr → Jun 2026 heat map</div>
     <div class="hdash-legend">
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(51,182,121,0.8)"></div><span class="hdash-legend-lbl">Done</span></div>
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(245,158,11,0.7)"></div><span class="hdash-legend-lbl">Delayed</span></div>
@@ -1410,7 +1416,159 @@ function renderHabitDash(){
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:var(--surface2)"></div><span class="hdash-legend-lbl">Not marked</span></div>
     </div>
     <div class="hdash-grid-outer"><div class="hdash-grid-inner">${headerH}${gridH}</div></div>
+
+    <div class="section-title" style="margin-top:8px">Consistency since Apr 1</div>
+    ${consistTableH}
   `;
+}
+
+// ─── NO-PORN STREAK ──────────────────────────────────────────────────────────
+const NK='gps_noporn';
+function getNoPornInfo(){
+  try{
+    const d=JSON.parse(localStorage.getItem(NK)||'{}');
+    const resetDate=d.resetDate||null;
+    const best=d.best||0;
+    const startDate=resetDate?new Date(resetDate+'T00:00:00'):Q_START;
+    const now=new Date();
+    const streak=Math.max(0,Math.floor((now-startDate)/864e5));
+    return {streak,best:Math.max(best,streak),resetDate};
+  }catch{return{streak:0,best:0,resetDate:null};}
+}
+function noPornReset(){
+  if(!confirm('Reset your streak? This will record today as a reset date.'))return;
+  const today=dkey(new Date());
+  const cur=getNoPornInfo();
+  const data={resetDate:today,best:Math.max(cur.best,cur.streak)};
+  localStorage.setItem(NK,JSON.stringify(data));
+  renderHabitDash();
+}
+
+// ─── TASKS TAB ───────────────────────────────────────────────────────────────
+const TDK='gps_tasks_done';
+let calendarEventsCache=null;
+
+function getTasksDone(){try{return JSON.parse(localStorage.getItem(TDK)||'{}')}catch{return{}}}
+function saveTasksDone(d){localStorage.setItem(TDK,JSON.stringify(d))}
+
+function toggleTaskDone(dateStr,eventId){
+  const d=getTasksDone();
+  if(!d[dateStr])d[dateStr]=[];
+  const idx=d[dateStr].indexOf(eventId);
+  if(idx>=0)d[dateStr].splice(idx,1);else d[dateStr].push(eventId);
+  saveTasksDone(d);
+  renderTasks();
+}
+
+async function fetchCalendarEvents(){
+  if(!accessToken)return null;
+  const now=new Date();
+  const mon=new Date(now);mon.setDate(now.getDate()-JS2IDX[now.getDay()]);mon.setHours(0,0,0,0);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);sun.setHours(23,59,59,999);
+  try{
+    const list=await apiFetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=50');
+    const cals=list.items||[];
+    const allEvents=[];
+    await Promise.all(cals.filter(c=>c.selected!==false&&c.summary.toLowerCase().trim()!=='habits').map(async cal=>{
+      try{
+        const data=await apiFetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events`+
+          `?timeMin=${encodeURIComponent(mon.toISOString())}&timeMax=${encodeURIComponent(sun.toISOString())}`+
+          `&singleEvents=true&orderBy=startTime&maxResults=200`
+        );
+        (data.items||[]).forEach(ev=>{if(ev.summary)allEvents.push({...ev,_calName:cal.summary});});
+      }catch{}
+    }));
+    return allEvents;
+  }catch{return null;}
+}
+
+async function renderTasks(){
+  const now=new Date();
+  const todayStr=dkey(now);
+
+  // Week day nav — same week logic as habits
+  const wkMon=new Date(now);wkMon.setDate(now.getDate()-JS2IDX[now.getDay()]);wkMon.setHours(0,0,0,0);
+
+  if(!window._tasksActiveDateStr)window._tasksActiveDateStr=todayStr;
+  const activeDate=window._tasksActiveDateStr;
+
+  let html=`<div class="section-title">Tasks — this week</div>`;
+
+  // Day nav
+  html+=`<div class="habit-day-nav">`;
+  DAYS.forEach((dk,i)=>{
+    const d=new Date(wkMon);d.setDate(wkMon.getDate()+i);
+    const ds=dkey(d);
+    const isToday=ds===todayStr,isActive=ds===activeDate;
+    html+=`<button class="hday-btn${isActive?' active':''}${isToday&&!isActive?' today':''}" onclick="window._tasksActiveDateStr='${ds}';renderTasks()">${DNAMES[dk].slice(0,3).toUpperCase()} ${d.getDate()}</button>`;
+  });
+  html+=`</div>`;
+
+  if(!accessToken){
+    html+=`<div class="connect-screen" style="padding:40px 20px">
+      <h2>Connect Google</h2>
+      <p>Connect your Google account to pull tasks from Google Calendar.</p>
+      <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
+    </div>`;
+    document.getElementById('main').innerHTML=html;
+    return;
+  }
+
+  // Show loading then load events
+  html+=`<div id="tasks-body"><div class="no-data" style="opacity:.5">Loading calendar…</div></div>`;
+  document.getElementById('main').innerHTML=html;
+
+  if(!calendarEventsCache){
+    calendarEventsCache=await fetchCalendarEvents();
+  }
+
+  const done=getTasksDone();
+  const activeDateObj=new Date(activeDate+'T00:00:00');
+  const dayKey=DAYS[JS2IDX[activeDateObj.getDay()]];
+  const dateLabel=activeDateObj.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
+
+  let bodyHtml=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:1px;margin-bottom:14px;color:var(--text-mid)">${dateLabel}</div>`;
+
+  const events=(calendarEventsCache||[]).filter(ev=>{
+    const start=ev.start?.date||ev.start?.dateTime;
+    if(!start)return false;
+    const evDate=start.slice(0,10);
+    return evDate===activeDate;
+  }).sort((a,b)=>{
+    const sa=a.start?.dateTime||a.start?.date||'';
+    const sb=b.start?.dateTime||b.start?.date||'';
+    return sa.localeCompare(sb);
+  });
+
+  if(!events.length){
+    bodyHtml+=`<div class="no-data">No events on this day.</div>`;
+  } else {
+    const doneIds=done[activeDate]||[];
+    bodyHtml+=`<div style="display:flex;flex-direction:column;gap:4px">`;
+    events.forEach(ev=>{
+      const isDone=doneIds.includes(ev.id);
+      const startDT=ev.start?.dateTime?new Date(ev.start.dateTime):null;
+      const timeStr=startDT?startDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}):'All day';
+      const endDT=ev.end?.dateTime?new Date(ev.end.dateTime):null;
+      const endStr=endDT?' – '+endDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}):'';
+      bodyHtml+=`<div class="task-row${isDone?' done':''}" onclick="toggleTaskDone('${activeDate}','${ev.id.replace(/'/g,"\\'")}')">
+        <div class="task-check">${isDone?'✓':''}</div>
+        <div class="task-time" style="font-size:9px">${timeStr}${endStr}</div>
+        <div class="task-label">${ev.summary}</div>
+        <div style="font-size:8px;color:var(--text-dim);flex-shrink:0;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev._calName}</div>
+      </div>`;
+    });
+    bodyHtml+=`</div>`;
+    const doneCount=events.filter(ev=>(done[activeDate]||[]).includes(ev.id)).length;
+    bodyHtml=`<div style="font-size:10px;color:var(--text-dim);margin-bottom:12px">${doneCount}/${events.length} done</div>`+bodyHtml;
+  }
+
+  // Refresh button
+  bodyHtml+=`<button onclick="calendarEventsCache=null;renderTasks()" style="margin-top:16px;padding:7px 14px;background:var(--accent-dim);border:1px solid rgba(34,211,238,0.3);color:var(--accent);border-radius:5px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer">Refresh calendar</button>`;
+
+  const tasksBody=document.getElementById('tasks-body');
+  if(tasksBody)tasksBody.innerHTML=bodyHtml;
 }
 
 init();

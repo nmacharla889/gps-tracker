@@ -47,7 +47,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 14px rgba(245,158,11,0.6)}
 .tab.today-tab::after{content:'';position:absolute;top:9px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .tab.stats-tab{margin-left:auto;border-left:1px solid var(--border);padding-left:18px}
-.main{max-width:860px;margin:0 auto;padding:20px 20px 80px;position:relative;z-index:1}
+.main{max-width:860px;margin:0 auto;padding:20px 20px 80px;position:relative;z-index:1;overflow-x:hidden;width:100%}
 /* connect screen */
 .connect-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:20px}
 .connect-screen h2{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;letter-spacing:1px;color:var(--text)}
@@ -203,7 +203,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .streak-label{flex:1;font-size:10px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .streak-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#33b679;flex-shrink:0;min-width:26px;text-align:right}
 .streak-badge{font-size:11px;flex-shrink:0}
-.hdash-grid-outer{overflow-x:auto;margin-bottom:24px;-webkit-overflow-scrolling:touch}
+.hdash-grid-outer{overflow-x:auto;margin-bottom:24px;-webkit-overflow-scrolling:touch;max-width:100%}
 .hdash-grid-inner{display:inline-flex;flex-direction:column;min-width:max-content}
 .hdash-header-row{display:flex;padding-left:112px;margin-bottom:3px}
 .hdash-month-block{font-size:8px;color:var(--text-dim);letter-spacing:.3px;flex-shrink:0;text-align:left}
@@ -300,6 +300,7 @@ body::before{animation:ambientDrift 9s ease-in-out infinite}
     <button class="tab" data-day="habits">HABITS</button>
     <button class="tab" data-day="habitdash">DASH ✦</button>
     <button class="tab" data-day="tasks">TASKS</button>
+    <button class="tab" data-day="calories">CALORIES</button>
     <button class="tab" data-day="manage">MANAGE ⚙</button>
     <button class="tab stats-tab" data-day="history">HISTORY ▸</button>
   </div>
@@ -656,6 +657,7 @@ function saveCustomGoal(){
   saveCustomGoals(goals);
   manageGoalForm=null;
   showToast('Goal saved','ok');
+  customGoalsSheetBackup().catch(e=>console.warn('Goals_Config backup:',e));
   renderManage();
 }
 
@@ -666,6 +668,7 @@ function deleteCustomGoal(id){
   if(!confirm(`Delete "${g.name}"?\nProgress data will also be removed.`))return;
   saveCustomGoals(goals.filter(x=>x.id!==id));
   const logs=getCustomLogs();delete logs[id];saveCustomLogs(logs);
+  customGoalsSheetBackup().catch(e=>console.warn('Goals_Config backup:',e));
   renderManage();
 }
 
@@ -746,7 +749,6 @@ function renderCustomGoalCards(category){
     const pct=g.target>0?Math.min(100,Math.round(total/g.target*100)):0;
     const barCol=pct>=75?'rgba(51,182,121,0.8)':pct>=40?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.7)';
     const trendCls=pct>=75?'good':pct>=40?'warn':'bad';
-    const recentLogs=logs.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+${e.value} ${g.unit}</span></div>`).join('');
     const catCls=category==='work'?'goal-cat-work':category==='relationship'?'goal-cat-rel':category==='health'?'goal-cat-health':category==='money'?'goal-cat-money':'goal-cat-faith';
     return`<div class="goal-card ${catCls}">
       <div class="goal-card-header">
@@ -759,7 +761,6 @@ function renderCustomGoalCards(category){
         <input id="cgl_${g.id}" class="goal-input" type="number" step="any" min="0" placeholder="Add progress (${g.unit})">
         <button class="goal-input-btn" onclick="logCustomGoal('${g.id}')">Log</button>
       </div>
-      ${recentLogs?`<div class="goal-log-list">${recentLogs}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -816,11 +817,20 @@ function switchDay(day){
   if(day==='habits'){renderHabits();return}
   if(day==='habitdash'){renderHabitDash();return}
   if(day==='tasks'){renderTasks();return}
+  if(day==='calories'){renderCalories();return}
   if(day==='manage'){manageGoalForm=null;renderManage();return}
 }
 
 // ── Render Goals Tab ──
 function renderGoals(){
+  if(!accessToken){
+    document.getElementById('main').innerHTML=`<div class="connect-screen">
+      <h2>Connect Google</h2>
+      <p>Connect your Google account to access Goals.</p>
+      <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
+    </div>`;
+    return;
+  }
   const targets=getGoalsTargets();
   const healthData=getGoalsHealth().sort((a,b)=>a.date.localeCompare(b.date));
   const moneyData=getGoalsMoney().sort((a,b)=>a.date.localeCompare(b.date));
@@ -851,7 +861,7 @@ function renderGoals(){
     else if(diff>0.05){hTrendCls='bad';hTrendTxt=`↑ Gaining ${diff.toFixed(1)}kg/week`;}
     else{hTrendCls='warn';hTrendTxt='→ Holding steady';}
   }
-  const hLogs=healthData.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">${e.weight}kg</span></div>`).join('');
+  const hLogs=''; // Log history shown in History tab only
 
   // ── Savings ──
   const savingsEntries=moneyData.filter(e=>e.type==='savings');
@@ -860,7 +870,7 @@ function renderGoals(){
   const sExpected=Math.round(targets.savings*qElapsed/qTotalDays);
   const sTrendCls=totalSavings>=sExpected?'good':'bad';
   const sTrendTxt=totalSavings>=sExpected?`On track (+$${(totalSavings-sExpected).toFixed(0)} ahead)`:`Behind by $${(sExpected-totalSavings).toFixed(0)}`;
-  const sLogs=savingsEntries.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+$${e.amount}</span></div>`).join('');
+  const sLogs=''; // History tab only
 
   // ── Gold ──
   const goldEntries=moneyData.filter(e=>e.type==='gold');
@@ -869,7 +879,7 @@ function renderGoals(){
   const gExpected=Math.round(targets.gold*qElapsed/qTotalDays);
   const gTrendCls=totalGold>=gExpected?'good':'bad';
   const gTrendTxt=totalGold>=gExpected?`On track (+$${(totalGold-gExpected).toFixed(0)} ahead)`:`Behind by $${(gExpected-totalGold).toFixed(0)}`;
-  const gLogs=goldEntries.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+$${e.amount}</span></div>`).join('');
+  const gLogs=''; // History tab only
 
   // ── Faith ──
   const totalShlokas=faithData.reduce((s,e)=>s+e.shlokas,0);
@@ -878,7 +888,7 @@ function renderGoals(){
   const fDiff=totalShlokas-fExpected;
   const fTrendCls=fDiff>=0?'good':fDiff>=-5?'warn':'bad';
   const fTrendTxt=fDiff>=0?`Ahead by ${fDiff} shloka${fDiff!==1?'s':''}`:`Behind by ${Math.abs(fDiff)} shloka${Math.abs(fDiff)!==1?'s':''}`;
-  const fLogs=faithData.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+${e.shlokas}</span></div>`).join('');
+  const fLogs=''; // History tab only
 
   document.getElementById('main').innerHTML=`
     <div class="section-title">Goals — Apr → Jun 2026</div>
@@ -955,6 +965,14 @@ function renderGoals(){
 
 // ─── RENDER HISTORY ───────────────────────────────────────────────────────────
 function renderHistory(){
+  if(!accessToken){
+    document.getElementById('main').innerHTML=`<div class="connect-screen">
+      <h2>Connect Google</h2>
+      <p>Connect your Google account to access History.</p>
+      <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
+    </div>`;
+    return;
+  }
   const now=new Date();
   const qTotalDays=Math.round((Q_END-Q_START)/864e5)+1;
   const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
@@ -1154,6 +1172,14 @@ async function habitsSheetWrite(ds,statuses){
 
 // ── Render Habits Tab ──
 function renderHabits(){
+  if(!accessToken){
+    document.getElementById('main').innerHTML=`<div class="connect-screen">
+      <h2>Connect Google</h2>
+      <p>Connect your Google account to access Habits.</p>
+      <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
+    </div>`;
+    return;
+  }
   const now=new Date();
   if(!habitActiveDay){
     habitActiveDay=DAYS[JS2IDX[now.getDay()]];
@@ -1234,6 +1260,14 @@ function switchHabitDay(dk,ds){
 
 // ── Render Habit Dashboard ──
 function renderHabitDash(){
+  if(!accessToken){
+    document.getElementById('main').innerHTML=`<div class="connect-screen">
+      <h2>Connect Google</h2>
+      <p>Connect your Google account to access the Dashboard.</p>
+      <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
+    </div>`;
+    return;
+  }
   const store=getHabitStore(),now=new Date();
 
   // Build groups: habits sharing a group field are merged; ungrouped use their own id as key
@@ -1482,6 +1516,10 @@ async function restoreGoalsFromSheet(){
     }catch(e){console.warn('Faith restore:',e);}
 
     if(restored>0)showToast('Goals restored from Sheets ✓','ok');
+
+    // Also restore custom goal definitions and logs
+    await customGoalsSheetRestore();
+    await customLogsSheetRestore();
   }catch(e){console.warn('Restore goals failed:',e);}
 }
 
@@ -1638,8 +1676,9 @@ async function fetchGoogleTasks(){
 async function fetchCalendarEvents(){
   if(!accessToken)return null;
   const now=new Date();
-  const mon=new Date(now);mon.setDate(now.getDate()-JS2IDX[now.getDay()]);mon.setHours(0,0,0,0);
-  const sun=new Date(mon);sun.setDate(mon.getDate()+6);sun.setHours(23,59,59,999);
+  // Fetch past 30 days (overdue) + next 60 days (upcoming)
+  const tMin=new Date(now);tMin.setDate(now.getDate()-30);tMin.setHours(0,0,0,0);
+  const tMax=new Date(now);tMax.setDate(now.getDate()+60);tMax.setHours(23,59,59,999);
   try{
     const list=await apiFetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=50');
     const cals=list.items||[];
@@ -1648,13 +1687,13 @@ async function fetchCalendarEvents(){
       try{
         const data=await apiFetch(
           `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events`+
-          `?timeMin=${encodeURIComponent(mon.toISOString())}&timeMax=${encodeURIComponent(sun.toISOString())}`+
-          `&singleEvents=true&orderBy=startTime&maxResults=200`
+          `?timeMin=${encodeURIComponent(tMin.toISOString())}&timeMax=${encodeURIComponent(tMax.toISOString())}`+
+          `&singleEvents=true&orderBy=startTime&maxResults=500`
         );
         (data.items||[]).forEach(ev=>{if(ev.summary)allEvents.push({...ev,_calName:cal.summary});});
       }catch{}
     }));
-    // Merge Google Tasks (tasks with due dates show up in Tasks tab)
+    // Merge Google Tasks
     try{
       const tasks=await fetchGoogleTasks();
       allEvents.push(...tasks);
@@ -1667,123 +1706,186 @@ async function renderTasks(){
   const now=new Date();
   const todayStr=dkey(now);
 
-  // Week day nav — same week logic as habits
-  const wkMon=new Date(now);wkMon.setDate(now.getDate()-JS2IDX[now.getDay()]);wkMon.setHours(0,0,0,0);
-
-  if(!window._tasksActiveDateStr)window._tasksActiveDateStr=todayStr;
-  const activeDate=window._tasksActiveDateStr;
-
-  let html=`<div class="section-title">Tasks — this week</div>`;
-
-  // Day nav
-  html+=`<div class="habit-day-nav">`;
-  DAYS.forEach((dk,i)=>{
-    const d=new Date(wkMon);d.setDate(wkMon.getDate()+i);
-    const ds=dkey(d);
-    const isToday=ds===todayStr,isActive=ds===activeDate;
-    html+=`<button class="hday-btn${isActive?' active':''}${isToday&&!isActive?' today':''}" onclick="window._tasksActiveDateStr='${ds}';renderTasks()">${DNAMES[dk].slice(0,3).toUpperCase()} ${d.getDate()}</button>`;
-  });
-  html+=`</div>`;
-
   if(!accessToken){
-    html+=`<div class="connect-screen" style="padding:40px 20px">
+    document.getElementById('main').innerHTML=`<div class="connect-screen">
       <h2>Connect Google</h2>
       <p>Connect your Google account to pull tasks from Google Calendar.</p>
       <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
     </div>`;
-    document.getElementById('main').innerHTML=html;
     return;
   }
 
-  // Show loading then load events
-  html+=`<div id="tasks-body"><div class="no-data" style="opacity:.5">Loading calendar…</div></div>`;
-  document.getElementById('main').innerHTML=html;
+  document.getElementById('main').innerHTML=`
+    <div class="section-title">Tasks</div>
+    <div id="tasks-body"><div class="no-data" style="opacity:.5">Loading…</div></div>`;
 
   if(!calendarEventsCache){
     calendarEventsCache=await fetchCalendarEvents();
   }
 
   const done=getTasksDone();
-  const activeDateObj=new Date(activeDate+'T00:00:00');
-  const dayKey=DAYS[JS2IDX[activeDateObj.getDay()]];
-  const dateLabel=activeDateObj.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
+  const all=calendarEventsCache||[];
 
-  let bodyHtml=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:1px;margin-bottom:14px;color:var(--text-mid)">${dateLabel}</div>`;
-
-  const events=(calendarEventsCache||[]).filter(ev=>{
-    const start=ev.start?.date||ev.start?.dateTime;
-    if(!start)return false;
-    const evDate=start.slice(0,10);
-    return evDate===activeDate;
-  }).sort((a,b)=>{
-    // Google Tasks (no dateTime) go to bottom, calendar events sorted by time
-    const aIsTask=!!a._isGTask, bIsTask=!!b._isGTask;
-    if(aIsTask!==bIsTask)return aIsTask?1:-1;
-    const sa=a.start?.dateTime||a.start?.date||'';
-    const sb=b.start?.dateTime||b.start?.date||'';
-    return sa.localeCompare(sb);
+  // Bucket tasks
+  const overdue=[],today=[],upcoming=[],noDate=[];
+  all.forEach(ev=>{
+    const dueStr=ev.start?.date||ev.start?.dateTime?.slice(0,10)||null;
+    if(!dueStr){noDate.push(ev);return;}
+    if(dueStr<todayStr)overdue.push({...ev,_dueStr:dueStr});
+    else if(dueStr===todayStr)today.push({...ev,_dueStr:dueStr});
+    else upcoming.push({...ev,_dueStr:dueStr});
   });
+  overdue.sort((a,b)=>a._dueStr.localeCompare(b._dueStr));
+  upcoming.sort((a,b)=>a._dueStr.localeCompare(b._dueStr));
 
-  // Undated Google Tasks — only show on today's view
-  const undatedTasks=activeDate===todayStr
-    ?(calendarEventsCache||[]).filter(ev=>ev._isGTask&&!ev.start?.date)
-    :[];
+  const totalDone=Object.values(done).flat().length;
+  const totalAll=overdue.length+today.length+upcoming.length+noDate.length;
 
-  const totalItems=events.length+undatedTasks.length;
-
-  if(!totalItems){
-    const totalThisWeek=(calendarEventsCache||[]).filter(ev=>!ev._isGTask||ev.start?.date).length;
-    bodyHtml+=`<div class="no-data">No events or tasks on this day.<br><span style="font-size:9px;color:var(--text-dim);line-height:2">${totalThisWeek>0?`${totalThisWeek} item${totalThisWeek!==1?'s':''} found elsewhere this week — check other days above.`:'No events found this week.<br>Tasks pulls from Google Calendar (all except "Habits") and Google Tasks.<br>Make sure Tasks API is enabled and tasks have a due date to appear here.'}</span></div>`;
-  } else {
-    const doneIds=done[activeDate]||[];
-
-    // Dated events + dated tasks
-    if(events.length){
-      bodyHtml+=`<div style="display:flex;flex-direction:column;gap:4px">`;
-      events.forEach(ev=>{
-        const isDone=doneIds.includes(ev.id);
-        const startDT=ev.start?.dateTime?new Date(ev.start.dateTime):null;
-        const timeStr=startDT?startDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}):(ev._isGTask?'Task':'All day');
-        const endDT=ev.end?.dateTime?new Date(ev.end.dateTime):null;
-        const endStr=endDT?' – '+endDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}):'';
-        bodyHtml+=`<div class="task-row${isDone?' done':''}" onclick="toggleTaskDone('${activeDate}','${ev.id.replace(/'/g,"\\'")}')">
-          <div class="task-check">${isDone?'✓':''}</div>
-          <div class="task-time" style="font-size:9px">${timeStr}${endStr}</div>
-          <div class="task-label">${ev.summary}</div>
-          <div style="font-size:8px;color:var(--text-dim);flex-shrink:0;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev._calName}</div>
-        </div>`;
-      });
-      bodyHtml+=`</div>`;
-    }
-
-    // Undated tasks section — only on today
-    if(undatedTasks.length){
-      bodyHtml+=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 8px">No due date</div>`;
-      bodyHtml+=`<div style="display:flex;flex-direction:column;gap:4px">`;
-      undatedTasks.forEach(ev=>{
-        const isDone=doneIds.includes(ev.id);
-        bodyHtml+=`<div class="task-row${isDone?' done':''}" onclick="toggleTaskDone('${activeDate}','${ev.id.replace(/'/g,"\\'")}')">
-          <div class="task-check">${isDone?'✓':''}</div>
-          <div class="task-time" style="font-size:9px;color:var(--text-dim)">—</div>
-          <div class="task-label">${ev.summary}</div>
-          <div style="font-size:8px;color:var(--text-dim);flex-shrink:0;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev._calName}</div>
-        </div>`;
-      });
-      bodyHtml+=`</div>`;
-    }
-
-    const doneCount=doneIds.filter(id=>[...events,...undatedTasks].some(ev=>ev.id===id)).length;
-    bodyHtml=`<div style="font-size:10px;color:var(--text-dim);margin-bottom:12px">${doneCount}/${totalItems} done${undatedTasks.length&&activeDate===todayStr?' · '+undatedTasks.length+' undated':''}</div>`+bodyHtml;
+  function fmtDue(dueStr){
+    const d=new Date(dueStr+'T00:00:00');
+    return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+  }
+  function daysDiff(dueStr){
+    const d=new Date(dueStr+'T00:00:00'),t=new Date(todayStr+'T00:00:00');
+    return Math.round((t-d)/864e5);
   }
 
-  // Refresh button
-  bodyHtml+=`<button onclick="calendarEventsCache=null;renderTasks()" style="margin-top:16px;padding:7px 14px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.3);color:var(--accent);border-radius:5px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer">Refresh calendar + tasks</button>`;
+  function taskRow(ev,bucketDateStr,isOverdue){
+    const isDone=(done[bucketDateStr]||[]).includes(ev.id);
+    const startDT=ev.start?.dateTime?new Date(ev.start.dateTime):null;
+    const timeStr=startDT?startDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}):null;
+    const dueLine=ev._dueStr
+      ?(isOverdue
+          ?`<span style="color:rgba(239,68,68,0.85);font-weight:600">${daysDiff(ev._dueStr)}d overdue · ${fmtDue(ev._dueStr)}</span>`
+          :`<span style="color:var(--text-dim)">${fmtDue(ev._dueStr)}${timeStr?' · '+timeStr:''}</span>`)
+      :`<span style="color:var(--text-dim)">No due date</span>`;
+    const leftBorder=isOverdue?'rgba(239,68,68,0.7)':'var(--border)';
+    const bgRow=isOverdue&&!isDone?'rgba(239,68,68,0.05)':'';
+    return`<div class="task-row${isDone?' done':''}" style="${bgRow?'background:'+bgRow+';':''} border-left-color:${leftBorder}"
+        onclick="toggleTaskDone('${bucketDateStr}','${ev.id.replace(/'/g,"\\'")}')">
+      <div class="task-check">${isDone?'✓':''}</div>
+      <div style="flex:1;min-width:0">
+        <div class="task-label" style="white-space:normal;word-break:break-word">${ev.summary}</div>
+        <div style="font-size:9px;margin-top:3px">${dueLine}</div>
+      </div>
+      <div style="font-size:8px;color:var(--text-dim);flex-shrink:0;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right">${ev._calName||''}</div>
+    </div>`;
+  }
 
-  const tasksBody=document.getElementById('tasks-body');
-  if(tasksBody)tasksBody.innerHTML=bodyHtml;
+  function sectionHdr(label,count,col){
+    return`<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:20px 0 8px;color:${col||'var(--text-mid)'};">${label} <span style="font-size:10px;opacity:.6">(${count})</span></div>`;
+  }
+
+  let bodyHtml='';
+
+  if(!totalAll){
+    bodyHtml=`<div class="no-data">No tasks or events found.<br><span style="font-size:9px;color:var(--text-dim);line-height:2">Pulls from Google Calendar (excluding Habits) and Google Tasks.<br>Make sure Tasks API is enabled in Google Cloud Console.</span></div>`;
+  } else {
+    // Summary
+    const doneToday=(done[todayStr]||[]).length;
+    const totalToday=today.length;
+    bodyHtml+=`<div style="font-size:10px;color:var(--text-dim);margin-bottom:4px">${overdue.length} overdue · ${totalToday} today · ${upcoming.length} upcoming · ${noDate.length} no date</div>`;
+
+    if(overdue.length){
+      bodyHtml+=sectionHdr('⚠ Overdue',overdue.length,'rgba(239,68,68,0.85)');
+      bodyHtml+=`<div style="display:flex;flex-direction:column;gap:4px">`;
+      overdue.forEach(ev=>bodyHtml+=taskRow(ev,ev._dueStr,true));
+      bodyHtml+=`</div>`;
+    }
+    if(today.length){
+      bodyHtml+=sectionHdr('Today',today.length,'var(--accent)');
+      bodyHtml+=`<div style="display:flex;flex-direction:column;gap:4px">`;
+      today.forEach(ev=>bodyHtml+=taskRow(ev,todayStr,false));
+      bodyHtml+=`</div>`;
+    }
+    if(upcoming.length){
+      bodyHtml+=sectionHdr('Upcoming',upcoming.length,'var(--text-mid)');
+      bodyHtml+=`<div style="display:flex;flex-direction:column;gap:4px">`;
+      upcoming.forEach(ev=>bodyHtml+=taskRow(ev,ev._dueStr,false));
+      bodyHtml+=`</div>`;
+    }
+    if(noDate.length){
+      bodyHtml+=sectionHdr('No due date',noDate.length,'var(--text-dim)');
+      bodyHtml+=`<div style="display:flex;flex-direction:column;gap:4px">`;
+      noDate.forEach(ev=>bodyHtml+=taskRow(ev,todayStr,false));
+      bodyHtml+=`</div>`;
+    }
+  }
+
+  bodyHtml+=`<button onclick="calendarEventsCache=null;renderTasks()" style="margin-top:20px;padding:7px 14px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.3);color:var(--accent);border-radius:5px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer">↻ Refresh tasks</button>`;
+
+  const tb=document.getElementById('tasks-body');
+  if(tb)tb.innerHTML=bodyHtml;
 }
 
-init();
+// ─── CUSTOM GOALS SHEET BACKUP ───────────────────────────────────────────────
+// Backs up goal definitions (name/target/unit) to Goals_Config tab so they
+// survive localStorage clears. Called on every save/delete.
+const GOALS_CFG_TAB='Goals_Config';
+
+async function customGoalsSheetBackup(){
+  if(!accessToken)return;
+  const goals=getCustomGoals();
+  const rows=[['id','category','name','target','unit'],...goals.map(g=>[g.id,g.category,g.name,g.target,g.unit])];
+  try{
+    await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent(GOALS_CFG_TAB+'!A:E')}:clear`,'POST',{});
+    await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent(GOALS_CFG_TAB+'!A1')}?valueInputOption=RAW`,'PUT',{values:rows});
+  }catch(e){console.warn('Goals_Config backup failed:',e);}
+}
+
+async function customGoalsSheetRestore(){
+  if(!accessToken)return;
+  try{
+    const data=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent(GOALS_CFG_TAB+'!A:E')}`);
+    const rows=(data.values||[]).slice(1).filter(r=>r[0]&&r[1]&&r[2]);
+    if(!rows.length)return;
+    const existing=getCustomGoals();
+    const existingIds=new Set(existing.map(g=>g.id));
+    let added=0;
+    rows.forEach(r=>{
+      if(!existingIds.has(r[0])){
+        existing.push({id:r[0],category:r[1],name:r[2],target:parseFloat(r[3])||0,unit:r[4]||''});
+        added++;
+      }
+    });
+    if(added>0){saveCustomGoals(existing);showToast(`${added} goal def${added!==1?'s':''} restored from Sheets ✓`,'ok');}
+  }catch(e){console.warn('Goals_Config restore failed:',e);}
+}
+
+// Also restore custom logs from Goals_Custom sheet
+async function customLogsSheetRestore(){
+  if(!accessToken)return;
+  try{
+    const data=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Custom!A:E')}`);
+    const rows=(data.values||[]).filter(r=>isValidDateStr(r[0])&&r[1]&&r[4]);
+    if(!rows.length)return;
+    const logs=getCustomLogs();
+    let added=0;
+    rows.forEach(r=>{
+      const id=r[1],val=parseFloat(r[4]);
+      if(!id||isNaN(val))return;
+      if(!logs[id])logs[id]=[];
+      const exists=logs[id].some(e=>e.date===r[0]&&e.value===val);
+      if(!exists){logs[id].push({date:r[0],value:val});added++;}
+    });
+    if(added>0){saveCustomLogs(logs);showToast(`${added} custom log entries restored`,'ok');}
+  }catch(e){console.warn('Goals_Custom restore failed:',e);}
+}
+
+// ─── CALORIE TRACKER (STUB) ───────────────────────────────────────────────────
+function renderCalories(){
+  document.getElementById('main').innerHTML=`
+    <div class="section-title">Calorie Tracker</div>
+    <div class="no-data" style="padding:48px 20px;text-align:center">
+      <strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;color:var(--text-mid);margin-bottom:12px">Coming Soon</strong>
+      <span style="font-size:11px;color:var(--text-dim);line-height:2">
+        This tab will track daily calorie intake.<br>
+        Tap a food item → calories auto-added.<br>
+        See daily total vs. your target.
+      </span>
+    </div>`;
+}
+
 </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const CACHE = 'gps-v17';
+const CACHE = 'gps-v19';
 
 const ASSETS = [
   './',
@@ -33,7 +33,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Always go network-first for Google APIs (Calendar/Sheets later)
+  // Always go network-first for Google APIs (Calendar/Sheets/Tasks)
   if (url.hostname.includes('googleapis.com') || url.hostname.includes('accounts.google.com')) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))

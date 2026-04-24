@@ -15,10 +15,10 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@400;600;700;800&display=swap');
 :root{
-  --bg:#07070e;--surface:#0f0f1a;--surface2:#14141e;--border:#1c1c2a;
+  --bg:#0a0a0c;--surface:#111115;--surface2:#18181e;--border:#252530;
   --accent:#f59e0b;--accent-dim:rgba(245,158,11,0.12);
   --text:#dddde8;--text-dim:#55556a;--text-mid:#9090a8;
-  --work:#7c3aed;   --work-dim:rgba(124,58,237,0.12);
+  --work:#4285f4;   --work-dim:rgba(66,133,244,0.12);
   --money:#0f9d58;  --money-dim:rgba(15,157,88,0.12);
   --rel:#e91e8c;    --rel-dim:rgba(233,30,140,0.12);
   --health:#33b679; --health-dim:rgba(51,182,121,0.12);
@@ -26,14 +26,13 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 90% 60% at 5% 0%,rgba(124,58,237,0.06) 0%,transparent 55%),radial-gradient(ellipse 70% 55% at 95% 100%,rgba(245,158,11,0.06) 0%,transparent 55%),radial-gradient(ellipse 50% 45% at 50% 50%,rgba(233,30,140,0.03) 0%,transparent 60%)}
-.header{background:rgba(7,7,14,0.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.055);padding:0 20px;position:sticky;top:0;z-index:100}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;position:sticky;top:0;z-index:100}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:14px 0 12px;border-bottom:1px solid var(--border)}
-.header-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(120deg,#e0e0f0 30%,#f59e0b 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
 .header-right{display:flex;align-items:center;gap:10px}
 .header-date{font-size:10px;color:var(--text-dim)}
 .btn-connect{padding:4px 10px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.3);color:var(--accent);border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s}
-.btn-connect:hover{background:rgba(245,158,11,0.15)}
+.btn-connect:hover{background:rgba(245,158,11,0.2)}
 .btn-disconnect{padding:4px 10px;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s}
 .btn-disconnect:hover{border-color:rgba(239,68,68,0.4);color:rgba(239,68,68,0.7)}
 .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--health);flex-shrink:0}
@@ -44,10 +43,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .tabs::-webkit-scrollbar{display:none}
 .tab{padding:11px 14px 9px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;position:relative}
 .tab:hover{color:var(--text-mid)}
-.tab.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 14px rgba(245,158,11,0.6)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tab.today-tab::after{content:'';position:absolute;top:9px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .tab.stats-tab{margin-left:auto;border-left:1px solid var(--border);padding-left:18px}
-.main{max-width:860px;margin:0 auto;padding:20px 20px 80px;position:relative;z-index:1}
+.main{max-width:860px;margin:0 auto;padding:20px 20px 80px}
 /* connect screen */
 .connect-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:20px}
 .connect-screen h2{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;letter-spacing:1px;color:var(--text)}
@@ -94,7 +93,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .task-meta{display:flex;gap:6px;align-items:center;flex-shrink:0}
 .task-goal-tag{font-size:8px;padding:2px 6px;border-radius:3px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
 .task-dur{font-size:10px;color:var(--text-dim)}
-.tag-work{background:var(--work-dim);color:var(--work);border:1px solid rgba(124,58,237,0.25)}
+.tag-work{background:var(--work-dim);color:var(--work);border:1px solid rgba(66,133,244,0.25)}
 .tag-money{background:var(--money-dim);color:var(--money);border:1px solid rgba(15,157,88,0.25)}
 .tag-relationship{background:var(--rel-dim);color:var(--rel);border:1px solid rgba(233,30,140,0.25)}
 .tag-health{background:var(--health-dim);color:var(--health);border:1px solid rgba(51,182,121,0.25)}
@@ -104,7 +103,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 /* stats */
 .section-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-mid);margin-bottom:14px}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px}
-.stat-card{background:linear-gradient(145deg,rgba(15,15,24,0.98),rgba(9,9,16,0.98));border:1px solid rgba(255,255,255,0.055);border-radius:9px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px}
 .stat-label{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 .stat-value{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--accent);line-height:1}
 .stat-sub{font-size:10px;color:var(--text-dim);margin-top:5px}
@@ -128,7 +127,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .bar-chart{display:flex;gap:8px;align-items:flex-end;height:90px;padding:0 2px;margin-bottom:6px}
 .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%}
 .bar-pct-lbl{font-size:9px;color:var(--text-dim);min-height:12px}
-.bar{width:100%;border-radius:3px 3px 0 0;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-bottom:none;min-height:2px}
+.bar{width:100%;border-radius:3px 3px 0 0;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);border-bottom:none;min-height:2px}
 .bar.current{background:var(--accent);border-color:var(--accent)}
 .bar-lbl{font-size:9px;color:var(--text-dim)}
 .quarter-wrap{margin-bottom:28px}
@@ -148,7 +147,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .c-rel{color:var(--rel)!important}.c-health{color:var(--health)!important}.c-spirit{color:var(--spirit)!important}
 .actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
 .btn-export{padding:9px 18px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.3);color:var(--accent);border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s}
-.btn-export:hover{background:rgba(245,158,11,0.15)}
+.btn-export:hover{background:rgba(245,158,11,0.2)}
 .btn-danger{padding:9px 18px;background:none;border:1px solid rgba(239,68,68,0.25);color:rgba(239,68,68,0.7);border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s}
 .btn-danger:hover{border-color:rgba(239,68,68,0.5);color:#ef4444}
 .no-data{padding:32px;text-align:center;color:var(--text-dim);font-size:12px;background:var(--surface);border-radius:9px;border:1px solid var(--border)}
@@ -174,8 +173,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .habit-summary-num{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;line-height:1}
 .habit-summary-lbl{font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-top:4px}
 .habit-group-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:16px 0 6px;padding-left:2px}
-.habit-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border-left:3px solid var(--border);background:linear-gradient(135deg,rgba(15,15,24,0.9),rgba(10,10,17,0.9));margin-bottom:3px;cursor:pointer;transition:all .18s;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
-.habit-row:hover{background:rgba(22,22,32,0.95);transform:translateX(3px)}
+.habit-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border-left:3px solid var(--border);background:var(--surface);margin-bottom:3px;cursor:pointer;transition:all .12s;user-select:none}
+.habit-row:hover{background:var(--surface2)}
 .habit-row.state-did{border-left-color:#33b679;background:rgba(51,182,121,0.07)}
 .habit-row.state-delayed{border-left-color:#f59e0b;background:rgba(245,158,11,0.07)}
 .habit-row.state-didnot{border-left-color:rgba(239,68,68,0.7);background:rgba(239,68,68,0.05)}
@@ -194,14 +193,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 
 /* ── HABIT DASHBOARD ── */
 .hdash-top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
-.hdash-card{background:linear-gradient(145deg,rgba(15,15,24,0.98),rgba(9,9,16,0.98));border:1px solid rgba(255,255,255,0.055);border-radius:9px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+.hdash-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px}
 .hdash-card-title{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
 .hdash-big-num{font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:800;color:var(--accent);line-height:1}
 .hdash-big-sub{font-size:10px;color:var(--text-dim);margin-top:5px}
 .streak-list{display:flex;flex-direction:column;gap:7px}
 .streak-item{display:flex;align-items:center;gap:6px}
 .streak-label{flex:1;font-size:10px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.streak-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#33b679;flex-shrink:0;min-width:26px;text-align:right}
+.streak-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--accent);flex-shrink:0;min-width:26px;text-align:right}
 .streak-badge{font-size:11px;flex-shrink:0}
 .hdash-grid-outer{overflow-x:auto;margin-bottom:24px;-webkit-overflow-scrolling:touch}
 .hdash-grid-inner{display:inline-flex;flex-direction:column;min-width:max-content}
@@ -220,68 +219,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .hdash-legend-item{display:flex;align-items:center;gap:5px}
 .hdash-legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 .hdash-legend-lbl{font-size:9px;color:var(--text-dim)}
-
-/* ── MANAGE TAB ── */
-.manage-btn{padding:4px 10px;border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:none;color:var(--text-dim)}
-.manage-btn:hover{border-color:var(--text-mid);color:var(--text-mid)}
-.manage-btn.danger:hover{border-color:rgba(239,68,68,0.5);color:rgba(239,68,68,0.8)}
-.manage-form{background:var(--surface);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:18px;margin-bottom:12px}
-.manage-form-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;color:var(--accent);margin-bottom:14px}
-.manage-field{margin-bottom:12px}
-.manage-field label{display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
-.manage-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none}
-.manage-field input:focus{border-color:rgba(245,158,11,0.4)}
-.manage-form-btns{display:flex;gap:8px;margin-top:16px}
-.manage-save-btn{flex:1;padding:9px;background:var(--accent);border:none;border-radius:6px;color:#000;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer}
-.manage-cancel-btn{padding:9px 16px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer}
-.manage-cat-section{background:linear-gradient(145deg,rgba(15,15,24,0.98),rgba(9,9,16,0.98));border:1px solid rgba(255,255,255,0.055);border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
-.manage-cat-header{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;margin-bottom:12px}
-.manage-goal-row{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
-.manage-goal-label{font-size:12px;color:var(--text);flex:1}
-.manage-goal-meta{font-size:9px;color:var(--text-dim);margin-top:2px}
-.manage-builtin-row{padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
-.manage-builtin-label{font-size:10px;color:var(--text-dim);letter-spacing:.5px;margin-bottom:7px}
-.manage-target-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim)}
-.manage-target-input{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none;width:76px}
-.manage-target-input:focus{border-color:rgba(245,158,11,0.4)}
-.manage-add-btn{width:100%;padding:8px;margin-top:6px;background:none;border:1px dashed var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s}
-.manage-add-btn:hover{border-color:rgba(245,158,11,0.4);color:var(--accent)}
-
-/* ── GOALS TAB ── */
-.goals-section-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 8px}
-.goal-card{background:linear-gradient(145deg,rgba(15,15,24,0.98),rgba(9,9,16,0.98));border:1px solid rgba(255,255,255,0.055);border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 4px 24px rgba(0,0,0,0.6),0 1px 0 rgba(255,255,255,0.035) inset;transition:transform .2s ease,box-shadow .2s ease}
-.goal-card:not(.placeholder):hover{transform:translateY(-3px);box-shadow:0 10px 36px rgba(0,0,0,0.7),0 1px 0 rgba(255,255,255,0.05) inset}
-.goal-card.placeholder{opacity:.5}
-.goal-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.goal-card-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;color:var(--text)}
-.goal-metric-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--text);line-height:1}
-.goal-metric-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin:4px 0}
-.goal-bar-outer{height:6px;background:rgba(255,255,255,0.055);border-radius:3px;margin:8px 0 4px}
-.goal-bar-inner{height:6px;border-radius:3px;transition:width .55s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
-.goal-bar-inner::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.2) 50%,transparent 100%);transform:translateX(-100%);animation:barShine 2.8s ease-in-out infinite}
-@keyframes barShine{0%,100%{transform:translateX(-100%)}60%{transform:translateX(200%)}}
-@keyframes pageEnter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-#main.enter{animation:pageEnter .24s cubic-bezier(.22,1,.36,1) both}
-@keyframes ambientDrift{0%,100%{opacity:.7}50%{opacity:1}}
-body::before{animation:ambientDrift 9s ease-in-out infinite}
-.goal-trend{font-size:9px;padding:2px 7px;border-radius:3px;display:inline-block;margin-top:4px;font-weight:500}
-.goal-trend.good{background:rgba(51,182,121,0.15);color:rgba(51,182,121,0.9)}
-.goal-trend.warn{background:rgba(245,158,11,0.15);color:rgba(245,158,11,0.9)}
-.goal-trend.bad{background:rgba(239,68,68,0.15);color:rgba(239,68,68,0.8)}
-.goal-input-row{display:flex;gap:8px;margin-top:12px}
-.goal-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;-moz-appearance:textfield}
-.goal-input::-webkit-outer-spin-button,.goal-input::-webkit-inner-spin-button{-webkit-appearance:none}
-.goal-input:focus{border-color:rgba(245,158,11,0.4)}
-.goal-input-btn{padding:7px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:5px;color:#000;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 12px rgba(245,158,11,0.4)}
-.goal-log-list{margin-top:10px}
-.goal-log-item{display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);padding:4px 0;border-bottom:1px solid var(--border)}
-.goal-log-item:last-child{border-bottom:none}
-.goal-log-val{color:var(--text-mid);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600}
-.goal-cat-health{border-left:3px solid rgba(51,182,121,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(51,182,121,0.13)!important}
-.goal-cat-money{border-left:3px solid rgba(15,157,88,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(15,157,88,0.13)!important}
-.goal-cat-work{border-left:3px solid rgba(66,133,244,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(66,133,244,0.13)!important}
-.goal-cat-rel{border-left:3px solid rgba(233,30,140,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(233,30,140,0.13)!important}
-.goal-cat-faith{border-left:3px solid rgba(246,191,38,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(246,191,38,0.13)!important}
 </style>
 </head>
 <body>
@@ -296,12 +233,16 @@ body::before{animation:ambientDrift 9s ease-in-out infinite}
     </div>
   </div>
   <div class="tabs">
-    <button class="tab" data-day="goals">GOALS</button>
+    <button class="tab" data-day="mon">MON</button>
+    <button class="tab" data-day="tue">TUE</button>
+    <button class="tab" data-day="wed">WED</button>
+    <button class="tab" data-day="thu">THU</button>
+    <button class="tab" data-day="fri">FRI</button>
+    <button class="tab" data-day="sat">SAT</button>
+    <button class="tab" data-day="sun">SUN</button>
     <button class="tab" data-day="habits">HABITS</button>
     <button class="tab" data-day="habitdash">DASH ✦</button>
-    <button class="tab" data-day="tasks">TASKS</button>
-    <button class="tab" data-day="manage">MANAGE ⚙</button>
-    <button class="tab stats-tab" data-day="history">HISTORY ▸</button>
+    <button class="tab stats-tab" data-day="stats">STATS ▸</button>
   </div>
 </div>
 <div class="main" id="main"></div>
@@ -310,67 +251,63 @@ body::before{animation:ambientDrift 9s ease-in-out infinite}
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const CLIENT_ID  = '1032987809909-jo6c8a1sgncp4si85dhavbm96idr08cc.apps.googleusercontent.com';
-const SCOPES     = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/tasks';
+const SCOPES     = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/spreadsheets';
 const SHEET_ID   = '1909BqpI0IUDqYbFKPFyh2TDc99f1nUMuAgpp8MhXhrg';
+const SHEET_TAB  = 'Tracking';
+const SHEET_COLS = 'A:F'; // Date | Day | CheckedIDs | Total | GoalTotals | GoalDone
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const DAYS   = ['mon','tue','wed','thu','fri','sat','sun'];
 const DNAMES = {mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
 const JS2IDX = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
 const Q_START = new Date('2026-04-01');
-const Q_END   = new Date('2026-06-30');
+const Q_END   = new Date('2026-08-31');
+
+// Goal config — key must exactly match your Google Calendar name (lowercase)
+const GOALS = {
+  work:        {label:'Work',     color:'#4285f4', cls:'c-work'},
+  money:       {label:'Money',    color:'#0f9d58', cls:'c-money'},
+  relationship:{label:'Marriage', color:'#e91e8c', cls:'c-rel'},
+  health:      {label:'Health',   color:'#33b679', cls:'c-health'},
+  spirituality:{label:'Faith',    color:'#f6bf26', cls:'c-spirit'},
+};
+const GOAL_KEYS = Object.keys(GOALS);
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
+let tasks         = {mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
 let activeDay     = null;
+let checked       = [];
+let activeDateStr = null;
 let accessToken   = null;
 let tokenClient   = null;
+let calendarIds   = {}; // goal key → calendar id
+let sheetsRowMap  = {}; // dateStr → sheet row number (1-indexed)
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
+const SK = 'gps_v1';
 const TK = 'gps_token';
 
-// ── Goals storage keys ──
-const GK_HEALTH  = 'gps_goals_health';
-const GK_MONEY   = 'gps_goals_money';
-const GK_FAITH   = 'gps_goals_faith';
-const GK_TARGETS = 'gps_goals_targets';
-const DEFAULT_TARGETS = {health:68, savings:2500, gold:300, faith:90};
-const GK_CUSTOM_DEFS = 'gps_goals_custom';
-const GK_CUSTOM_LOGS = 'gps_goals_custom_logs';
-function getCustomGoals(){try{return JSON.parse(localStorage.getItem(GK_CUSTOM_DEFS)||'[]');}catch{return[];}}
-function saveCustomGoals(g){localStorage.setItem(GK_CUSTOM_DEFS,JSON.stringify(g));}
-function getCustomLogs(){try{return JSON.parse(localStorage.getItem(GK_CUSTOM_LOGS)||'{}');}catch{return{};}}
-function saveCustomLogs(l){localStorage.setItem(GK_CUSTOM_LOGS,JSON.stringify(l));}
-
-function getGoalsTargets(){try{return {...DEFAULT_TARGETS,...JSON.parse(localStorage.getItem(GK_TARGETS)||'{}')};}catch{return{...DEFAULT_TARGETS};}}
-function saveGoalsTargets(t){localStorage.setItem(GK_TARGETS,JSON.stringify(t));}
-function getGoalsHealth(){try{return JSON.parse(localStorage.getItem(GK_HEALTH)||'[]');}catch{return[];}}
-function getGoalsMoney(){try{return JSON.parse(localStorage.getItem(GK_MONEY)||'[]');}catch{return[];}}
-function getGoalsFaith(){try{return JSON.parse(localStorage.getItem(GK_FAITH)||'[]');}catch{return[];}}
-
-async function goalsSheetAppend(sheetName,row){
-  if(!accessToken)return;
-  try{
-    await apiWrite(
-      `${SHEETS_BASE}/values/${encodeURIComponent(sheetName+'!A:Z')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
-      'POST',{values:[row]}
-    );
-  }catch(e){console.warn(sheetName+' write failed:',e);}
-}
-async function goalsTargetsSheetSave(t){
-  if(!accessToken)return;
-  const rows=[['quarter','goal','target'],
-    ['Apr-Jun 2026','health',t.health],
-    ['Apr-Jun 2026','savings',t.savings],
-    ['Apr-Jun 2026','gold',t.gold],
-    ['Apr-Jun 2026','faith',t.faith],
-  ];
-  try{
-    await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Targets!A:C')}:clear`,'POST',{});
-    await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Targets!A1')}?valueInputOption=RAW`,'PUT',{values:rows});
-  }catch(e){console.warn('Goals_Targets write failed:',e);}
-}
-
+function getStore(){try{return JSON.parse(localStorage.getItem(SK)||'{}')}catch{return{}}}
+function saveStore(s){localStorage.setItem(SK,JSON.stringify(s))}
 function dkey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+
+function recentDateFor(dn){
+  const t=new Date(),ti=JS2IDX[t.getDay()],di=DAYS.indexOf(dn);
+  let df=ti-di;if(df<0)df+=7;
+  const d=new Date(t);d.setDate(t.getDate()-df);return dkey(d);
+}
+function getChecked(ds){return getStore()[ds]?.checked||[]}
+function setChecked(ds,dn,c){
+  const s=getStore();
+  if(!s[ds])s[ds]={};
+  s[ds].checked=c; s[ds].total=tasks[dn].length; s[ds].day=dn;
+  const gT={},gD={};
+  tasks[dn].forEach(t=>{gT[t.goal]=(gT[t.goal]||0)+1});
+  c.forEach(id=>{const t=tasks[dn].find(x=>x.id===id);if(t)gD[t.goal]=(gD[t.goal]||0)+1});
+  s[ds].goalTotals=gT; s[ds].goalDone=gD;
+  saveStore(s);
+  sheetsWrite(ds,s[ds]).catch(err=>console.warn('Sheets write failed:',err));
+}
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 function getSavedToken(){
@@ -413,8 +350,10 @@ function connectCalendar(){
 function disconnectCalendar(){
   if(accessToken) google.accounts.oauth2.revoke(accessToken);
   clearToken();
+  tasks={mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
+  calendarIds={};
   setSyncStatus('off');
-  switchDay(activeDay);
+  switchDay(activeDay==='stats'?activeDay:activeDay);
 }
 
 // ─── CALENDAR FETCH ───────────────────────────────────────────────────────────
@@ -439,6 +378,78 @@ async function apiWrite(url,method,body){
 // ─── SHEETS ───────────────────────────────────────────────────────────────────
 const SHEETS_BASE=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`;
 
+// Load all rows from Sheets into localStorage and build row map
+async function sheetsLoad(){
+  try{
+    const data=await apiFetch(`${SHEETS_BASE}/values/${SHEET_TAB}!${SHEET_COLS}`);
+    const rows=data.values||[];
+    sheetsRowMap={};
+    if(rows.length===0){
+      // First time: write header row
+      await apiWrite(
+        `${SHEETS_BASE}/values/${SHEET_TAB}!A1:F1?valueInputOption=RAW`,
+        'PUT',
+        {values:[['Date','Day','CheckedIDs','Total','GoalTotals','GoalDone']]}
+      );
+      return;
+    }
+    // Skip header row (row 0), process data rows
+    const store=getStore();
+    rows.forEach((row,i)=>{
+      if(i===0) return; // header
+      const ds=row[0];
+      if(!ds) return;
+      sheetsRowMap[ds]=i+1; // 1-indexed sheet row
+      // Sync Sheets data into localStorage (Sheets is source of truth)
+      try{
+        store[ds]={
+          day:row[1]||'',
+          checked:(row[2]||'').split(',').filter(Boolean),
+          total:parseInt(row[3])||0,
+          goalTotals:row[4]?JSON.parse(row[4]):{},
+          goalDone:row[5]?JSON.parse(row[5]):{},
+        };
+      }catch(e){console.warn('Row parse error:',e)}
+    });
+    saveStore(store);
+  }catch(err){
+    console.warn('Sheets load failed — using localStorage:',err);
+    showToast('Sheets load: '+err.message,'err');
+  }
+}
+
+// Write one day's record to Sheets (update existing row or append new)
+async function sheetsWrite(ds,entry){
+  if(!accessToken) return;
+  const row=[
+    ds,
+    entry.day||'',
+    (entry.checked||[]).join(','),
+    String(entry.total||0),
+    JSON.stringify(entry.goalTotals||{}),
+    JSON.stringify(entry.goalDone||{}),
+  ];
+  try{
+    if(sheetsRowMap[ds]){
+      const r=sheetsRowMap[ds];
+      await apiWrite(
+        `${SHEETS_BASE}/values/${encodeURIComponent(SHEET_TAB+'!A'+r+':F'+r)}?valueInputOption=RAW`,
+        'PUT',{values:[row]}
+      );
+    } else {
+      const res=await apiWrite(
+        `${SHEETS_BASE}/values/${encodeURIComponent(SHEET_TAB+'!A:F')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        'POST',{values:[row]}
+      );
+      const match=(res.updates?.updatedRange||'').match(/(\d+):/);
+      if(match) sheetsRowMap[ds]=parseInt(match[1]);
+    }
+    showToast('Saved to Sheets','ok');
+  }catch(err){
+    showToast('Sheets: '+err.message,'err');
+  }
+}
+
 function showToast(msg,type){
   let t=document.getElementById('toast');
   if(!t){
@@ -455,61 +466,97 @@ function showToast(msg,type){
 async function loadCalendarData(){
   setSyncStatus('loading');
   try{
+    // 1. get calendar list, find matching calendars
     const list=await apiFetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=50');
+    calendarIds={};
+    list.items.forEach(cal=>{
+      const key=cal.summary.toLowerCase().trim();
+      if(GOALS[key]) calendarIds[key]=cal.id;
+    });
 
-    // Monday of current week
+    if(Object.keys(calendarIds).length===0){
+      setSyncStatus('error');
+      document.getElementById('main').innerHTML=`<div class="connect-screen">
+        <h2>No matching calendars found</h2>
+        <p>Make sure your calendars are named exactly:<br><strong>Work, Money, Relationship, Health, Spirituality</strong></p>
+        <button class="btn-connect-big" onclick="loadCalendarData()">Retry</button>
+      </div>`;
+      return;
+    }
+
+    // 2. fetch this week's events for each found calendar
     const now=new Date();
+    // Monday of current week
     const mon=new Date(now);
     mon.setDate(now.getDate()-JS2IDX[now.getDay()]);
     mon.setHours(0,0,0,0);
+    // Sunday = mon + 6 days end of day
     const sun=new Date(mon);
     sun.setDate(mon.getDate()+6);
     sun.setHours(23,59,59,999);
 
-    // Load Habits calendar — overrides hardcoded HABITS array when populated
-    const habitCal=list.items.find(c=>c.summary.toLowerCase().trim()==='habits');
-    if(habitCal){
-      const hSun2=new Date(sun);hSun2.setDate(sun.getDate()+7);
-      const hData=await apiFetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(habitCal.id)}/events`+
-        `?timeMin=${encodeURIComponent(mon.toISOString())}&timeMax=${encodeURIComponent(hSun2.toISOString())}`+
-        `&singleEvents=true&orderBy=startTime&maxResults=500`
+    const timeMin=mon.toISOString();
+    const timeMax=sun.toISOString();
+
+    // reset tasks
+    tasks={mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
+
+    // fetch all calendars in parallel
+    await Promise.all(Object.entries(calendarIds).map(async([goal,calId])=>{
+      const encoded=encodeURIComponent(calId);
+      const data=await apiFetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encoded}/events`+
+        `?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`+
+        `&singleEvents=true&orderBy=startTime&maxResults=250`
       );
-      const hEvents=hData.items||[];
-      if(hEvents.length>0){
-        const habitMap={};
-        hEvents.forEach(ev=>{
-          if(!ev.start||!ev.summary)return;
-          const isAllDay=!!ev.start.date;
-          const startDT=isAllDay?new Date(ev.start.date+'T00:00:00'):new Date(ev.start.dateTime);
-          const dayKey=DAYS[JS2IDX[startDT.getDay()]];
-          if(!dayKey)return;
-          const rawTime=isAllDay?'All day':startDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toLowerCase();
-          const label=ev.summary.trim();
-          const group=label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-          const key=group+'__'+rawTime;
-          if(!habitMap[key])habitMap[key]={id:key,label,time:rawTime,days:new Set(),group};
-          habitMap[key].days.add(dayKey);
+      (data.items||[]).forEach(ev=>{
+        if(!ev.start) return;
+        // all-day events have ev.start.date, timed events have ev.start.dateTime
+        const isAllDay=!!ev.start.date;
+        const startDT=isAllDay?new Date(ev.start.date+'T00:00:00'):new Date(ev.start.dateTime);
+        const endDT=isAllDay?new Date(ev.end.date+'T00:00:00'):new Date(ev.end.dateTime||ev.start.dateTime);
+
+        // which day of week?
+        const dayIdx=JS2IDX[startDT.getDay()]; // 0-6 → mon-sun index
+        const dayKey=DAYS[dayIdx];
+        if(!dayKey) return;
+
+        // format time
+        const timeStr=isAllDay?'All day':startDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true});
+
+        // duration
+        const diffMins=Math.round((endDT-startDT)/60000);
+        let durStr='';
+        if(!isAllDay && diffMins>0){
+          const h=Math.floor(diffMins/60),m=diffMins%60;
+          durStr=h&&m?`${h}h ${m}m`:h?`${h}h`:`${m}m`;
+        }
+
+        tasks[dayKey].push({
+          id: ev.id,
+          time: timeStr,
+          label: ev.summary||'(no title)',
+          dur: durStr,
+          goal: goal,
         });
-        const calHabits=Object.values(habitMap).map(h=>({
-          id:h.id,label:h.label,time:h.time,group:h.group,
-          days:h.days.size===7?'daily':[...h.days].sort((a,b)=>DAYS.indexOf(a)-DAYS.indexOf(b)),
-        }));
-        if(calHabits.length>0)HABITS=calHabits;
-      }
-    }
+      });
+    }));
+
+    // sort each day by start time
+    DAYS.forEach(d=>{
+      tasks[d].sort((a,b)=>{
+        if(a.time==='All day') return -1;
+        if(b.time==='All day') return 1;
+        return a.time.localeCompare(b.time);
+      });
+    });
 
     setSyncStatus('ok');
-    calendarEventsCache=null;
-    await restoreGoalsFromSheet();
 
     // refresh current view
-    if(activeDay==='history') renderHistory();
-    else if(activeDay==='goals') renderGoals();
-    else if(activeDay==='habits') renderHabits();
-    else if(activeDay==='habitdash') renderHabitDash();
-    else if(activeDay==='tasks') renderTasks();
-    else if(activeDay==='manage') renderManage();
+    activeDateStr=recentDateFor(activeDay);
+    checked=getChecked(activeDateStr);
+    if(activeDay==='stats') renderStats(); else renderDay();
 
   }catch(err){
     console.error('Calendar load failed:',err);
@@ -517,265 +564,23 @@ async function loadCalendarData(){
   }
 }
 
-// ── HabitsConfig Sheet helpers ──
-function habitToRow(h){
-  const days=Array.isArray(h.days)?h.days.join(','):h.days;
-  const flags=h.lastSundayOnly?'lastSundayOnly':'';
-  return [h.id,h.label,h.time,days,flags];
-}
-function rowToHabit(row){
-  const [id,label,time,daysStr,flags]=[row[0],row[1],row[2],row[3]||'',row[4]||''];
-  const days=daysStr==='daily'?'daily':daysStr.split(',').map(s=>s.trim()).filter(Boolean);
-  const h={id,label,time,days};
-  if(flags.includes('lastSundayOnly'))h.lastSundayOnly=true;
-  return h;
-}
-function slugify(label){
-  return label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-}
-const HABITS_CFG_TAB='HabitsConfig';
-async function habitsConfigSaveAll(){
-  const header=[['id','label','time','days','flags']];
-  const dataRows=HABITS.map(habitToRow);
-  await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent(HABITS_CFG_TAB+'!A:E')}:clear`,'POST',{});
-  await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent(HABITS_CFG_TAB+'!A1')}?valueInputOption=RAW`,'PUT',{values:[...header,...dataRows]});
-}
-
-// ── Manage Tab ──
-let manageGoalForm=null; // {category, editId} or null
-
-function renderManage(){
-  if(!accessToken){
-    document.getElementById('main').innerHTML=`<div class="connect-screen">
-      <h2>Not Connected</h2>
-      <p>Connect Google to manage your goals.</p>
-      <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
-    </div>`;
-    return;
-  }
-  const t=getGoalsTargets();
-  const customs=getCustomGoals();
-  const CATS=[
-    {key:'health',       label:'Health',       emoji:'💪', color:'var(--health)'},
-    {key:'money',        label:'Money',        emoji:'💰', color:'var(--money)'},
-    {key:'work',         label:'Work',         emoji:'💼', color:'var(--work)'},
-    {key:'relationship', label:'Relationship', emoji:'🤝', color:'var(--rel)'},
-    {key:'faith',        label:'Faith',        emoji:'🙏', color:'var(--spirit)'},
-  ];
-  let html=`<div class="section-title">Manage Goals</div>`;
-  CATS.forEach(cat=>{
-    html+=`<div class="manage-cat-section">
-      <div class="manage-cat-header" style="color:${cat.color}">${cat.emoji} ${cat.label}</div>`;
-    if(cat.key==='health'){
-      html+=`<div class="manage-builtin-row">
-        <div class="manage-builtin-label">WEIGHT — BUILT-IN</div>
-        <div class="manage-target-row"><span>Target</span>
-          <input id="tHealth" class="manage-target-input" type="number" step="0.1" value="${t.health}">
-          <span>kg</span><button class="manage-btn" onclick="saveTargets()">Save</button>
-        </div></div>`;
-    }
-    if(cat.key==='money'){
-      html+=`<div class="manage-builtin-row">
-        <div class="manage-builtin-label">SAVINGS — BUILT-IN</div>
-        <div class="manage-target-row"><span>Target</span>
-          <input id="tSavings" class="manage-target-input" type="number" step="1" value="${t.savings}">
-          <span>$/qtr</span><button class="manage-btn" onclick="saveTargets()">Save</button>
-        </div></div>
-      <div class="manage-builtin-row" style="margin-top:6px">
-        <div class="manage-builtin-label">GOLD — BUILT-IN</div>
-        <div class="manage-target-row"><span>Target</span>
-          <input id="tGold" class="manage-target-input" type="number" step="1" value="${t.gold}">
-          <span>$/qtr</span><button class="manage-btn" onclick="saveTargets()">Save</button>
-        </div></div>`;
-    }
-    if(cat.key==='faith'){
-      html+=`<div class="manage-builtin-row">
-        <div class="manage-builtin-label">SHLOKAS (LALITHA SAHASRANAMAM) — BUILT-IN</div>
-        <div class="manage-target-row"><span>Target</span>
-          <input id="tFaith" class="manage-target-input" type="number" step="1" value="${t.faith}">
-          <button class="manage-btn" onclick="saveTargets()">Save</button>
-        </div></div>`;
-    }
-    const catGoals=customs.filter(g=>g.category===cat.key);
-    catGoals.forEach(g=>{
-      const logs=getCustomLogs()[g.id]||[];
-      const total=logs.reduce((s,e)=>s+e.value,0);
-      html+=`<div class="manage-goal-row">
-        <div style="flex:1;min-width:0">
-          <div class="manage-goal-label">${g.name}</div>
-          <div class="manage-goal-meta">Target: ${g.target} ${g.unit} · Progress: ${total} ${g.unit}</div>
-        </div>
-        <button class="manage-btn" onclick="openGoalForm('${cat.key}','${g.id}')">edit</button>
-        <button class="manage-btn danger" onclick="deleteCustomGoal('${g.id}')">delete</button>
-      </div>`;
-    });
-    if(manageGoalForm&&manageGoalForm.category===cat.key){
-      const editing=manageGoalForm.editId?customs.find(g=>g.id===manageGoalForm.editId):null;
-      html+=`<div class="manage-form" id="goalForm">
-        <div class="manage-form-title">${editing?'Edit goal':'Add goal — '+cat.label}</div>
-        <div class="manage-field"><label>Goal name</label>
-          <input id="gfName" type="text" placeholder="e.g. Read 5 books" value="${editing?editing.name:''}">
-        </div>
-        <div class="manage-field"><label>Target (number)</label>
-          <input id="gfTarget" type="number" step="any" min="0" placeholder="e.g. 5" value="${editing?editing.target:''}">
-        </div>
-        <div class="manage-field"><label>Unit</label>
-          <input id="gfUnit" type="text" placeholder="e.g. books, hours, calls" value="${editing?editing.unit:''}">
-        </div>
-        <div class="manage-form-btns">
-          <button class="manage-save-btn" onclick="saveCustomGoal()">Save</button>
-          <button class="manage-cancel-btn" onclick="closeGoalForm()">Cancel</button>
-        </div>
-      </div>`;
-    } else {
-      html+=`<button class="manage-add-btn" onclick="openGoalForm('${cat.key}')">+ Add ${cat.label} goal</button>`;
-    }
-    html+=`</div>`;
-  });
-  document.getElementById('main').innerHTML=html;
-  if(manageGoalForm){const f=document.getElementById('goalForm');if(f)f.scrollIntoView({behavior:'smooth'});}
-}
-
-function openGoalForm(category,editId=null){manageGoalForm={category,editId};renderManage();}
-function closeGoalForm(){manageGoalForm=null;renderManage();}
-
-function saveCustomGoal(){
-  const name=document.getElementById('gfName').value.trim();
-  const target=parseFloat(document.getElementById('gfTarget').value);
-  const unit=document.getElementById('gfUnit').value.trim();
-  if(!name){showToast('Goal name required','err');return;}
-  if(isNaN(target)||target<=0){showToast('Enter a valid target','err');return;}
-  if(!unit){showToast('Unit required','err');return;}
-  const goals=getCustomGoals();
-  if(manageGoalForm.editId){
-    const idx=goals.findIndex(g=>g.id===manageGoalForm.editId);
-    if(idx>-1)goals[idx]={...goals[idx],name,target,unit};
-  } else {
-    goals.push({id:manageGoalForm.category+'_'+Date.now().toString(36),category:manageGoalForm.category,name,target,unit});
-  }
-  saveCustomGoals(goals);
-  manageGoalForm=null;
-  showToast('Goal saved','ok');
-  renderManage();
-}
-
-function deleteCustomGoal(id){
-  const goals=getCustomGoals();
-  const g=goals.find(x=>x.id===id);
-  if(!g)return;
-  if(!confirm(`Delete "${g.name}"?\nProgress data will also be removed.`))return;
-  saveCustomGoals(goals.filter(x=>x.id!==id));
-  const logs=getCustomLogs();delete logs[id];saveCustomLogs(logs);
-  renderManage();
-}
-
-// ── Goal log functions ──
-function logHealth(){
-  const val=parseFloat(document.getElementById('healthInput').value);
-  if(isNaN(val)||val<30||val>200){showToast('Enter a valid weight','err');return;}
-  const today=dkey(new Date());
-  const data=getGoalsHealth();
-  const idx=data.findIndex(e=>e.date===today);
-  const entry={date:today,weight:val};
-  if(idx>-1)data[idx]=entry;else data.push(entry);
-  localStorage.setItem(GK_HEALTH,JSON.stringify(data));
-  goalsSheetAppend('Goals_Health',[today,val]);
-  showToast('Weight logged','ok');
-  renderGoals();
-}
-function logMoney(type){
-  const inputId=type==='savings'?'savingsInput':'goldInput';
-  const val=parseFloat(document.getElementById(inputId).value);
-  if(isNaN(val)||val<=0){showToast('Enter a valid amount','err');return;}
-  const entry={date:dkey(new Date()),type,amount:val};
-  const data=getGoalsMoney();
-  data.push(entry);
-  localStorage.setItem(GK_MONEY,JSON.stringify(data));
-  goalsSheetAppend('Goals_Money',[entry.date,type,val]);
-  showToast(type==='savings'?'Savings logged':'Gold logged','ok');
-  renderGoals();
-}
-function logFaith(){
-  const val=parseInt(document.getElementById('faithInput').value);
-  if(isNaN(val)||val<1||val>182){showToast('Enter a valid shloka count','err');return;}
-  const today=dkey(new Date());
-  const data=getGoalsFaith();
-  const idx=data.findIndex(e=>e.date===today);
-  const entry={date:today,shlokas:val};
-  if(idx>-1){data[idx].shlokas+=val;}else data.push(entry);
-  localStorage.setItem(GK_FAITH,JSON.stringify(data));
-  goalsSheetAppend('Goals_Faith',[today,data.find(e=>e.date===today).shlokas]);
-  showToast('Shlokas logged','ok');
-  renderGoals();
-}
-function saveTargets(){
-  const h=parseFloat(document.getElementById('tHealth').value);
-  const s=parseFloat(document.getElementById('tSavings').value);
-  const g=parseFloat(document.getElementById('tGold').value);
-  const f=parseInt(document.getElementById('tFaith').value);
-  if([h,s,g,f].some(v=>isNaN(v)||v<=0)){showToast('All targets must be positive numbers','err');return;}
-  const t={health:h,savings:s,gold:g,faith:f};
-  saveGoalsTargets(t);
-  goalsTargetsSheetSave(t);
-  showToast('Targets saved','ok');
-  renderManage();
-}
-
-function logCustomGoal(id){
-  const el=document.getElementById('cgl_'+id);
-  if(!el)return;
-  const val=parseFloat(el.value);
-  if(isNaN(val)||val<=0){showToast('Enter a valid amount','err');return;}
-  const logs=getCustomLogs();
-  if(!logs[id])logs[id]=[];
-  logs[id].push({date:dkey(new Date()),value:val});
-  saveCustomLogs(logs);
-  el.value='';
-  const goal=getCustomGoals().find(g=>g.id===id);
-  if(goal)goalsSheetAppend('Goals_Custom',[dkey(new Date()),id,goal.category,goal.name,val]);
-  showToast('Progress logged','ok');
-  renderGoals();
-}
-
-function renderCustomGoalCards(category){
-  const goals=getCustomGoals().filter(g=>g.category===category);
-  if(!goals.length)return`<div class="goal-card placeholder"><div class="goal-card-title" style="font-size:12px;color:var(--text-dim)">No goals yet — add in Manage tab</div></div>`;
-  return goals.map(g=>{
-    const logs=getCustomLogs()[g.id]||[];
-    const total=logs.reduce((s,e)=>s+e.value,0);
-    const pct=g.target>0?Math.min(100,Math.round(total/g.target*100)):0;
-    const barCol=pct>=75?'rgba(51,182,121,0.8)':pct>=40?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.7)';
-    const trendCls=pct>=75?'good':pct>=40?'warn':'bad';
-    const recentLogs=logs.slice(-5).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+${e.value} ${g.unit}</span></div>`).join('');
-    const catCls=category==='work'?'goal-cat-work':category==='relationship'?'goal-cat-rel':category==='health'?'goal-cat-health':category==='money'?'goal-cat-money':'goal-cat-faith';
-    return`<div class="goal-card ${catCls}">
-      <div class="goal-card-header">
-        <span class="goal-card-title">${g.name}</span>
-        <span class="goal-trend ${trendCls}">${pct}%</span>
-      </div>
-      <div class="goal-metric-row"><span>Progress</span><span>${total} / ${g.target} ${g.unit}</span></div>
-      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${pct}%;background:${barCol}"></div></div>
-      <div class="goal-input-row">
-        <input id="cgl_${g.id}" class="goal-input" type="number" step="any" min="0" placeholder="Add progress (${g.unit})">
-        <button class="goal-input-btn" onclick="logCustomGoal('${g.id}')">Log</button>
-      </div>
-      ${recentLogs?`<div class="goal-log-list">${recentLogs}</div>`:''}
-    </div>`;
-  }).join('');
-}
-
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init(){
   const now=new Date();
-  activeDay = 'goals';
+  activeDay    = DAYS[JS2IDX[now.getDay()]];
+  activeDateStr= dkey(now);
+  checked      = getChecked(activeDateStr);
 
   document.getElementById('hDate').textContent=
     now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
   document.querySelectorAll('.tab[data-day]').forEach(tab=>{
+    if(tab.dataset.day===activeDay) tab.classList.add('today-tab');
     tab.addEventListener('click',()=>switchDay(tab.dataset.day));
   });
 
+  // init GIS token client
+  // GIS lib loads async — poll until ready
   function setupGIS(){
     if(typeof google==='undefined'||!google.accounts){
       setTimeout(setupGIS,200); return;
@@ -787,18 +592,17 @@ function init(){
         if(response.error){setSyncStatus('error');return}
         accessToken=response.access_token;
         saveToken(response.access_token, response.expires_in||3600);
+        await sheetsLoad();
         habitsSheetInit();
-        tasksDoneSheetInit();
         loadCalendarData();
       }
     });
 
+    // check for saved token
     const saved=getSavedToken();
     if(saved){
       accessToken=saved;
-      habitsSheetInit();
-      tasksDoneSheetInit();
-      loadCalendarData();
+      sheetsLoad().then(()=>{habitsSheetInit();loadCalendarData();});
     } else {
       setSyncStatus('off');
       switchDay(activeDay);
@@ -810,204 +614,331 @@ function init(){
 function switchDay(day){
   activeDay=day;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.day===day));
-  const m=document.getElementById('main');m.classList.remove('enter');void m.offsetWidth;m.classList.add('enter');
-  if(day==='history'){renderHistory();return}
-  if(day==='goals'){renderGoals();return}
+  if(day==='stats'){renderStats();return}
   if(day==='habits'){renderHabits();return}
   if(day==='habitdash'){renderHabitDash();return}
-  if(day==='tasks'){renderTasks();return}
-  if(day==='manage'){manageGoalForm=null;renderManage();return}
+  activeDateStr=recentDateFor(day);
+  checked=getChecked(activeDateStr);
+  renderDay();
 }
 
-// ── Render Goals Tab ──
-function renderGoals(){
-  const targets=getGoalsTargets();
-  const healthData=getGoalsHealth().sort((a,b)=>a.date.localeCompare(b.date));
-  const moneyData=getGoalsMoney().sort((a,b)=>a.date.localeCompare(b.date));
-  const faithData=getGoalsFaith().sort((a,b)=>a.date.localeCompare(b.date));
-  const now=new Date();
-  const qTotalDays=Math.round((Q_END-Q_START)/864e5)+1;
-  const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
+// ─── RENDER DAY ───────────────────────────────────────────────────────────────
+function renderDay(){
+  const day=activeDay, dt=tasks[day]||[];
 
-  // ── Health ──
-  const latestW=healthData.length?healthData[healthData.length-1].weight:null;
-  const firstW=healthData.length?healthData[0].weight:null;
-  const hTarget=targets.health;
-  const hRange=firstW&&firstW!==hTarget?firstW-hTarget:10;
-  const hPct=latestW?Math.min(100,Math.max(0,Math.round((firstW-latestW)/hRange*100))):0;
-  const barG='linear-gradient(90deg,rgba(51,182,121,0.5),rgba(51,182,121,1))';
-  const barW='linear-gradient(90deg,rgba(245,158,11,0.5),rgba(245,158,11,1))';
-  const barB='linear-gradient(90deg,rgba(239,68,68,0.4),rgba(239,68,68,0.85))';
-  const hBarCol=hPct>=75?barG:hPct>=40?barW:barB;
-  // Trend: compare last 7 entries avg vs prev 7
-  let hTrendCls='warn',hTrendTxt='No data yet';
-  if(healthData.length>=2){
-    const last7=healthData.slice(-7).map(e=>e.weight);
-    const prev7=healthData.slice(-14,-7).map(e=>e.weight);
-    const avgL=last7.reduce((s,v)=>s+v,0)/last7.length;
-    const avgP=prev7.length?prev7.reduce((s,v)=>s+v,0)/prev7.length:avgL;
-    const diff=avgL-avgP;
-    if(diff<-0.05){hTrendCls='good';hTrendTxt=`↓ Losing ${Math.abs(diff).toFixed(1)}kg/week`;}
-    else if(diff>0.05){hTrendCls='bad';hTrendTxt=`↑ Gaining ${diff.toFixed(1)}kg/week`;}
-    else{hTrendCls='warn';hTrendTxt='→ Holding steady';}
+  // if not connected, show connect screen
+  if(!accessToken){
+    document.getElementById('main').innerHTML=`<div class="connect-screen">
+      <h2>Connect Google Calendar</h2>
+      <p>Your tasks come directly from your 5 goal calendars. Connect once and the app stays in sync.</p>
+      <div class="goal-pills">
+        ${GOAL_KEYS.map(g=>`<span class="goal-pill" style="background:${GOALS[g].color}22;color:${GOALS[g].color};border:1px solid ${GOALS[g].color}44">${GOALS[g].label}</span>`).join('')}
+      </div>
+      <button class="btn-connect-big" onclick="connectCalendar()">Connect Google Calendar</button>
+      <p style="font-size:10px;opacity:.5">Read-only access. We never modify your calendar.</p>
+    </div>`;
+    return;
   }
-  const hLogs=healthData.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">${e.weight}kg</span></div>`).join('');
 
-  // ── Savings ──
-  const savingsEntries=moneyData.filter(e=>e.type==='savings');
-  const totalSavings=savingsEntries.reduce((s,e)=>s+e.amount,0);
-  const sPct=Math.min(100,Math.round(totalSavings/targets.savings*100));
-  const sExpected=Math.round(targets.savings*qElapsed/qTotalDays);
-  const sTrendCls=totalSavings>=sExpected?'good':'bad';
-  const sTrendTxt=totalSavings>=sExpected?`On track (+$${(totalSavings-sExpected).toFixed(0)} ahead)`:`Behind by $${(sExpected-totalSavings).toFixed(0)}`;
-  const sLogs=savingsEntries.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+$${e.amount}</span></div>`).join('');
+  const done=dt.filter(t=>checked.includes(t.id)).length, total=dt.length;
+  const pct=total?Math.round(done/total*100):0;
+  const C=2*Math.PI*22, offset=C-(pct/100)*C;
 
-  // ── Gold ──
-  const goldEntries=moneyData.filter(e=>e.type==='gold');
-  const totalGold=goldEntries.reduce((s,e)=>s+e.amount,0);
-  const gPct=Math.min(100,Math.round(totalGold/targets.gold*100));
-  const gExpected=Math.round(targets.gold*qElapsed/qTotalDays);
-  const gTrendCls=totalGold>=gExpected?'good':'bad';
-  const gTrendTxt=totalGold>=gExpected?`On track (+$${(totalGold-gExpected).toFixed(0)} ahead)`:`Behind by $${(gExpected-totalGold).toFixed(0)}`;
-  const gLogs=goldEntries.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+$${e.amount}</span></div>`).join('');
+  const gT={},gD={};
+  dt.forEach(t=>{gT[t.goal]=(gT[t.goal]||0)+1});
+  checked.forEach(id=>{const t=dt.find(x=>x.id===id);if(t)gD[t.goal]=(gD[t.goal]||0)+1});
+  const activeGoals=GOAL_KEYS.filter(g=>gT[g]);
 
-  // ── Faith ──
-  const totalShlokas=faithData.reduce((s,e)=>s+e.shlokas,0);
-  const fPct=Math.min(100,Math.round(totalShlokas/targets.faith*100));
-  const fExpected=Math.round(targets.faith*qElapsed/qTotalDays);
-  const fDiff=totalShlokas-fExpected;
-  const fTrendCls=fDiff>=0?'good':fDiff>=-5?'warn':'bad';
-  const fTrendTxt=fDiff>=0?`Ahead by ${fDiff} shloka${fDiff!==1?'s':''}`:`Behind by ${Math.abs(fDiff)} shloka${Math.abs(fDiff)!==1?'s':''}`;
-  const fLogs=faithData.slice(-3).reverse().map(e=>`<div class="goal-log-item"><span>${e.date}</span><span class="goal-log-val">+${e.shlokas}</span></div>`).join('');
+  let barsH=activeGoals.length?'<div class="goal-bars">':'';
+  activeGoals.forEach(g=>{
+    const gp=Math.round((gD[g]||0)/gT[g]*100);
+    barsH+=`<div class="goal-bar-row">
+      <div class="goal-bar-label">${GOALS[g].label}</div>
+      <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${gp}%;background:${GOALS[g].color}"></div></div>
+      <div class="goal-bar-pct">${gp}%</div>
+    </div>`;
+  });
+  if(activeGoals.length) barsH+='</div>';
 
-  document.getElementById('main').innerHTML=`
-    <div class="section-title">Goals — Apr → Jun 2026</div>
-
-    <div class="goals-section-title">Health 💪</div>
-    <div class="goal-card goal-cat-health">
-      <div class="goal-card-header">
-        <span class="goal-card-title">${latestW??'—'}kg</span>
-        <span class="goal-trend ${hTrendCls}">${hTrendTxt}</span>
+  let h=`<div class="day-header">
+    <div class="progress-area">
+      <div class="ring-wrap">
+        <svg class="ring-svg" width="52" height="52" viewBox="0 0 52 52">
+          <circle class="ring-track" cx="26" cy="26" r="22" stroke-dasharray="${C}" stroke-dashoffset="0"/>
+          <circle class="ring-fill"  cx="26" cy="26" r="22" stroke-dasharray="${C}" stroke-dashoffset="${offset}"/>
+        </svg>
+        <div class="ring-pct">${pct}%</div>
       </div>
-      <div class="goal-metric-row"><span>Target</span><span>${hTarget}kg</span></div>
-      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${hPct}%;background:${hBarCol}"></div></div>
-      <div class="goal-metric-row"><span>Progress</span><span>${hPct}%${firstW?' · started '+firstW+'kg':''}</span></div>
-      <div class="goal-input-row">
-        <input id="healthInput" class="goal-input" type="number" step="0.1" min="30" max="200" placeholder="Weight (kg)">
-        <button class="goal-input-btn" onclick="logHealth()">Log</button>
+      <div>
+        <div class="day-name">${DNAMES[day]}</div>
+        <div class="task-count"><span>${done}</span> / ${total} done</div>
       </div>
-      ${hLogs?`<div class="goal-log-list">${hLogs}</div>`:''}
     </div>
-
-    <div class="goals-section-title">Money 💰</div>
-    <div class="goal-card goal-cat-money">
-      <div class="goal-card-header">
-        <span class="goal-card-title">Savings · $${totalSavings.toFixed(0)}</span>
-        <span class="goal-trend ${sTrendCls}">${sTrendTxt}</span>
-      </div>
-      <div class="goal-metric-row"><span>Target</span><span>$${targets.savings}/quarter</span></div>
-      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${sPct}%;background:${sTrendCls==='good'?barG:barB}"></div></div>
-      <div class="goal-metric-row"><span>Progress</span><span>$${totalSavings.toFixed(0)} / $${targets.savings} (${sPct}%)</span></div>
-      <div class="goal-input-row">
-        <input id="savingsInput" class="goal-input" type="number" step="1" min="1" placeholder="Amount saved ($)">
-        <button class="goal-input-btn" onclick="logMoney('savings')">Log</button>
-      </div>
-      ${sLogs?`<div class="goal-log-list">${sLogs}</div>`:''}
+    <div class="day-right">
+      ${barsH}
+      ${total?`<button class="btn-reset" onclick="resetDay()">reset day</button>`:''}
     </div>
-    <div class="goal-card goal-cat-money">
-      <div class="goal-card-header">
-        <span class="goal-card-title">Gold · $${totalGold.toFixed(0)}</span>
-        <span class="goal-trend ${gTrendCls}">${gTrendTxt}</span>
-      </div>
-      <div class="goal-metric-row"><span>Target</span><span>$${targets.gold}/quarter</span></div>
-      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${gPct}%;background:${gTrendCls==='good'?barG:barB}"></div></div>
-      <div class="goal-metric-row"><span>Progress</span><span>$${totalGold.toFixed(0)} / $${targets.gold} (${gPct}%)</span></div>
-      <div class="goal-input-row">
-        <input id="goldInput" class="goal-input" type="number" step="1" min="1" placeholder="Amount invested ($)">
-        <button class="goal-input-btn" onclick="logMoney('gold')">Log</button>
-      </div>
-      ${gLogs?`<div class="goal-log-list">${gLogs}</div>`:''}
-    </div>
-
-    <div class="goals-section-title">Faith 🙏</div>
-    <div class="goal-card goal-cat-faith">
-      <div class="goal-card-header">
-        <span class="goal-card-title">${totalShlokas} / ${targets.faith} shlokas</span>
-        <span class="goal-trend ${fTrendCls}">${fTrendTxt}</span>
-      </div>
-      <div class="goal-metric-row"><span>Target</span><span>${targets.faith} shlokas by Jun 30</span></div>
-      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${fPct}%;background:${fTrendCls==='good'?barG:fTrendCls==='warn'?barW:barB}"></div></div>
-      <div class="goal-metric-row"><span>Expected by today</span><span>${fExpected} shlokas</span></div>
-      <div class="goal-input-row">
-        <input id="faithInput" class="goal-input" type="number" step="1" min="1" placeholder="Shlokas read today">
-        <button class="goal-input-btn" onclick="logFaith()">Log</button>
-      </div>
-      ${fLogs?`<div class="goal-log-list">${fLogs}</div>`:''}
-    </div>
-
-    <div class="goals-section-title">Work 💼</div>
-    ${renderCustomGoalCards('work')}
-
-    <div class="goals-section-title">Relationship 🤝</div>
-    ${renderCustomGoalCards('relationship')}`;
-}
-
-
-// ─── RENDER HISTORY ───────────────────────────────────────────────────────────
-function renderHistory(){
-  const now=new Date();
-  const qTotalDays=Math.round((Q_END-Q_START)/864e5)+1;
-  const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
-  const qPct=Math.round(qElapsed/qTotalDays*100);
-  const daysLeft=qTotalDays-qElapsed;
-  const cA='rgba(245,158,11,0.8)';
-
-  let h=`<div class="section-title">History — Apr → Jun 2026</div>`;
-
-  // Quarter progress bar
-  h+=`<div class="goal-card" style="margin-bottom:20px">
-    <div class="goal-card-header">
-      <span class="goal-card-title">Q2 2026 progress</span>
-      <span class="goal-trend warn">${daysLeft} days left</span>
-    </div>
-    <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${qPct}%;background:${cA}"></div></div>
-    <div class="goal-metric-row"><span>Week ${Math.ceil(qElapsed/7)} of ${Math.ceil(qTotalDays/7)}</span><span>${qPct}% elapsed · Apr 1 → Jun 30</span></div>
   </div>`;
 
-  // Build unified goal entry log (all types, sorted by date desc)
-  const healthData=getGoalsHealth().map(e=>({date:e.date,type:'Weight',val:`${e.weight}kg`,col:'var(--health)'}));
-  const moneyData=getGoalsMoney().map(e=>({date:e.date,type:e.type==='savings'?'Savings':'Gold',val:`+$${e.amount}`,col:'var(--money)'}));
-  const faithData=getGoalsFaith().map(e=>({date:e.date,type:'Shlokas',val:`+${e.shlokas}`,col:'var(--spirit)'}));
-  const allEntries=[...healthData,...moneyData,...faithData].sort((a,b)=>b.date.localeCompare(a.date));
-
-  h+=`<div class="section-title">Goal entry log</div>`;
-  if(!allEntries.length){
-    h+=`<div class="no-data">No entries yet. Log your goals in the Goals tab.</div>`;
+  if(!total){
+    h+=`<div class="empty-day">
+      <strong>No events today</strong>
+      No events found in your goal calendars for ${DNAMES[day]}.<br>
+      Add events in Google Calendar and tap Refresh.
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn-connect" style="display:inline-block;font-size:11px;padding:8px 16px" onclick="loadCalendarData()">↻ Refresh Calendar</button>
+    </div>`;
   } else {
-    // Group by date
-    const byDate={};
-    allEntries.forEach(e=>{if(!byDate[e.date])byDate[e.date]=[];byDate[e.date].push(e);});
-    h+=`<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">`;
-    Object.keys(byDate).sort((a,b)=>b.localeCompare(a)).forEach(date=>{
-      const entries=byDate[date];
-      const d=new Date(date+'T00:00:00');
-      const label=d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
-      h+=`<div class="goal-card" style="padding:12px">
-        <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;font-weight:600">${label}</div>
-        <div style="display:flex;flex-direction:column;gap:5px">`;
-      entries.forEach(e=>{
-        h+=`<div style="display:flex;justify-content:space-between;font-size:11px">
-          <span style="color:${e.col};font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-size:9px">${e.type}</span>
-          <span style="color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700">${e.val}</span>
-        </div>`;
-      });
-      h+=`</div></div>`;
+    h+='<div class="task-list" id="taskList">';
+    dt.forEach(t=>{
+      const isDone=checked.includes(t.id);
+      h+=`<div class="task-row${isDone?' done':''}" data-goal="${t.goal||''}" data-id="${t.id.replace(/"/g,'&quot;')}">
+        <div class="task-check">${isDone?'✓':''}</div>
+        <div class="task-time">${t.time}</div>
+        <div class="task-label">${t.label}</div>
+        <div class="task-meta">
+          ${t.goal?`<span class="task-goal-tag tag-${t.goal}">${GOALS[t.goal]?.label||t.goal}</span>`:''}
+          ${t.dur?`<span class="task-dur">${t.dur}</span>`:''}
+        </div>
+      </div>`;
     });
-    h+=`</div>`;
+    h+='</div>';
+    h+=`<div style="text-align:right;margin-top:12px">
+      <button class="btn-disconnect" style="font-size:9px" onclick="loadCalendarData()">↻ Refresh</button>
+    </div>`;
+  }
+  document.getElementById('main').innerHTML=h;
+
+  // event delegation — safe for any calendar event ID format
+  const tl=document.getElementById('taskList');
+  if(tl) tl.addEventListener('click',e=>{
+    const row=e.target.closest('.task-row');
+    if(row&&row.dataset.id) toggle(row.dataset.id);
+  });
+}
+
+function toggle(id){
+  if(checked.includes(id)) checked=checked.filter(x=>x!==id); else checked.push(id);
+  setChecked(activeDateStr,activeDay,checked);
+  renderDay();
+}
+function resetDay(){checked=[];setChecked(activeDateStr,activeDay,[]);renderDay()}
+
+// ─── RENDER STATS ─────────────────────────────────────────────────────────────
+function renderStats(){
+  const store=getStore(),now=new Date();
+  let streak=0;
+  for(let i=0;i<365;i++){
+    const d=new Date(now);d.setDate(now.getDate()-i);
+    const e=store[dkey(d)];
+    if(e&&e.total>0&&(e.checked?.length||0)/e.total>=0.5)streak++;else break;
+  }
+  const all=Object.values(store).filter(e=>e.total>0);
+  const tracked=all.length;
+  const avgPct=tracked?Math.round(all.reduce((s,e)=>s+(e.checked?.length||0)/e.total,0)/tracked*100):0;
+  const perfectDays=all.filter(e=>(e.checked?.length||0)===e.total).length;
+
+  const wk=new Date(now);wk.setDate(now.getDate()-now.getDay()+1);wk.setHours(0,0,0,0);
+  const wGT={},wGD={};GOAL_KEYS.forEach(g=>{wGT[g]=0;wGD[g]=0});
+  for(let i=0;i<7;i++){
+    const d=new Date(wk);d.setDate(wk.getDate()+i);
+    const e=store[dkey(d)];if(!e?.goalTotals)continue;
+    GOAL_KEYS.forEach(g=>{wGT[g]+=(e.goalTotals[g]||0);wGD[g]+=(e.goalDone?.[g]||0)});
   }
 
+  const heatDays=[];
+  for(let i=34;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);heatDays.push(d)}
+
+  const weekBars=[];
+  for(let w=7;w>=0;w--){
+    const ws=new Date(now);ws.setDate(now.getDate()-now.getDay()-w*7+1);
+    let tot=0,dn=0;
+    for(let d=0;d<7;d++){const wd=new Date(ws);wd.setDate(ws.getDate()+d);const e=store[dkey(wd)];if(e?.total>0){tot+=e.total;dn+=(e.checked?.length||0)}}
+    weekBars.push({pct:tot>0?Math.round(dn/tot*100):0,isCurrent:w===0});
+  }
+
+  const qDays=Math.round((Q_END-Q_START)/864e5);
+  const elapsed=Math.max(0,Math.min(qDays,Math.round((now-Q_START)/864e5)));
+  const qPct=Math.round(elapsed/qDays*100);
+  const qGT={},qGD={};GOAL_KEYS.forEach(g=>{qGT[g]=0;qGD[g]=0});
+  Object.entries(store).forEach(([ds,e])=>{
+    const d=new Date(ds);if(d<Q_START||d>Q_END||!e.goalTotals)return;
+    GOAL_KEYS.forEach(g=>{qGT[g]+=(e.goalTotals[g]||0);qGD[g]+=(e.goalDone?.[g]||0)});
+  });
+
+  const months={};
+  Object.entries(store).forEach(([ds,e])=>{
+    if(!e.total)return;
+    const mo=ds.slice(0,7);
+    if(!months[mo])months[mo]={completions:[],gT:{},gD:{}};
+    months[mo].completions.push((e.checked?.length||0)/e.total*100);
+    GOAL_KEYS.forEach(g=>{months[mo].gT[g]=(months[mo].gT[g]||0)+(e.goalTotals?.[g]||0);months[mo].gD[g]=(months[mo].gD[g]||0)+(e.goalDone?.[g]||0)});
+  });
+  const monthKeys=Object.keys(months).sort().reverse();
+  const now_mo=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  function fmtMonth(ym){const[y,m]=ym.split('-');return new Date(y,m-1,1).toLocaleDateString('en-AU',{month:'short',year:'numeric'})}
+
+  let h=`<div class="actions-row">
+    <button class="btn-export" onclick="exportData()">↓ Export JSON — ${fmtMonth(now_mo)}</button>
+    <button class="btn-danger" onclick="clearAllData()">clear all data</button>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value">${streak}</div><div class="stat-sub">days ≥ 50%</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Completion</div><div class="stat-value">${avgPct}%</div><div class="stat-sub">across ${tracked} days</div></div>
+    <div class="stat-card"><div class="stat-label">Perfect Days</div><div class="stat-value">${perfectDays}</div><div class="stat-sub">100% done</div></div>
+  </div>`;
+
+  h+=`<div class="section-title">This week by goal</div><div class="goal-cards">`;
+  GOAL_KEYS.forEach(g=>{
+    const gt=wGT[g],gd=wGD[g],gp=gt?Math.round(gd/gt*100):0;
+    const C2=2*Math.PI*18,off2=C2-(gp/100)*C2;
+    h+=`<div class="goal-card">
+      <div class="goal-card-name">${GOALS[g].label}</div>
+      <div class="goal-card-ring">
+        <svg style="transform:rotate(-90deg)" width="44" height="44" viewBox="0 0 44 44">
+          <circle fill="none" stroke="var(--border)" stroke-width="3" cx="22" cy="22" r="18" stroke-dasharray="${C2}" stroke-dashoffset="0"/>
+          <circle fill="none" stroke="${GOALS[g].color}" stroke-width="3" stroke-linecap="round" cx="22" cy="22" r="18" stroke-dasharray="${C2}" stroke-dashoffset="${off2}"/>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10px;font-weight:700;color:${GOALS[g].color}">${gp}%</div>
+      </div>
+      <div class="goal-card-sub">${gd}/${gt} tasks</div>
+    </div>`;
+  });
+  h+='</div>';
+
+  h+=`<div class="heatmap-wrap"><div class="section-title">35-day map</div><div class="day-labels">`;
+  ['M','T','W','T','F','S','S'].forEach(l=>h+=`<div class="day-lbl">${l}</div>`);
+  h+=`</div><div class="heatmap">`;
+  heatDays.forEach(d=>{
+    const k=dkey(d),isFuture=d>now;let cls='hf',pct=0;
+    if(!isFuture){const e=store[k];if(!e?.total)cls='h0';else{pct=Math.round((e.checked?.length||0)/e.total*100);cls=pct>=80?'h4':pct>=60?'h3':pct>=40?'h2':pct>0?'h1':'h0'}}
+    const lbl=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+    const tip=isFuture?`${lbl} — future`:store[k]?.total?`${lbl} — ${pct}% done`:`${lbl} — no data`;
+    h+=`<div class="heat-cell ${cls}" onmouseenter="showTT(event,'${tip}')" onmouseleave="hideTT()"></div>`;
+  });
+  h+=`</div><div class="heat-legend"><span class="legend-lbl">Less</span>`;
+  ['var(--surface2)','rgba(245,158,11,0.18)','rgba(245,158,11,0.38)','rgba(245,158,11,0.62)','rgba(245,158,11,0.88)'].forEach(c=>h+=`<div class="legend-cell" style="background:${c}"></div>`);
+  h+=`<span class="legend-lbl">More</span></div></div>`;
+
+  // ── YEARLY HEATMAP ──
+  // Build 52 weeks × 7 days grid ending today
+  const yearDays=[];
+  const yearEnd=new Date(now);
+  // go back to start of current week's Sunday, then back 51 more weeks
+  const yearStart=new Date(now);
+  yearStart.setDate(now.getDate()-now.getDay()-51*7); // 52 weeks ago Sunday
+  yearStart.setHours(0,0,0,0);
+  for(let d=new Date(yearStart);d<=now;d.setDate(d.getDate()+1)){
+    yearDays.push(new Date(d));
+  }
+  // pad start so grid aligns to Sunday
+  const startPad=yearStart.getDay(); // days offset
+
+  // build 52 columns of 7 cells
+  let weeklyCols=[];
+  let week=[];
+  // fill empty cells at start
+  for(let i=0;i<startPad;i++) week.push(null);
+  yearDays.forEach(d=>{
+    week.push(new Date(d));
+    if(week.length===7){weeklyCols.push(week);week=[];}
+  });
+  if(week.length) weeklyCols.push(week);
+
+  // month labels — show month name at the week column where month starts
+  const monthLabels=new Array(weeklyCols.length).fill('');
+  weeklyCols.forEach((wk,wi)=>{
+    wk.forEach(d=>{
+      if(d&&d.getDate()<=7){
+        monthLabels[wi]=d.toLocaleDateString('en-AU',{month:'short'});
+      }
+    });
+  });
+
+  h+=`<div class="heatmap-wrap"><div class="section-title">Yearly map — ${now.getFullYear()}</div>
+  <div class="year-heatmap-wrap">
+  <div class="year-month-labels">`;
+  monthLabels.forEach(lbl=>{
+    h+=`<div class="year-month-lbl" style="width:14px">${lbl}</div>`;
+  });
+  h+=`</div><div class="year-heatmap-inner">`;
+  weeklyCols.forEach(wk=>{
+    h+='<div class="year-week-col">';
+    for(let di=0;di<7;di++){
+      const d=wk[di];
+      if(!d){h+='<div class="year-cell" style="background:transparent"></div>';continue;}
+      const isFuture=d>now;
+      let bg='var(--surface2)';
+      if(isFuture){bg='transparent';}
+      else{
+        const e=store[dkey(d)];
+        if(e?.total>0){
+          const pct=Math.round((e.checked?.length||0)/e.total*100);
+          bg=pct>=80?'rgba(245,158,11,0.88)':pct>=60?'rgba(245,158,11,0.62)':pct>=40?'rgba(245,158,11,0.38)':pct>0?'rgba(245,158,11,0.18)':'var(--surface2)';
+        }
+      }
+      const lbl=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+      const e=store[dkey(d)];
+      const pct=(!isFuture&&e?.total)?Math.round((e.checked?.length||0)/e.total*100):0;
+      const tip=isFuture?`${lbl} — future`:e?.total?`${lbl} — ${pct}% done`:`${lbl} — no data`;
+      h+=`<div class="year-cell" style="background:${bg}" onmouseenter="showTT(event,'${tip}')" onmouseleave="hideTT()"></div>`;
+    }
+    h+='</div>';
+  });
+  h+=`</div></div><div class="heat-legend" style="margin-top:6px"><span class="legend-lbl">Less</span>`;
+  ['var(--surface2)','rgba(245,158,11,0.18)','rgba(245,158,11,0.38)','rgba(245,158,11,0.62)','rgba(245,158,11,0.88)'].forEach(c=>h+=`<div class="legend-cell" style="background:${c}"></div>`);
+  h+=`<span class="legend-lbl">More</span></div></div>`;
+
+  h+=`<div class="bar-chart-wrap"><div class="section-title">8-week trend</div><div class="bar-chart">`;
+  weekBars.forEach((w,i)=>{const ht=Math.round(w.pct/100*80);h+=`<div class="bar-col"><div class="bar-pct-lbl">${w.pct||''}</div><div class="bar${w.isCurrent?' current':''}" style="height:${ht}px"></div><div class="bar-lbl">W${i+1}${w.isCurrent?'★':''}</div></div>`});
+  h+=`</div></div>`;
+
+  h+=`<div class="quarter-wrap"><div class="section-title">Quarter — Apr → Aug 2026</div>
+  <div class="quarter-meta">Week ${Math.ceil(elapsed/7)} of ${Math.ceil(qDays/7)} · ${qPct}% elapsed · ${qDays-elapsed} days left</div>`;
+  GOAL_KEYS.forEach(g=>{
+    const qp=qGT[g]?Math.round(qGD[g]/qGT[g]*100):0;
+    h+=`<div class="quarter-row">
+      <div class="quarter-goal-name">${GOALS[g].label}</div>
+      <div class="quarter-track"><div class="quarter-fill" style="width:${qp}%;background:${GOALS[g].color}"></div></div>
+      <div class="quarter-pct-lbl">${qp}%</div>
+    </div>`;
+  });
+  h+=`<div class="quarter-row" style="margin-top:8px;opacity:0.4">
+    <div class="quarter-goal-name" style="font-size:8px">time used</div>
+    <div class="quarter-track"><div class="quarter-fill" style="width:${qPct}%;background:var(--text-dim)"></div></div>
+    <div class="quarter-pct-lbl">${qPct}%</div>
+  </div></div>`;
+
+  h+=`<div class="section-title">Monthly summary</div>`;
+  if(!monthKeys.length){
+    h+=`<div class="no-data">No data yet. Tick tasks daily — monthly breakdown appears here once you have tracked days.</div>`;
+  } else {
+    h+=`<table class="monthly-table"><thead><tr>
+      <th>Month</th><th>Days</th><th>Overall</th>
+      <th class="c-work">Work</th><th class="c-money">Money</th>
+      <th class="c-rel">Marriage</th><th class="c-health">Health</th><th class="c-spirit">Faith</th>
+    </tr></thead><tbody>`;
+    monthKeys.forEach(mo=>{
+      const m=months[mo],avg=Math.round(m.completions.reduce((a,b)=>a+b,0)/m.completions.length);
+      const gp=g=>m.gT[g]?Math.round(m.gD[g]/m.gT[g]*100)+'%':'—';
+      h+=`<tr><td>${fmtMonth(mo)}</td><td>${m.completions.length}</td><td class="pct-c">${avg}%</td>
+        <td class="c-work">${gp('work')}</td><td class="c-money">${gp('money')}</td>
+        <td class="c-rel">${gp('relationship')}</td><td class="c-health">${gp('health')}</td><td class="c-spirit">${gp('spirituality')}</td>
+      </tr>`;
+    });
+    h+=`</tbody></table>`;
+  }
   document.getElementById('main').innerHTML=h;
 }
+
+function exportData(){
+  const store=getStore(),now=new Date();
+  const tag=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const blob=new Blob([JSON.stringify({exported:now.toISOString(),data:store},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`gps-${tag}.json`;a.click();URL.revokeObjectURL(a.href);
+}
+function clearAllData(){if(confirm('Delete all tracked history?')){localStorage.removeItem(SK);renderStats()}}
 function showTT(e,text){const t=document.getElementById('tt');t.textContent=text;t.classList.add('show');t.style.left=(e.clientX+12)+'px';t.style.top=(e.clientY-32)+'px'}
 function hideTT(){document.getElementById('tt').classList.remove('show')}
 
@@ -1018,24 +949,24 @@ if('serviceWorker' in navigator){
 }
 
 // ─── HABITS SYSTEM ─────────────────────────────────────────────────────────
-let HABITS = [
+const HABITS = [
   { id:'wake_up',         label:'Wake up',                      time:'5:30am',  days:'daily' },
   { id:'get_ready',       label:'Get ready',                    time:'6:15am',  days:'daily' },
   { id:'thyroxine',       label:'Take Thyroxine',               time:'6:15am',  days:'daily' },
   { id:'wash_clothes',    label:'Wash clothes',                 time:'6:30am',  days:['mon'] },
-  { id:'deepam_tt',       label:'Deepam',                       time:'6:45am',  days:['tue','thu'],                         group:'deepam' },
-  { id:'deepam_main',     label:'Deepam',                       time:'7:00am',  days:['mon','wed','fri','sat'],              group:'deepam' },
+  { id:'deepam_tt',       label:'Deepam',                       time:'6:45am',  days:['tue','thu'] },
+  { id:'deepam_main',     label:'Deepam',                       time:'7:00am',  days:['mon','wed','fri','sat'] },
   { id:'wash_pooja',      label:'Wash pooja samagri',           time:'7:00am',  days:['sun'] },
-  { id:'soak_nuts_tt',    label:'Soak nuts & sprouts',          time:'7:15am',  days:['tue','thu'],                         group:'soak_nuts' },
-  { id:'recite_main',     label:'Recite Lalitha Sahasranamam',  time:'7:15am',  days:['mon','tue','wed','thu','fri','sat'],  group:'recite' },
-  { id:'deepam_sun',      label:'Deepam',                       time:'7:30am',  days:['sun'],                               group:'deepam' },
-  { id:'gita_main',       label:'Read Bhagawad Gita',           time:'7:45am',  days:['mon','tue','wed','thu','fri','sat'],  group:'gita' },
-  { id:'recite_sun',      label:'Recite Lalitha Sahasranamam',  time:'7:45am',  days:['sun'],                               group:'recite' },
-  { id:'learn_main',      label:'Learn Lalitha Sahasranamam',   time:'8:00am',  days:['mon','tue','wed','thu','fri','sat'],  group:'learn' },
+  { id:'soak_nuts_tt',    label:'Soak nuts & sprouts',          time:'7:15am',  days:['tue','thu'] },
+  { id:'recite_main',     label:'Recite Lalitha Sahasranamam',  time:'7:15am',  days:['mon','tue','wed','thu','fri','sat'] },
+  { id:'deepam_sun',      label:'Deepam',                       time:'7:30am',  days:['sun'] },
+  { id:'gita_main',       label:'Read Bhagawad Gita',           time:'7:45am',  days:['mon','tue','wed','thu','fri','sat'] },
+  { id:'recite_sun',      label:'Recite Lalitha Sahasranamam',  time:'7:45am',  days:['sun'] },
+  { id:'learn_main',      label:'Learn Lalitha Sahasranamam',   time:'8:00am',  days:['mon','tue','wed','thu','fri','sat'] },
   { id:'send_snap',       label:'Send snap',                    time:'8:30am',  days:'daily' },
-  { id:'gita_sun',        label:'Read Bhagawad Gita',           time:'8:15am',  days:['sun'],                               group:'gita' },
-  { id:'learn_sun',       label:'Learn Lalitha Sahasranamam',   time:'8:30am',  days:['sun'],                               group:'learn' },
-  { id:'soak_nuts_main',  label:'Soak nuts & sprouts',          time:'10:30am', days:['mon','wed','fri','sat','sun'],        group:'soak_nuts' },
+  { id:'gita_sun',        label:'Read Bhagawad Gita',           time:'8:15am',  days:['sun'] },
+  { id:'learn_sun',       label:'Learn Lalitha Sahasranamam',   time:'8:30am',  days:['sun'] },
+  { id:'soak_nuts_main',  label:'Soak nuts & sprouts',          time:'10:30am', days:['mon','wed','fri','sat','sun'] },
   { id:'lunch',           label:'Lunch',                        time:'11:00am', days:'daily' },
   { id:'haircut',         label:'Haircut',                      time:'12:15pm', days:['sun'], lastSundayOnly:true },
   { id:'buy_groceries',   label:'Buy Indian groceries',         time:'1:00pm',  days:['sun'] },
@@ -1114,16 +1045,7 @@ async function habitsSheetInit(){
       );
     }else{
       habitsSheetRowMap={};
-      const store=getHabitStore();
-      let changed=false;
-      rows.forEach((row,i)=>{
-        if(i===0||!row[0])return;
-        habitsSheetRowMap[row[0]]=i+1;
-        if(!store[row[0]]&&row[2]){
-          try{store[row[0]]=JSON.parse(row[2]);changed=true;}catch{}
-        }
-      });
-      if(changed){saveHabitStore(store);showToast('Habit data restored from Sheets','ok');}
+      rows.forEach((row,i)=>{if(i>0&&row[0])habitsSheetRowMap[row[0]]=i+1;});
     }
   }catch(err){console.warn('Habits sheet init:',err);}
 }
@@ -1154,6 +1076,14 @@ async function habitsSheetWrite(ds,statuses){
 
 // ── Render Habits Tab ──
 function renderHabits(){
+  if(!accessToken){
+    document.getElementById('main').innerHTML=`<div class="connect-screen">
+      <h2>Connect Google Calendar</h2>
+      <p>Connect to load your habits and start tracking.</p>
+      <button class="btn-connect-big" onclick="connectCalendar()">Connect Google Calendar</button>
+    </div>`;
+    return;
+  }
   const now=new Date();
   if(!habitActiveDay){
     habitActiveDay=DAYS[JS2IDX[now.getDay()]];
@@ -1234,56 +1164,41 @@ function switchHabitDay(dk,ds){
 
 // ── Render Habit Dashboard ──
 function renderHabitDash(){
+  if(!accessToken){
+    document.getElementById('main').innerHTML=`<div class="connect-screen">
+      <h2>Connect Google Calendar</h2>
+      <p>Connect to view your habit dashboard.</p>
+      <button class="btn-connect-big" onclick="connectCalendar()">Connect Google Calendar</button>
+    </div>`;
+    return;
+  }
   const store=getHabitStore(),now=new Date();
 
-  // Build groups: habits sharing a group field are merged; ungrouped use their own id as key
-  const groups={};
-  HABITS.forEach(h=>{
-    const key=h.group||h.id;
-    if(!groups[key])groups[key]={key,label:h.label,members:[]};
-    groups[key].members.push(h);
-  });
-
-  // Streaks — per group, skip days where no member is scheduled, break on scheduled+unmarked past days
+  // Streaks — per habit, skip unscheduled days, break on scheduled+unmarked past days
   const streaks={};
-  Object.values(groups).forEach(g=>{
-    let streak=0,didCount=0;
+  HABITS.forEach(h=>{
+    let streak=0;
     for(let i=0;i<90;i++){
       const d=new Date(now);d.setDate(now.getDate()-i);
       const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
-      const scheduled=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
-      if(!scheduled.length)continue;
-      const sts=scheduled.map(h=>(store[ds]||{})[h.id]);
-      const did=sts.some(s=>s==='did'),delayed=sts.some(s=>s==='delayed');
-      if(did||delayed){streak++;if(did)didCount++;}
+      const scheduled=getHabitsForDay(dk,ds).find(x=>x.id===h.id);
+      if(!scheduled)continue;
+      const st=(store[ds]||{})[h.id];
+      if(st==='did'||st==='delayed'){streak++;}
       else if(i===0){continue;} // today not yet marked — don't break
       else{break;}
     }
-    streaks[g.key]={id:g.key,label:g.label,streak,didCount};
+    streaks[h.id]={label:h.label,streak};
   });
-  // Only include groups scheduled at least once since Apr 1
+  // Only include habits scheduled at least once since Apr 1
   const qStart=new Date('2026-04-01T00:00:00');
-  const scheduledSinceQ=Object.values(groups).filter(g=>
+  const scheduledSinceQ=HABITS.filter(h=>
     Array.from({length:Math.ceil((now-qStart)/864e5)+1},(_,i)=>{const d=new Date(qStart);d.setDate(qStart.getDate()+i);return d;})
-    .some(d=>g.members.some(h=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id)))
-  ).map(g=>g.key);
+    .some(d=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id))
+  ).map(h=>h.id);
   const allSorted=Object.values(streaks).filter(x=>scheduledSinceQ.includes(x.id));
-  // Top: highest streak, tiebreak by most 'did' (done beats delayed)
-  const top5=[...allSorted].sort((a,b)=>b.streak-a.streak||b.didCount-a.didCount).slice(0,5);
-  // Needs work: habits with recent skips (didnot), sorted by skip count in last 30 days
-  const skipCounts={};
-  Object.values(groups).forEach(g=>{
-    let skips=0;
-    for(let i=0;i<30;i++){
-      const d=new Date(now);d.setDate(now.getDate()-i);
-      const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
-      const scheduled=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
-      if(!scheduled.length)continue;
-      if(scheduled.some(h=>(store[ds]||{})[h.id]==='didnot'))skips++;
-    }
-    skipCounts[g.key]=skips;
-  });
-  const bottom5=allSorted.filter(x=>skipCounts[x.id]>0).sort((a,b)=>skipCounts[b.id]-skipCounts[a.id]).slice(0,5);
+  const top5=allSorted.sort((a,b)=>b.streak-a.streak).slice(0,5);
+  const bottom5=allSorted.sort((a,b)=>a.streak-b.streak).slice(0,5);
 
   // Quarter grid: Apr 1 → today (capped at Aug 31)
   const gridStart=new Date("2026-04-01T00:00:00");
@@ -1291,15 +1206,15 @@ function renderHabitDash(){
   const days90=[];
   for(let d=new Date(gridStart);d<=gridEnd;d.setDate(d.getDate()+1)){days90.push(new Date(d));}
 
-  // Only show groups scheduled at least once in quarter
-  const visGroups=Object.values(groups).filter(g=>
-    days90.some(d=>g.members.some(h=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id)))
+  // Only show habits scheduled at least once in quarter
+  const visHabits=HABITS.filter(h=>
+    days90.some(d=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id))
   );
 
   // Month label blocks for header
   const CELL_W=10; // cell width + gap
   let headerH='<div class="hdash-header-row">';
-  let lastMo='',blockLen=0;
+  let lastMo='',blockStart=0,blockLen=0;
   const blocks=[];
   days90.forEach((d,i)=>{
     const mo=d.toLocaleDateString('en-AU',{month:'short'});
@@ -1315,15 +1230,13 @@ function renderHabitDash(){
   headerH+='</div>';
 
   let gridH='';
-  visGroups.forEach(g=>{
-    gridH+=`<div class="hdash-grid-row"><div class="hdash-habit-name" title="${g.label}">${g.label}</div>`;
+  visHabits.forEach(h=>{
+    gridH+=`<div class="hdash-grid-row"><div class="hdash-habit-name" title="${h.label}">${h.label}</div>`;
     days90.forEach(d=>{
       const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
-      const scheduledMembers=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
-      if(!scheduledMembers.length){gridH+='<div class="hdash-cell hc-skip"></div>';return;}
-      // Use status of the first marked member, or blank
-      let st='';
-      for(const h of scheduledMembers){const s=(store[ds]||{})[h.id];if(s){st=s;break;}}
+      const scheduled=getHabitsForDay(dk,ds).find(x=>x.id===h.id);
+      if(!scheduled){gridH+='<div class="hdash-cell hc-skip"></div>';return;}
+      const st=(store[ds]||{})[h.id];
       const cls=st==='did'?'hc-did':st==='delayed'?'hc-delayed':st==='didnot'?'hc-didnot':'hc-blank';
       const tipDate=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
       gridH+=`<div class="hdash-cell ${cls}" onmouseenter="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;
@@ -1331,58 +1244,8 @@ function renderHabitDash(){
     gridH+='</div>';
   });
 
-  // Habit consistency table (same data as old History tab)
-  const qTotalDays=Math.round((Q_END-Q_START)/864e5)+1;
-  const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
-  const cG='rgba(51,182,121,0.8)',cR='rgba(239,68,68,0.7)',cA='rgba(245,158,11,0.8)';
-  const consistGroups={};
-  HABITS.forEach(h=>{const key=h.group||h.id;if(!consistGroups[key])consistGroups[key]={key,label:h.label,members:[]};consistGroups[key].members.push(h);});
-  const habitStats=Object.values(consistGroups).map(g=>{
-    let sched=0,done=0,delayed=0,skipped=0;
-    for(let i=0;i<qElapsed;i++){
-      const d=new Date(Q_START);d.setDate(Q_START.getDate()+i);
-      const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
-      const members=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
-      if(!members.length)continue;
-      sched++;
-      const sts=members.map(h=>(store[ds]||{})[h.id]);
-      if(sts.some(s=>s==='did'))done++;
-      else if(sts.some(s=>s==='delayed'))delayed++;
-      else if(sts.some(s=>s==='didnot'))skipped++;
-    }
-    const pct=sched?Math.round((done+delayed)/sched*100):0;
-    return {label:g.label,sched,done,delayed,skipped,pct};
-  }).filter(x=>x.sched>0).sort((a,b)=>b.pct-a.pct);
-
-  let consistTableH='';
-  if(habitStats.length){
-    consistTableH=`<table class="monthly-table"><thead><tr>
-      <th>Habit</th><th>Sched</th><th style="color:#33b679">Done</th><th style="color:#f59e0b">Delayed</th><th style="color:rgba(239,68,68,0.8)">Skipped</th><th class="pct-c">Rate</th>
-    </tr></thead><tbody>`;
-    habitStats.forEach(x=>{
-      const barCol=x.pct>=80?cG:x.pct>=50?cA:cR;
-      consistTableH+=`<tr>
-        <td>${x.label}</td><td>${x.sched}</td>
-        <td style="color:#33b679">${x.done}</td>
-        <td style="color:#f59e0b">${x.delayed}</td>
-        <td style="color:rgba(239,68,68,0.8)">${x.skipped}</td>
-        <td><div style="display:flex;align-items:center;gap:6px">
-          <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;min-width:40px"><div style="height:4px;border-radius:2px;background:${barCol};width:${x.pct}%"></div></div>
-          <span class="pct-c">${x.pct}%</span>
-        </div></td>
-      </tr>`;
-    });
-    consistTableH+=`</tbody></table>`;
-  } else {
-    consistTableH=`<div class="no-data">No habit data yet.</div>`;
-  }
-
-  // No-porn streak
-  const npInfo=getNoPornInfo();
-  const npStreakCol=npInfo.streak>=30?'#33b679':npInfo.streak>=7?'#f59e0b':'rgba(239,68,68,0.8)';
-
   document.getElementById('main').innerHTML=`
-    <div class="section-title">Habit Dashboard — Apr → Jun 2026</div>
+    <div class="section-title">Habit Dashboard — Apr → Aug 2026</div>
     <div class="hdash-top">
       <div class="hdash-card">
         <div class="hdash-card-title">Top streaks 🔥</div>
@@ -1397,30 +1260,15 @@ function renderHabitDash(){
       <div class="hdash-card">
         <div class="hdash-card-title">Needs work ⚠️</div>
         <div class="streak-list">
-          ${bottom5.length?bottom5.map(x=>`<div class="streak-item">
+          ${bottom5.map(x=>`<div class="streak-item">
             <div class="streak-label">${x.label}</div>
-            <div class="streak-num" style="color:rgba(239,68,68,0.8)">${skipCounts[x.id]}</div>
-            <div class="streak-badge">✗</div>
-          </div>`).join(''):'<div style="font-size:10px;color:var(--text-dim);padding:6px 0">No skipped habits 🎉</div>'}
+            <div class="streak-num" style="color:${x.streak===0?'rgba(239,68,68,0.8)':'var(--accent)'}">${x.streak}</div>
+            <div class="streak-badge">${x.streak===0?'✗':'·'}</div>
+          </div>`).join('')}
         </div>
       </div>
     </div>
-
-    <div class="hdash-card" style="margin-bottom:22px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <div>
-          <div class="hdash-card-title">No-Porn Streak 🧘</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:800;color:${npStreakCol};line-height:1">${npInfo.streak}</div>
-          <div style="font-size:10px;color:var(--text-dim);margin-top:4px">days clean · best: ${npInfo.best} days</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-          <button onclick="noPornReset()" style="padding:8px 16px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:rgba(239,68,68,0.85);border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer">I broke it today</button>
-          ${npInfo.resetDate?`<div style="font-size:9px;color:var(--text-dim)">Last reset: ${npInfo.resetDate}</div>`:'<div style="font-size:9px;color:var(--text-dim)">Tracking since Apr 1</div>'}
-        </div>
-      </div>
-    </div>
-
-    <div class="section-title">Apr → Jun 2026 heat map</div>
+    <div class="section-title">Apr → Aug 2026 consistency</div>
     <div class="hdash-legend">
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(51,182,121,0.8)"></div><span class="hdash-legend-lbl">Done</span></div>
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(245,158,11,0.7)"></div><span class="hdash-legend-lbl">Delayed</span></div>
@@ -1428,359 +1276,7 @@ function renderHabitDash(){
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:var(--surface2)"></div><span class="hdash-legend-lbl">Not marked</span></div>
     </div>
     <div class="hdash-grid-outer"><div class="hdash-grid-inner">${headerH}${gridH}</div></div>
-
-    <div class="section-title" style="margin-top:8px">Consistency since Apr 1</div>
-    ${consistTableH}
   `;
-}
-
-// ─── RESTORE GOALS FROM SHEETS ───────────────────────────────────────────────
-// Always merges Sheets → localStorage. Sheets wins for any date that exists there.
-// This means data is never lost just because localStorage was cleared or app reinstalled.
-function isValidDateStr(s){return s&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&!isNaN(new Date(s).getTime());}
-
-async function restoreGoalsFromSheet(){
-  let restored=0;
-  try{
-    // HEALTH: merge Sheets into localStorage (Sheets wins per date)
-    try{
-      const h=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Health!A:B')}`);
-      const rows=(h.values||[]).filter(r=>isValidDateStr(r[0])&&r[1]);
-      if(rows.length){
-        const byDate={};
-        getGoalsHealth().forEach(e=>{if(isValidDateStr(e.date))byDate[e.date]=e;});
-        rows.forEach(r=>{byDate[r[0]]={date:r[0],weight:parseFloat(r[1])};});
-        localStorage.setItem(GK_HEALTH,JSON.stringify(Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date))));
-        restored++;
-      }
-    }catch(e){console.warn('Health restore:',e);}
-
-    // MONEY (savings + gold): merge by date+type composite key
-    try{
-      const m=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Money!A:C')}`);
-      const rows=(m.values||[]).filter(r=>isValidDateStr(r[0])&&r[1]&&r[2]);
-      if(rows.length){
-        const byKey={};
-        getGoalsMoney().forEach(e=>{if(isValidDateStr(e.date))byKey[e.date+'_'+e.type]=e;});
-        rows.forEach(r=>{byKey[r[0]+'_'+r[1]]={date:r[0],type:r[1],amount:parseFloat(r[2])};});
-        localStorage.setItem(GK_MONEY,JSON.stringify(Object.values(byKey).sort((a,b)=>a.date.localeCompare(b.date))));
-        restored++;
-      }
-    }catch(e){console.warn('Money restore:',e);}
-
-    // FAITH: merge Sheets into localStorage
-    try{
-      const f=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Faith!A:B')}`);
-      const rows=(f.values||[]).filter(r=>isValidDateStr(r[0])&&r[1]);
-      if(rows.length){
-        const byDate={};
-        getGoalsFaith().forEach(e=>{if(isValidDateStr(e.date))byDate[e.date]=e;});
-        rows.forEach(r=>{byDate[r[0]]={date:r[0],shlokas:parseInt(r[1])};});
-        localStorage.setItem(GK_FAITH,JSON.stringify(Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date))));
-        restored++;
-      }
-    }catch(e){console.warn('Faith restore:',e);}
-
-    if(restored>0)showToast('Goals restored from Sheets ✓','ok');
-  }catch(e){console.warn('Restore goals failed:',e);}
-}
-
-// ─── NO-PORN STREAK ──────────────────────────────────────────────────────────
-const NK='gps_noporn';
-function getNoPornInfo(){
-  try{
-    const d=JSON.parse(localStorage.getItem(NK)||'{}');
-    const resetDate=d.resetDate||null;
-    const best=d.best||0;
-    const startDate=resetDate?new Date(resetDate+'T00:00:00'):Q_START;
-    const now=new Date();
-    const streak=Math.max(0,Math.floor((now-startDate)/864e5));
-    return {streak,best:Math.max(best,streak),resetDate};
-  }catch{return{streak:0,best:0,resetDate:null};}
-}
-function noPornReset(){
-  if(!confirm('Reset your streak? This will record today as a reset date.'))return;
-  const today=dkey(new Date());
-  const cur=getNoPornInfo();
-  const data={resetDate:today,best:Math.max(cur.best,cur.streak)};
-  localStorage.setItem(NK,JSON.stringify(data));
-  renderHabitDash();
-}
-
-// ─── TASKS TAB ───────────────────────────────────────────────────────────────
-const TDK='gps_tasks_done';
-const TASKS_DONE_TAB='Tasks_Done';
-let calendarEventsCache=null;
-let tasksDoneRowMap={};  // dateStr → sheet row number
-
-function getTasksDone(){try{return JSON.parse(localStorage.getItem(TDK)||'{}')}catch{return{}}}
-function saveTasksDone(d){localStorage.setItem(TDK,JSON.stringify(d))}
-
-async function toggleTaskDone(dateStr,eventId){
-  const d=getTasksDone();
-  if(!d[dateStr])d[dateStr]=[];
-  const idx=d[dateStr].indexOf(eventId);
-  const nowDone=idx<0;
-  if(idx>=0)d[dateStr].splice(idx,1);else d[dateStr].push(eventId);
-  saveTasksDone(d);
-  tasksDoneSheetWrite(dateStr,d[dateStr]).catch(e=>console.warn('Tasks_Done sheet:',e));
-
-  // If it's a Google Task, mark complete/incomplete in Google Tasks
-  if(eventId.startsWith('gtask_')&&accessToken&&calendarEventsCache){
-    const ev=calendarEventsCache.find(e=>e.id===eventId);
-    if(ev&&ev._listId&&ev._taskId){
-      try{
-        await apiWrite(
-          `https://tasks.googleapis.com/tasks/v1/lists/${ev._listId}/tasks/${ev._taskId}`,
-          'PATCH',
-          nowDone
-            ?{status:'completed',completed:new Date().toISOString()}
-            :{status:'needsAction',completed:null}
-        );
-        showToast(nowDone?'Task completed ✓':'Task reopened','ok');
-        // Wipe cache so the completed task disappears on next refresh
-        if(nowDone)calendarEventsCache=null;
-      }catch(e){
-        showToast('Google Tasks sync failed','err');
-        console.warn('Task sync failed:',e);
-      }
-    }
-  }
-
-  renderTasks();
-}
-
-// ── Sheets for Tasks Done ──
-async function tasksDoneSheetInit(){
-  if(!accessToken)return;
-  try{
-    const data=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent(TASKS_DONE_TAB+'!A:C')}`);
-    const rows=data.values||[];
-    if(rows.length===0){
-      // Create header row
-      await apiWrite(
-        `${SHEETS_BASE}/values/${encodeURIComponent(TASKS_DONE_TAB+'!A1:C1')}?valueInputOption=RAW`,
-        'PUT',{values:[['Date','Day','DoneIds']]}
-      );
-    }else{
-      tasksDoneRowMap={};
-      const store=getTasksDone();
-      let changed=false;
-      rows.forEach((row,i)=>{
-        if(i===0||!isValidDateStr(row[0]))return;
-        tasksDoneRowMap[row[0]]=i+1;
-        // Restore from Sheets if local has nothing for that date
-        if(!store[row[0]]&&row[2]){
-          try{store[row[0]]=JSON.parse(row[2]);changed=true;}catch{}
-        }
-      });
-      if(changed){saveTasksDone(store);showToast('Task ticks restored from Sheets','ok');}
-    }
-  }catch(err){console.warn('Tasks_Done sheet init:',err);}
-}
-
-async function tasksDoneSheetWrite(ds,ids){
-  if(!accessToken)return;
-  const d=new Date(ds+'T00:00:00');
-  const dayKey=DAYS[JS2IDX[d.getDay()]]||'';
-  const row=[ds,dayKey,JSON.stringify(ids)];
-  try{
-    if(tasksDoneRowMap[ds]){
-      const r=tasksDoneRowMap[ds];
-      await apiWrite(
-        `${SHEETS_BASE}/values/${encodeURIComponent(TASKS_DONE_TAB+'!A'+r+':C'+r)}?valueInputOption=RAW`,
-        'PUT',{values:[row]}
-      );
-    }else{
-      const res=await apiWrite(
-        `${SHEETS_BASE}/values/${encodeURIComponent(TASKS_DONE_TAB+'!A:C')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
-        'POST',{values:[row]}
-      );
-      const match=(res.updates?.updatedRange||'').match(/(\d+):/);
-      if(match)tasksDoneRowMap[ds]=parseInt(match[1]);
-    }
-  }catch(err){console.warn('Tasks_Done write failed:',err);}
-}
-
-// ─── GOOGLE TASKS FETCH ───────────────────────────────────────────────────────
-async function fetchGoogleTasks(){
-  if(!accessToken)return[];
-  try{
-    const lists=await apiFetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists?maxResults=20');
-    const allTasks=[];
-    await Promise.all((lists.items||[]).map(async list=>{
-      try{
-        const data=await apiFetch(
-          `https://tasks.googleapis.com/tasks/v1/lists/${list.id}/tasks`+
-          `?showCompleted=false&showHidden=false&maxResults=100`
-        );
-        (data.items||[]).forEach(t=>{
-          if(!t.title||t.status==='completed')return;
-          // due comes as RFC3339 UTC e.g. "2026-04-22T00:00:00.000Z"
-          const dueDate=t.due?t.due.slice(0,10):null;
-          allTasks.push({
-            id:'gtask_'+t.id,
-            summary:t.title,
-            start:{date:dueDate},
-            _calName:'📋 '+list.title,
-            _isGTask:true,
-            _listId:list.id,
-            _taskId:t.id,
-            notes:t.notes||''
-          });
-        });
-      }catch(e){console.warn('Task list fetch failed:',list.title,e);}
-    }));
-    return allTasks;
-  }catch(e){console.warn('Google Tasks fetch failed:',e);return[];}
-}
-
-async function fetchCalendarEvents(){
-  if(!accessToken)return null;
-  const now=new Date();
-  const mon=new Date(now);mon.setDate(now.getDate()-JS2IDX[now.getDay()]);mon.setHours(0,0,0,0);
-  const sun=new Date(mon);sun.setDate(mon.getDate()+6);sun.setHours(23,59,59,999);
-  try{
-    const list=await apiFetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=50');
-    const cals=list.items||[];
-    const allEvents=[];
-    await Promise.all(cals.filter(c=>c.selected!==false&&c.summary.toLowerCase().trim()!=='habits').map(async cal=>{
-      try{
-        const data=await apiFetch(
-          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events`+
-          `?timeMin=${encodeURIComponent(mon.toISOString())}&timeMax=${encodeURIComponent(sun.toISOString())}`+
-          `&singleEvents=true&orderBy=startTime&maxResults=200`
-        );
-        (data.items||[]).forEach(ev=>{if(ev.summary)allEvents.push({...ev,_calName:cal.summary});});
-      }catch{}
-    }));
-    // Merge Google Tasks (tasks with due dates show up in Tasks tab)
-    try{
-      const tasks=await fetchGoogleTasks();
-      allEvents.push(...tasks);
-    }catch(e){console.warn('Tasks merge failed:',e);}
-    return allEvents;
-  }catch{return null;}
-}
-
-async function renderTasks(){
-  const now=new Date();
-  const todayStr=dkey(now);
-
-  // Week day nav — same week logic as habits
-  const wkMon=new Date(now);wkMon.setDate(now.getDate()-JS2IDX[now.getDay()]);wkMon.setHours(0,0,0,0);
-
-  if(!window._tasksActiveDateStr)window._tasksActiveDateStr=todayStr;
-  const activeDate=window._tasksActiveDateStr;
-
-  let html=`<div class="section-title">Tasks — this week</div>`;
-
-  // Day nav
-  html+=`<div class="habit-day-nav">`;
-  DAYS.forEach((dk,i)=>{
-    const d=new Date(wkMon);d.setDate(wkMon.getDate()+i);
-    const ds=dkey(d);
-    const isToday=ds===todayStr,isActive=ds===activeDate;
-    html+=`<button class="hday-btn${isActive?' active':''}${isToday&&!isActive?' today':''}" onclick="window._tasksActiveDateStr='${ds}';renderTasks()">${DNAMES[dk].slice(0,3).toUpperCase()} ${d.getDate()}</button>`;
-  });
-  html+=`</div>`;
-
-  if(!accessToken){
-    html+=`<div class="connect-screen" style="padding:40px 20px">
-      <h2>Connect Google</h2>
-      <p>Connect your Google account to pull tasks from Google Calendar.</p>
-      <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
-    </div>`;
-    document.getElementById('main').innerHTML=html;
-    return;
-  }
-
-  // Show loading then load events
-  html+=`<div id="tasks-body"><div class="no-data" style="opacity:.5">Loading calendar…</div></div>`;
-  document.getElementById('main').innerHTML=html;
-
-  if(!calendarEventsCache){
-    calendarEventsCache=await fetchCalendarEvents();
-  }
-
-  const done=getTasksDone();
-  const activeDateObj=new Date(activeDate+'T00:00:00');
-  const dayKey=DAYS[JS2IDX[activeDateObj.getDay()]];
-  const dateLabel=activeDateObj.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
-
-  let bodyHtml=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:1px;margin-bottom:14px;color:var(--text-mid)">${dateLabel}</div>`;
-
-  const events=(calendarEventsCache||[]).filter(ev=>{
-    const start=ev.start?.date||ev.start?.dateTime;
-    if(!start)return false;
-    const evDate=start.slice(0,10);
-    return evDate===activeDate;
-  }).sort((a,b)=>{
-    // Google Tasks (no dateTime) go to bottom, calendar events sorted by time
-    const aIsTask=!!a._isGTask, bIsTask=!!b._isGTask;
-    if(aIsTask!==bIsTask)return aIsTask?1:-1;
-    const sa=a.start?.dateTime||a.start?.date||'';
-    const sb=b.start?.dateTime||b.start?.date||'';
-    return sa.localeCompare(sb);
-  });
-
-  // Undated Google Tasks — only show on today's view
-  const undatedTasks=activeDate===todayStr
-    ?(calendarEventsCache||[]).filter(ev=>ev._isGTask&&!ev.start?.date)
-    :[];
-
-  const totalItems=events.length+undatedTasks.length;
-
-  if(!totalItems){
-    const totalThisWeek=(calendarEventsCache||[]).filter(ev=>!ev._isGTask||ev.start?.date).length;
-    bodyHtml+=`<div class="no-data">No events or tasks on this day.<br><span style="font-size:9px;color:var(--text-dim);line-height:2">${totalThisWeek>0?`${totalThisWeek} item${totalThisWeek!==1?'s':''} found elsewhere this week — check other days above.`:'No events found this week.<br>Tasks pulls from Google Calendar (all except "Habits") and Google Tasks.<br>Make sure Tasks API is enabled and tasks have a due date to appear here.'}</span></div>`;
-  } else {
-    const doneIds=done[activeDate]||[];
-
-    // Dated events + dated tasks
-    if(events.length){
-      bodyHtml+=`<div style="display:flex;flex-direction:column;gap:4px">`;
-      events.forEach(ev=>{
-        const isDone=doneIds.includes(ev.id);
-        const startDT=ev.start?.dateTime?new Date(ev.start.dateTime):null;
-        const timeStr=startDT?startDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}):(ev._isGTask?'Task':'All day');
-        const endDT=ev.end?.dateTime?new Date(ev.end.dateTime):null;
-        const endStr=endDT?' – '+endDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}):'';
-        bodyHtml+=`<div class="task-row${isDone?' done':''}" onclick="toggleTaskDone('${activeDate}','${ev.id.replace(/'/g,"\\'")}')">
-          <div class="task-check">${isDone?'✓':''}</div>
-          <div class="task-time" style="font-size:9px">${timeStr}${endStr}</div>
-          <div class="task-label">${ev.summary}</div>
-          <div style="font-size:8px;color:var(--text-dim);flex-shrink:0;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev._calName}</div>
-        </div>`;
-      });
-      bodyHtml+=`</div>`;
-    }
-
-    // Undated tasks section — only on today
-    if(undatedTasks.length){
-      bodyHtml+=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 8px">No due date</div>`;
-      bodyHtml+=`<div style="display:flex;flex-direction:column;gap:4px">`;
-      undatedTasks.forEach(ev=>{
-        const isDone=doneIds.includes(ev.id);
-        bodyHtml+=`<div class="task-row${isDone?' done':''}" onclick="toggleTaskDone('${activeDate}','${ev.id.replace(/'/g,"\\'")}')">
-          <div class="task-check">${isDone?'✓':''}</div>
-          <div class="task-time" style="font-size:9px;color:var(--text-dim)">—</div>
-          <div class="task-label">${ev.summary}</div>
-          <div style="font-size:8px;color:var(--text-dim);flex-shrink:0;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev._calName}</div>
-        </div>`;
-      });
-      bodyHtml+=`</div>`;
-    }
-
-    const doneCount=doneIds.filter(id=>[...events,...undatedTasks].some(ev=>ev.id===id)).length;
-    bodyHtml=`<div style="font-size:10px;color:var(--text-dim);margin-bottom:12px">${doneCount}/${totalItems} done${undatedTasks.length&&activeDate===todayStr?' · '+undatedTasks.length+' undated':''}</div>`+bodyHtml;
-  }
-
-  // Refresh button
-  bodyHtml+=`<button onclick="calendarEventsCache=null;renderTasks()" style="margin-top:16px;padding:7px 14px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.3);color:var(--accent);border-radius:5px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer">Refresh calendar + tasks</button>`;
-
-  const tasksBody=document.getElementById('tasks-body');
-  if(tasksBody)tasksBody.innerHTML=bodyHtml;
 }
 
 init();

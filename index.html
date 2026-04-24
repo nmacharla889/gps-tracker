@@ -1604,6 +1604,9 @@ async function customLogsSheetRestore(){
   }catch(e){console.warn('Goals_Custom restore failed:',e);}
 }
 
+// ─── BOOTSTRAP ───────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+
 // ─── CALORIE TRACKER (STUB) ───────────────────────────────────────────────────
 function renderCalories(){
   document.getElementById('main').innerHTML=`

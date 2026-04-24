@@ -3,6 +3,7 @@ const CACHE = 'gps-v19';
 const ASSETS = [
   './',
   './index.html',
+  './styles.css',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',

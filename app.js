@@ -192,6 +192,7 @@ async function loadCalendarData(){
     setSyncStatus('ok');
     calendarEventsCache=null;
     await restoreGoalsFromSheet();
+    await noPornSheetRestore();
 
     // refresh current view
     if(activeDay==='history') renderHistory();
@@ -1216,6 +1217,8 @@ async function restoreGoalsFromSheet(){
 
 // ─── NO-PORN STREAK ──────────────────────────────────────────────────────────
 const NK='gps_noporn';
+const SETTINGS_TAB='Settings';
+
 function getNoPornInfo(){
   try{
     const d=JSON.parse(localStorage.getItem(NK)||'{}');
@@ -1227,12 +1230,52 @@ function getNoPornInfo(){
     return {streak,best:Math.max(best,streak),resetDate};
   }catch{return{streak:0,best:0,resetDate:null};}
 }
+
+async function noPornSheetSave(){
+  if(!accessToken)return;
+  const d=JSON.parse(localStorage.getItem(NK)||'{}');
+  try{
+    // Upsert two rows in Settings tab: noporn_reset and noporn_best
+    await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent(SETTINGS_TAB+'!A:B')}:clear`,'POST',{});
+    await apiWrite(
+      `${SHEETS_BASE}/values/${encodeURIComponent(SETTINGS_TAB+'!A1')}?valueInputOption=RAW`,
+      'PUT',
+      {values:[
+        ['key','value'],
+        ['noporn_reset', d.resetDate||''],
+        ['noporn_best',  d.best||0]
+      ]}
+    );
+  }catch(e){console.warn('NoPorn sheet save failed:',e);}
+}
+
+async function noPornSheetRestore(){
+  if(!accessToken)return;
+  try{
+    const data=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent(SETTINGS_TAB+'!A:B')}`);
+    const rows=data.values||[];
+    const map={};
+    rows.slice(1).forEach(r=>{if(r[0]&&r[1]!==undefined)map[r[0]]=r[1];});
+    if(!map['noporn_reset']&&!map['noporn_best'])return; // nothing saved yet
+    const local=JSON.parse(localStorage.getItem(NK)||'{}');
+    const sheetReset=map['noporn_reset']||null;
+    const sheetBest=parseInt(map['noporn_best'])||0;
+    // Restore resetDate only if localStorage is empty (reinstall scenario)
+    const merged={
+      resetDate: local.resetDate || sheetReset,
+      best: Math.max(local.best||0, sheetBest)
+    };
+    localStorage.setItem(NK,JSON.stringify(merged));
+  }catch(e){console.warn('NoPorn sheet restore failed:',e);}
+}
+
 function noPornReset(){
   if(!confirm('Reset your streak? This will record today as a reset date.'))return;
   const today=dkey(new Date());
   const cur=getNoPornInfo();
   const data={resetDate:today,best:Math.max(cur.best,cur.streak)};
   localStorage.setItem(NK,JSON.stringify(data));
+  noPornSheetSave().catch(e=>console.warn('NoPorn save:',e));
   renderHabitDash();
 }
 

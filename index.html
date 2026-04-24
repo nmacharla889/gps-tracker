@@ -527,6 +527,8 @@ function init(){
     const saved=getSavedToken();
     if(saved){
       accessToken=saved;
+      setSyncStatus('ok');
+      switchDay(activeDay);
       habitsSheetInit();
       tasksDoneSheetInit();
       loadCalendarData();

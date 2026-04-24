@@ -32,7 +32,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 14px rgba(245,158,11,0.6)}
 .tab.today-tab::after{content:'';position:absolute;top:9px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .tab.stats-tab{margin-left:auto;border-left:1px solid var(--border);padding-left:18px}
-.main{max-width:860px;margin:0 auto;padding:20px 20px 80px;position:relative;z-index:1;overflow-x:hidden;width:100%}
+.main{max-width:860px;margin:0 auto;padding:20px 20px 80px;position:relative;z-index:1;width:100%}
 /* connect screen */
 .connect-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:20px}
 .connect-screen h2{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;letter-spacing:1px;color:var(--text)}

@@ -188,12 +188,15 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .streak-label{flex:1;font-size:10px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .streak-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#33b679;flex-shrink:0;min-width:26px;text-align:right}
 .streak-badge{font-size:11px;flex-shrink:0}
-.hdash-grid-outer{overflow-x:auto;margin-bottom:24px;-webkit-overflow-scrolling:touch;max-width:100%}
+.hdash-grid-wrapper{display:flex;overflow:hidden;margin-bottom:24px;max-width:100%}
+.hdash-names-col{flex-shrink:0;width:112px;background:var(--bg);padding-top:0}
+.hdash-names-spacer{height:16px}
+.hdash-habit-name-cell{height:15px;font-size:9px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px;text-align:right;display:flex;align-items:center;justify-content:flex-end;margin-bottom:2px}
+.hdash-grid-scroll{overflow-x:auto;flex:1;-webkit-overflow-scrolling:touch}
 .hdash-grid-inner{display:inline-flex;flex-direction:column;min-width:max-content}
-.hdash-header-row{display:flex;padding-left:112px;margin-bottom:3px}
+.hdash-header-row{display:flex;margin-bottom:3px}
 .hdash-month-block{font-size:8px;color:var(--text-dim);letter-spacing:.3px;flex-shrink:0;text-align:left}
-.hdash-grid-row{display:flex;align-items:center;margin-bottom:2px}
-.hdash-habit-name{width:110px;font-size:9px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px;flex-shrink:0;text-align:right}
+.hdash-cells-row{display:flex;align-items:center;margin-bottom:2px}
 .hdash-cell{width:9px;height:13px;border-radius:1px;flex-shrink:0;margin-right:1px;cursor:default;transition:transform .1s}
 .hdash-cell:hover{transform:scale(1.4);z-index:10;position:relative}
 .hc-did{background:rgba(51,182,121,0.8)}
@@ -233,7 +236,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .manage-add-btn:hover{border-color:rgba(245,158,11,0.4);color:var(--accent)}
 
 /* ── GOALS TAB ── */
-.goals-section-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:18px 0 8px}
+.goals-section-header{display:flex;align-items:center;justify-content:space-between;margin:18px 0 8px}
+.goals-section-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:0}
+.goals-target-btn{padding:2px 7px;background:none;border:1px solid var(--border);border-radius:4px;color:var(--text-dim);font-size:9px;cursor:pointer;transition:all .15s;font-family:'DM Mono',monospace}
+.goals-target-btn:hover{border-color:rgba(245,158,11,0.4);color:var(--accent)}
+.goals-target-edit-block{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);border:1px solid rgba(245,158,11,0.25);border-radius:7px;margin-bottom:10px;flex-wrap:wrap}
+.goals-target-edit-lbl{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
 .goal-card{background:linear-gradient(145deg,rgba(15,15,24,0.98),rgba(9,9,16,0.98));border:1px solid rgba(255,255,255,0.055);border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 4px 24px rgba(0,0,0,0.6),0 1px 0 rgba(255,255,255,0.035) inset;transition:transform .2s ease,box-shadow .2s ease}
 .goal-card:not(.placeholder):hover{transform:translateY(-3px);box-shadow:0 10px 36px rgba(0,0,0,0.7),0 1px 0 rgba(255,255,255,0.05) inset}
 .goal-card.placeholder{opacity:.5}

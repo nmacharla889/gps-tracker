@@ -1,10 +1,10 @@
-const CACHE = 'gps-v24';
+const CACHE = 'gps-v25';
 
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
-  './app.js'
+  './app.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',

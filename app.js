@@ -14,6 +14,7 @@ const Q_END   = new Date('2026-06-30');
 let activeDay     = null;
 let accessToken   = null;
 let tokenClient   = null;
+let goalsTargetEdit = null; // null | 'health'|'savings'|'gold'|'faith'|'belly'
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
 const TK = 'gps_token';
@@ -22,8 +23,9 @@ const TK = 'gps_token';
 const GK_HEALTH  = 'gps_goals_health';
 const GK_MONEY   = 'gps_goals_money';
 const GK_FAITH   = 'gps_goals_faith';
+const GK_BELLY   = 'gps_goals_belly';
 const GK_TARGETS = 'gps_goals_targets';
-const DEFAULT_TARGETS = {health:68, savings:2500, gold:300, faith:90};
+const DEFAULT_TARGETS = {health:68, savings:2500, gold:300, faith:90, belly:85};
 const GK_CUSTOM_DEFS = 'gps_goals_custom';
 const GK_CUSTOM_LOGS = 'gps_goals_custom_logs';
 function getCustomGoals(){try{return JSON.parse(localStorage.getItem(GK_CUSTOM_DEFS)||'[]');}catch{return[];}}
@@ -36,6 +38,28 @@ function saveGoalsTargets(t){localStorage.setItem(GK_TARGETS,JSON.stringify(t));
 function getGoalsHealth(){try{return JSON.parse(localStorage.getItem(GK_HEALTH)||'[]');}catch{return[];}}
 function getGoalsMoney(){try{return JSON.parse(localStorage.getItem(GK_MONEY)||'[]');}catch{return[];}}
 function getGoalsFaith(){try{return JSON.parse(localStorage.getItem(GK_FAITH)||'[]');}catch{return[];}}
+function getGoalsBelly(){try{return JSON.parse(localStorage.getItem(GK_BELLY)||'[]');}catch{return[];}}
+
+// ── Sparkline SVG helper ──
+function renderSparkline(entries, valueKey, color){
+  const pts=entries.slice(-30);
+  if(pts.length<2)return'';
+  const vals=pts.map(e=>e[valueKey]);
+  const min=Math.min(...vals),max=Math.max(...vals);
+  const range=(max-min)||1;
+  const W=300,H=40,PAD=5;
+  const coords=pts.map((e,i)=>{
+    const x=PAD+Math.round((i/(pts.length-1))*(W-2*PAD));
+    const y=Math.round(H-PAD-((e[valueKey]-min)/range)*(H-2*PAD));
+    return `${x},${y}`;
+  }).join(' ');
+  const lx=PAD+Math.round(((pts.length-1)/(pts.length-1))*(W-2*PAD));
+  const ly=Math.round(H-PAD-((vals[vals.length-1]-min)/range)*(H-2*PAD));
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" style="display:block;margin:6px 0">
+    <polyline points="${coords}" fill="none" stroke="${color}" stroke-width="1.5" opacity=".55" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lx}" cy="${ly}" r="3" fill="${color}" opacity=".9"/>
+  </svg>`;
+}
 
 async function goalsSheetAppend(sheetName,row){
   if(!accessToken)return;
@@ -200,7 +224,6 @@ async function loadCalendarData(){
     else if(activeDay==='habits') renderHabits();
     else if(activeDay==='habitdash') renderHabitDash();
     else if(activeDay==='tasks') renderTasks();
-    else if(activeDay==='manage') renderManage();
 
   }catch(err){
     console.error('Calendar load failed:',err);
@@ -232,103 +255,11 @@ async function habitsConfigSaveAll(){
   await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent(HABITS_CFG_TAB+'!A1')}?valueInputOption=RAW`,'PUT',{values:[...header,...dataRows]});
 }
 
-// ── Manage Tab ──
-let manageGoalForm=null; // {category, editId} or null
+// renderManage() removed — goal management is now inline in renderGoals()
+let manageGoalForm=null; // {category, editId} or null — used by renderGoals inline form
 
-function renderManage(){
-  if(!accessToken){
-    document.getElementById('main').innerHTML=`<div class="connect-screen">
-      <h2>Not Connected</h2>
-      <p>Connect Google to manage your goals.</p>
-      <button class="btn-connect-big" onclick="connectCalendar()">Connect</button>
-    </div>`;
-    return;
-  }
-  const t=getGoalsTargets();
-  const customs=getCustomGoals();
-  const CATS=[
-    {key:'health',       label:'Health',       emoji:'💪', color:'var(--health)'},
-    {key:'money',        label:'Money',        emoji:'💰', color:'var(--money)'},
-    {key:'work',         label:'Work',         emoji:'💼', color:'var(--work)'},
-    {key:'relationship', label:'Relationship', emoji:'🤝', color:'var(--rel)'},
-    {key:'faith',        label:'Faith',        emoji:'🙏', color:'var(--spirit)'},
-  ];
-  let html=`<div class="section-title">Manage Goals</div>`;
-  CATS.forEach(cat=>{
-    html+=`<div class="manage-cat-section">
-      <div class="manage-cat-header" style="color:${cat.color}">${cat.emoji} ${cat.label}</div>`;
-    if(cat.key==='health'){
-      html+=`<div class="manage-builtin-row">
-        <div class="manage-builtin-label">WEIGHT — BUILT-IN</div>
-        <div class="manage-target-row"><span>Target</span>
-          <input id="tHealth" class="manage-target-input" type="number" step="0.1" value="${t.health}">
-          <span>kg</span><button class="manage-btn" onclick="saveTargets()">Save</button>
-        </div></div>`;
-    }
-    if(cat.key==='money'){
-      html+=`<div class="manage-builtin-row">
-        <div class="manage-builtin-label">SAVINGS — BUILT-IN</div>
-        <div class="manage-target-row"><span>Target</span>
-          <input id="tSavings" class="manage-target-input" type="number" step="1" value="${t.savings}">
-          <span>$/qtr</span><button class="manage-btn" onclick="saveTargets()">Save</button>
-        </div></div>
-      <div class="manage-builtin-row" style="margin-top:6px">
-        <div class="manage-builtin-label">GOLD — BUILT-IN</div>
-        <div class="manage-target-row"><span>Target</span>
-          <input id="tGold" class="manage-target-input" type="number" step="1" value="${t.gold}">
-          <span>$/qtr</span><button class="manage-btn" onclick="saveTargets()">Save</button>
-        </div></div>`;
-    }
-    if(cat.key==='faith'){
-      html+=`<div class="manage-builtin-row">
-        <div class="manage-builtin-label">SHLOKAS (LALITHA SAHASRANAMAM) — BUILT-IN</div>
-        <div class="manage-target-row"><span>Target</span>
-          <input id="tFaith" class="manage-target-input" type="number" step="1" value="${t.faith}">
-          <button class="manage-btn" onclick="saveTargets()">Save</button>
-        </div></div>`;
-    }
-    const catGoals=customs.filter(g=>g.category===cat.key);
-    catGoals.forEach(g=>{
-      const logs=getCustomLogs()[g.id]||[];
-      const total=logs.reduce((s,e)=>s+e.value,0);
-      html+=`<div class="manage-goal-row">
-        <div style="flex:1;min-width:0">
-          <div class="manage-goal-label">${g.name}</div>
-          <div class="manage-goal-meta">Target: ${g.target} ${g.unit} · Progress: ${total} ${g.unit}</div>
-        </div>
-        <button class="manage-btn" onclick="openGoalForm('${cat.key}','${g.id}')">edit</button>
-        <button class="manage-btn danger" onclick="deleteCustomGoal('${g.id}')">delete</button>
-      </div>`;
-    });
-    if(manageGoalForm&&manageGoalForm.category===cat.key){
-      const editing=manageGoalForm.editId?customs.find(g=>g.id===manageGoalForm.editId):null;
-      html+=`<div class="manage-form" id="goalForm">
-        <div class="manage-form-title">${editing?'Edit goal':'Add goal — '+cat.label}</div>
-        <div class="manage-field"><label>Goal name</label>
-          <input id="gfName" type="text" placeholder="e.g. Read 5 books" value="${editing?editing.name:''}">
-        </div>
-        <div class="manage-field"><label>Target (number)</label>
-          <input id="gfTarget" type="number" step="any" min="0" placeholder="e.g. 5" value="${editing?editing.target:''}">
-        </div>
-        <div class="manage-field"><label>Unit</label>
-          <input id="gfUnit" type="text" placeholder="e.g. books, hours, calls" value="${editing?editing.unit:''}">
-        </div>
-        <div class="manage-form-btns">
-          <button class="manage-save-btn" onclick="saveCustomGoal()">Save</button>
-          <button class="manage-cancel-btn" onclick="closeGoalForm()">Cancel</button>
-        </div>
-      </div>`;
-    } else {
-      html+=`<button class="manage-add-btn" onclick="openGoalForm('${cat.key}')">+ Add ${cat.label} goal</button>`;
-    }
-    html+=`</div>`;
-  });
-  document.getElementById('main').innerHTML=html;
-  if(manageGoalForm){const f=document.getElementById('goalForm');if(f)f.scrollIntoView({behavior:'smooth'});}
-}
-
-function openGoalForm(category,editId=null){manageGoalForm={category,editId};renderManage();}
-function closeGoalForm(){manageGoalForm=null;renderManage();}
+function openGoalForm(category,editId=null){manageGoalForm={category,editId};renderGoals();}
+function closeGoalForm(){manageGoalForm=null;renderGoals();}
 
 function saveCustomGoal(){
   const name=document.getElementById('gfName').value.trim();
@@ -348,7 +279,7 @@ function saveCustomGoal(){
   manageGoalForm=null;
   showToast('Goal saved','ok');
   customGoalsSheetBackup().catch(e=>console.warn('Goals_Config backup:',e));
-  renderManage();
+  renderGoals();
 }
 
 function deleteCustomGoal(id){
@@ -359,7 +290,7 @@ function deleteCustomGoal(id){
   saveCustomGoals(goals.filter(x=>x.id!==id));
   const logs=getCustomLogs();delete logs[id];saveCustomLogs(logs);
   customGoalsSheetBackup().catch(e=>console.warn('Goals_Config backup:',e));
-  renderManage();
+  renderGoals();
 }
 
 // ── Goal log functions ──
@@ -401,17 +332,49 @@ function logFaith(){
   showToast('Shlokas logged','ok');
   renderGoals();
 }
+function logBelly(){
+  const val=parseFloat(document.getElementById('bellyInput').value);
+  if(isNaN(val)||val<50||val>200){showToast('Enter a valid belly size (cm)','err');return;}
+  const today=dkey(new Date());
+  const data=getGoalsBelly();
+  const idx=data.findIndex(e=>e.date===today);
+  const entry={date:today,cm:val};
+  if(idx>-1)data[idx]=entry;else data.push(entry);
+  localStorage.setItem(GK_BELLY,JSON.stringify(data));
+  goalsSheetAppend('Goals_Belly',[today,val]);
+  showToast('Belly size logged','ok');
+  renderGoals();
+}
+function toggleTargetEdit(key){
+  goalsTargetEdit=goalsTargetEdit===key?null:key;
+  renderGoals();
+}
+function closeTargetEdit(){goalsTargetEdit=null;renderGoals();}
+function saveTargetInline(key){
+  const el=document.getElementById('te_'+key);
+  if(!el)return;
+  const val=parseFloat(el.value);
+  if(isNaN(val)||val<=0){showToast('Enter valid target','err');return;}
+  const t=getGoalsTargets();
+  t[key]=val;
+  saveGoalsTargets(t);
+  goalsTargetsSheetSave(t);
+  showToast('Target saved','ok');
+  goalsTargetEdit=null;
+  renderGoals();
+}
 function saveTargets(){
-  const h=parseFloat(document.getElementById('tHealth').value);
-  const s=parseFloat(document.getElementById('tSavings').value);
-  const g=parseFloat(document.getElementById('tGold').value);
-  const f=parseInt(document.getElementById('tFaith').value);
+  // Legacy function — target editing now done inline via saveTargetInline
+  const h=parseFloat(document.getElementById('tHealth')?.value);
+  const s=parseFloat(document.getElementById('tSavings')?.value);
+  const g=parseFloat(document.getElementById('tGold')?.value);
+  const f=parseInt(document.getElementById('tFaith')?.value);
   if([h,s,g,f].some(v=>isNaN(v)||v<=0)){showToast('All targets must be positive numbers','err');return;}
-  const t={health:h,savings:s,gold:g,faith:f};
+  const t={...getGoalsTargets(),health:h,savings:s,gold:g,faith:f};
   saveGoalsTargets(t);
   goalsTargetsSheetSave(t);
   showToast('Targets saved','ok');
-  renderManage();
+  renderGoals();
 }
 
 function logCustomGoal(id){
@@ -432,7 +395,7 @@ function logCustomGoal(id){
 
 function renderCustomGoalCards(category){
   const goals=getCustomGoals().filter(g=>g.category===category);
-  if(!goals.length)return`<div class="goal-card placeholder"><div class="goal-card-title" style="font-size:12px;color:var(--text-dim)">No goals yet — add in Manage tab</div></div>`;
+  if(!goals.length)return'';
   return goals.map(g=>{
     const logs=getCustomLogs()[g.id]||[];
     const total=logs.reduce((s,e)=>s+e.value,0);
@@ -440,15 +403,21 @@ function renderCustomGoalCards(category){
     const barCol=pct>=75?'rgba(51,182,121,0.8)':pct>=40?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.7)';
     const trendCls=pct>=75?'good':pct>=40?'warn':'bad';
     const catCls=category==='work'?'goal-cat-work':category==='relationship'?'goal-cat-rel':category==='health'?'goal-cat-health':category==='money'?'goal-cat-money':'goal-cat-faith';
+    const spark=logs.length>=2?renderSparkline(logs,'value',barCol):'';
     return`<div class="goal-card ${catCls}">
       <div class="goal-card-header">
         <span class="goal-card-title">${g.name}</span>
-        <span class="goal-trend ${trendCls}">${pct}%</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="goal-trend ${trendCls}">${pct}%</span>
+          <button class="manage-btn" onclick="openGoalForm('${g.category}','${g.id}')" title="Edit">✎</button>
+          <button class="manage-btn danger" onclick="deleteCustomGoal('${g.id}')" title="Delete">✕</button>
+        </div>
       </div>
+      ${spark}
       <div class="goal-metric-row"><span>Progress</span><span>${total} / ${g.target} ${g.unit}</span></div>
       <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${pct}%;background:${barCol}"></div></div>
       <div class="goal-input-row">
-        <input id="cgl_${g.id}" class="goal-input" type="number" step="any" min="0" placeholder="Add progress (${g.unit})">
+        <input id="cgl_${g.id}" class="goal-input" type="number" step="any" min="0" placeholder="Add (${g.unit})">
         <button class="goal-input-btn" onclick="logCustomGoal('${g.id}')">Log</button>
       </div>
     </div>`;
@@ -505,15 +474,51 @@ function switchDay(day){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.day===day));
   const m=document.getElementById('main');m.classList.remove('enter');void m.offsetWidth;m.classList.add('enter');
   if(day==='history'){renderHistory();return}
-  if(day==='goals'){renderGoals();return}
+  if(day==='goals'){manageGoalForm=null;goalsTargetEdit=null;renderGoals();return}
   if(day==='habits'){renderHabits();return}
   if(day==='habitdash'){renderHabitDash();return}
   if(day==='tasks'){renderTasks();return}
   if(day==='calories'){renderCalories();return}
-  if(day==='manage'){manageGoalForm=null;renderManage();return}
 }
 
 // ── Render Goals Tab ──
+function _goalsSectionHdr(label,targetKey){
+  const btn=targetKey?`<button class="goals-target-btn" onclick="toggleTargetEdit('${targetKey}')" title="Edit target">⚙</button>`:'';
+  return`<div class="goals-section-header"><div class="goals-section-title">${label}</div>${btn}</div>`;
+}
+function _goalsTargetBlock(key,label,val,unit,step){
+  return`<div class="goals-target-edit-block">
+    <span class="goals-target-edit-lbl">${label}</span>
+    <input id="te_${key}" class="manage-target-input" type="number" step="${step}" value="${val}" style="width:72px">
+    <span style="font-size:10px;color:var(--text-dim)">${unit}</span>
+    <button class="manage-btn" onclick="saveTargetInline('${key}')">Save</button>
+    <button class="manage-btn" onclick="closeTargetEdit()">✕</button>
+  </div>`;
+}
+function _goalsFormSection(category){
+  const customs=getCustomGoals();
+  if(manageGoalForm&&manageGoalForm.category===category){
+    const editing=manageGoalForm.editId?customs.find(g=>g.id===manageGoalForm.editId):null;
+    return`<div class="manage-form" id="goalForm">
+      <div class="manage-form-title">${editing?'Edit goal':'Add '+category+' goal'}</div>
+      <div class="manage-field"><label>Goal name</label>
+        <input id="gfName" type="text" placeholder="e.g. Read 5 books" value="${editing?editing.name:''}">
+      </div>
+      <div class="manage-field"><label>Target (number)</label>
+        <input id="gfTarget" type="number" step="any" min="0" placeholder="e.g. 5" value="${editing?editing.target:''}">
+      </div>
+      <div class="manage-field"><label>Unit</label>
+        <input id="gfUnit" type="text" placeholder="e.g. books, hours, calls" value="${editing?editing.unit:''}">
+      </div>
+      <div class="manage-form-btns">
+        <button class="manage-save-btn" onclick="saveCustomGoal()">Save</button>
+        <button class="manage-cancel-btn" onclick="closeGoalForm()">Cancel</button>
+      </div>
+    </div>`;
+  }
+  return`<button class="manage-add-btn" onclick="openGoalForm('${category}')">+ Add ${category} goal</button>`;
+}
+
 function renderGoals(){
   if(!accessToken){
     document.getElementById('main').innerHTML=`<div class="connect-screen">
@@ -525,23 +530,24 @@ function renderGoals(){
   }
   const targets=getGoalsTargets();
   const healthData=getGoalsHealth().sort((a,b)=>a.date.localeCompare(b.date));
+  const bellyData=getGoalsBelly().sort((a,b)=>a.date.localeCompare(b.date));
   const moneyData=getGoalsMoney().sort((a,b)=>a.date.localeCompare(b.date));
   const faithData=getGoalsFaith().sort((a,b)=>a.date.localeCompare(b.date));
   const now=new Date();
   const qTotalDays=Math.round((Q_END-Q_START)/864e5)+1;
   const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
 
-  // ── Health ──
+  const barG='linear-gradient(90deg,rgba(51,182,121,0.5),rgba(51,182,121,1))';
+  const barW='linear-gradient(90deg,rgba(245,158,11,0.5),rgba(245,158,11,1))';
+  const barB='linear-gradient(90deg,rgba(239,68,68,0.4),rgba(239,68,68,0.85))';
+
+  // ── Health (weight) ──
   const latestW=healthData.length?healthData[healthData.length-1].weight:null;
   const firstW=healthData.length?healthData[0].weight:null;
   const hTarget=targets.health;
   const hRange=firstW&&firstW!==hTarget?firstW-hTarget:10;
   const hPct=latestW?Math.min(100,Math.max(0,Math.round((firstW-latestW)/hRange*100))):0;
-  const barG='linear-gradient(90deg,rgba(51,182,121,0.5),rgba(51,182,121,1))';
-  const barW='linear-gradient(90deg,rgba(245,158,11,0.5),rgba(245,158,11,1))';
-  const barB='linear-gradient(90deg,rgba(239,68,68,0.4),rgba(239,68,68,0.85))';
   const hBarCol=hPct>=75?barG:hPct>=40?barW:barB;
-  // Trend: compare last 7 entries avg vs prev 7
   let hTrendCls='warn',hTrendTxt='No data yet';
   if(healthData.length>=2){
     const last7=healthData.slice(-7).map(e=>e.weight);
@@ -553,7 +559,27 @@ function renderGoals(){
     else if(diff>0.05){hTrendCls='bad';hTrendTxt=`↑ Gaining ${diff.toFixed(1)}kg/week`;}
     else{hTrendCls='warn';hTrendTxt='→ Holding steady';}
   }
-  const hLogs=''; // Log history shown in History tab only
+  const weightSpark=renderSparkline(healthData,'weight','rgba(51,182,121,0.9)');
+
+  // ── Belly ──
+  const latestB=bellyData.length?bellyData[bellyData.length-1].cm:null;
+  const bTarget=targets.belly||85;
+  const firstB=bellyData.length?bellyData[0].cm:null;
+  const bRange=firstB&&firstB!==bTarget?firstB-bTarget:15;
+  const bPct=latestB?Math.min(100,Math.max(0,Math.round((firstB-latestB)/bRange*100))):0;
+  const bBarCol=bPct>=75?barG:bPct>=40?barW:barB;
+  let bTrendCls='warn',bTrendTxt='No data yet';
+  if(bellyData.length>=2){
+    const last7b=bellyData.slice(-7).map(e=>e.cm);
+    const prev7b=bellyData.slice(-14,-7).map(e=>e.cm);
+    const avgLb=last7b.reduce((s,v)=>s+v,0)/last7b.length;
+    const avgPb=prev7b.length?prev7b.reduce((s,v)=>s+v,0)/prev7b.length:avgLb;
+    const diffb=avgLb-avgPb;
+    if(diffb<-0.1){bTrendCls='good';bTrendTxt=`↓ Down ${Math.abs(diffb).toFixed(1)}cm/week`;}
+    else if(diffb>0.1){bTrendCls='bad';bTrendTxt=`↑ Up ${diffb.toFixed(1)}cm/week`;}
+    else{bTrendCls='warn';bTrendTxt='→ Holding steady';}
+  }
+  const bellySpark=renderSparkline(bellyData,'cm','rgba(51,182,121,0.9)');
 
   // ── Savings ──
   const savingsEntries=moneyData.filter(e=>e.type==='savings');
@@ -562,7 +588,6 @@ function renderGoals(){
   const sExpected=Math.round(targets.savings*qElapsed/qTotalDays);
   const sTrendCls=totalSavings>=sExpected?'good':'bad';
   const sTrendTxt=totalSavings>=sExpected?`On track (+$${(totalSavings-sExpected).toFixed(0)} ahead)`:`Behind by $${(sExpected-totalSavings).toFixed(0)}`;
-  const sLogs=''; // History tab only
 
   // ── Gold ──
   const goldEntries=moneyData.filter(e=>e.type==='gold');
@@ -571,7 +596,6 @@ function renderGoals(){
   const gExpected=Math.round(targets.gold*qElapsed/qTotalDays);
   const gTrendCls=totalGold>=gExpected?'good':'bad';
   const gTrendTxt=totalGold>=gExpected?`On track (+$${(totalGold-gExpected).toFixed(0)} ahead)`:`Behind by $${(gExpected-totalGold).toFixed(0)}`;
-  const gLogs=''; // History tab only
 
   // ── Faith ──
   const totalShlokas=faithData.reduce((s,e)=>s+e.shlokas,0);
@@ -580,17 +604,18 @@ function renderGoals(){
   const fDiff=totalShlokas-fExpected;
   const fTrendCls=fDiff>=0?'good':fDiff>=-5?'warn':'bad';
   const fTrendTxt=fDiff>=0?`Ahead by ${fDiff} shloka${fDiff!==1?'s':''}`:`Behind by ${Math.abs(fDiff)} shloka${Math.abs(fDiff)!==1?'s':''}`;
-  const fLogs=''; // History tab only
 
   document.getElementById('main').innerHTML=`
     <div class="section-title">Goals — Apr → Jun 2026</div>
 
-    <div class="goals-section-title">Health 💪</div>
+    ${_goalsSectionHdr('Health 💪','health')}
+    ${goalsTargetEdit==='health'?_goalsTargetBlock('health','Weight target',targets.health,'kg',0.1):''}
     <div class="goal-card goal-cat-health">
       <div class="goal-card-header">
         <span class="goal-card-title">${latestW??'—'}kg</span>
         <span class="goal-trend ${hTrendCls}">${hTrendTxt}</span>
       </div>
+      ${weightSpark}
       <div class="goal-metric-row"><span>Target</span><span>${hTarget}kg</span></div>
       <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${hPct}%;background:${hBarCol}"></div></div>
       <div class="goal-metric-row"><span>Progress</span><span>${hPct}%${firstW?' · started '+firstW+'kg':''}</span></div>
@@ -598,14 +623,40 @@ function renderGoals(){
         <input id="healthInput" class="goal-input" type="number" step="0.1" min="30" max="200" placeholder="Weight (kg)">
         <button class="goal-input-btn" onclick="logHealth()">Log</button>
       </div>
-      ${hLogs?`<div class="goal-log-list">${hLogs}</div>`:''}
     </div>
 
-    <div class="goals-section-title">Money 💰</div>
+    ${goalsTargetEdit==='belly'?_goalsTargetBlock('belly','Belly target',bTarget,'cm',0.5):''}
+    <div class="goal-card goal-cat-health">
+      <div class="goal-card-header">
+        <span class="goal-card-title">${latestB??'—'}cm <span style="font-size:11px;color:var(--text-dim);font-weight:400">belly</span></span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="goal-trend ${bTrendCls}">${bTrendTxt}</span>
+          <button class="goals-target-btn" onclick="toggleTargetEdit('belly')" title="Edit target">⚙</button>
+        </div>
+      </div>
+      ${bellySpark}
+      <div class="goal-metric-row"><span>Target</span><span>${bTarget}cm</span></div>
+      <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${bPct}%;background:${bBarCol}"></div></div>
+      <div class="goal-metric-row"><span>Progress</span><span>${bPct}%${firstB?' · started '+firstB+'cm':''}</span></div>
+      <div class="goal-input-row">
+        <input id="bellyInput" class="goal-input" type="number" step="0.5" min="50" max="200" placeholder="Belly size (cm)">
+        <button class="goal-input-btn" onclick="logBelly()">Log</button>
+      </div>
+    </div>
+
+    ${renderCustomGoalCards('health')}
+    ${_goalsFormSection('health')}
+
+    ${_goalsSectionHdr('Money 💰','savings')}
+    ${goalsTargetEdit==='savings'?_goalsTargetBlock('savings','Savings target',targets.savings,'$/qtr',1):''}
+    ${goalsTargetEdit==='gold'?_goalsTargetBlock('gold','Gold target',targets.gold,'$/qtr',1):''}
     <div class="goal-card goal-cat-money">
       <div class="goal-card-header">
         <span class="goal-card-title">Savings · $${totalSavings.toFixed(0)}</span>
-        <span class="goal-trend ${sTrendCls}">${sTrendTxt}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="goal-trend ${sTrendCls}">${sTrendTxt}</span>
+          <button class="goals-target-btn" onclick="toggleTargetEdit('savings')" title="Edit target">⚙</button>
+        </div>
       </div>
       <div class="goal-metric-row"><span>Target</span><span>$${targets.savings}/quarter</span></div>
       <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${sPct}%;background:${sTrendCls==='good'?barG:barB}"></div></div>
@@ -614,12 +665,14 @@ function renderGoals(){
         <input id="savingsInput" class="goal-input" type="number" step="1" min="1" placeholder="Amount saved ($)">
         <button class="goal-input-btn" onclick="logMoney('savings')">Log</button>
       </div>
-      ${sLogs?`<div class="goal-log-list">${sLogs}</div>`:''}
     </div>
     <div class="goal-card goal-cat-money">
       <div class="goal-card-header">
         <span class="goal-card-title">Gold · $${totalGold.toFixed(0)}</span>
-        <span class="goal-trend ${gTrendCls}">${gTrendTxt}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="goal-trend ${gTrendCls}">${gTrendTxt}</span>
+          <button class="goals-target-btn" onclick="toggleTargetEdit('gold')" title="Edit target">⚙</button>
+        </div>
       </div>
       <div class="goal-metric-row"><span>Target</span><span>$${targets.gold}/quarter</span></div>
       <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${gPct}%;background:${gTrendCls==='good'?barG:barB}"></div></div>
@@ -628,10 +681,12 @@ function renderGoals(){
         <input id="goldInput" class="goal-input" type="number" step="1" min="1" placeholder="Amount invested ($)">
         <button class="goal-input-btn" onclick="logMoney('gold')">Log</button>
       </div>
-      ${gLogs?`<div class="goal-log-list">${gLogs}</div>`:''}
     </div>
+    ${renderCustomGoalCards('money')}
+    ${_goalsFormSection('money')}
 
-    <div class="goals-section-title">Faith 🙏</div>
+    ${_goalsSectionHdr('Faith 🙏','faith')}
+    ${goalsTargetEdit==='faith'?_goalsTargetBlock('faith','Shlokas target',targets.faith,'total',1):''}
     <div class="goal-card goal-cat-faith">
       <div class="goal-card-header">
         <span class="goal-card-title">${totalShlokas} / ${targets.faith} shlokas</span>
@@ -644,14 +699,19 @@ function renderGoals(){
         <input id="faithInput" class="goal-input" type="number" step="1" min="1" placeholder="Shlokas read today">
         <button class="goal-input-btn" onclick="logFaith()">Log</button>
       </div>
-      ${fLogs?`<div class="goal-log-list">${fLogs}</div>`:''}
     </div>
+    ${renderCustomGoalCards('faith')}
+    ${_goalsFormSection('faith')}
 
-    <div class="goals-section-title">Work 💼</div>
+    ${_goalsSectionHdr('Work 💼',null)}
     ${renderCustomGoalCards('work')}
+    ${_goalsFormSection('work')}
 
-    <div class="goals-section-title">Relationship 🤝</div>
-    ${renderCustomGoalCards('relationship')}`;
+    ${_goalsSectionHdr('Relationship 🤝',null)}
+    ${renderCustomGoalCards('relationship')}
+    ${_goalsFormSection('relationship')}`;
+
+  if(manageGoalForm){const f=document.getElementById('goalForm');if(f)f.scrollIntoView({behavior:'smooth'});}
 }
 
 
@@ -1009,7 +1069,22 @@ function renderHabitDash(){
     }
     skipCounts[g.key]=skips;
   });
-  const bottom5=allSorted.filter(x=>skipCounts[x.id]>0).sort((a,b)=>skipCounts[b.id]-skipCounts[a.id]).slice(0,5);
+  const delayCounts={};
+  Object.values(groups).forEach(g=>{
+    let delays=0;
+    for(let i=0;i<30;i++){
+      const d=new Date(now);d.setDate(now.getDate()-i);
+      const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+      const scheduled=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
+      if(!scheduled.length)continue;
+      if(scheduled.some(h=>(store[ds]||{})[h.id]==='delayed'))delays++;
+    }
+    delayCounts[g.key]=delays;
+  });
+  const withSkips=allSorted.filter(x=>skipCounts[x.id]>0).sort((a,b)=>skipCounts[b.id]-skipCounts[a.id]);
+  const skipSet=new Set(withSkips.map(x=>x.id));
+  const withDelaysOnly=allSorted.filter(x=>!skipSet.has(x.id)&&delayCounts[x.id]>0).sort((a,b)=>delayCounts[b.id]-delayCounts[a.id]);
+  const bottom5=[...withSkips,...withDelaysOnly].slice(0,5);
 
   // Quarter grid: Apr 1 → today (capped at Aug 31)
   const gridStart=new Date("2026-04-01T00:00:00");
@@ -1040,14 +1115,16 @@ function renderHabitDash(){
   });
   headerH+='</div>';
 
+  // Two-column heatmap: fixed names left, scrollable grid right
+  let namesH='<div class="hdash-names-spacer"></div>';
   let gridH='';
   visGroups.forEach(g=>{
-    gridH+=`<div class="hdash-grid-row"><div class="hdash-habit-name" title="${g.label}">${g.label}</div>`;
+    namesH+=`<div class="hdash-habit-name-cell" title="${g.label}">${g.label}</div>`;
+    gridH+=`<div class="hdash-cells-row">`;
     days90.forEach(d=>{
       const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
       const scheduledMembers=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
       if(!scheduledMembers.length){gridH+='<div class="hdash-cell hc-skip"></div>';return;}
-      // Use status of the first marked member, or blank
       let st='';
       for(const h of scheduledMembers){const s=(store[ds]||{})[h.id];if(s){st=s;break;}}
       const cls=st==='did'?'hc-did':st==='delayed'?'hc-delayed':st==='didnot'?'hc-didnot':'hc-blank';
@@ -1125,8 +1202,8 @@ function renderHabitDash(){
         <div class="streak-list">
           ${bottom5.length?bottom5.map(x=>`<div class="streak-item">
             <div class="streak-label">${x.label}</div>
-            <div class="streak-num" style="color:rgba(239,68,68,0.8)">${skipCounts[x.id]}</div>
-            <div class="streak-badge">✗</div>
+            <div class="streak-num" style="color:rgba(239,68,68,0.8)">${skipCounts[x.id]>0?skipCounts[x.id]:delayCounts[x.id]}</div>
+            <div class="streak-badge">${skipCounts[x.id]>0?'✗':'⏰'}</div>
           </div>`).join(''):'<div style="font-size:10px;color:var(--text-dim);padding:6px 0">No skipped habits 🎉</div>'}
         </div>
       </div>
@@ -1153,7 +1230,12 @@ function renderHabitDash(){
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(239,68,68,0.55)"></div><span class="hdash-legend-lbl">Skipped</span></div>
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:var(--surface2)"></div><span class="hdash-legend-lbl">Not marked</span></div>
     </div>
-    <div class="hdash-grid-outer"><div class="hdash-grid-inner">${headerH}${gridH}</div></div>
+    <div class="hdash-grid-wrapper">
+      <div class="hdash-names-col">${namesH}</div>
+      <div class="hdash-grid-scroll">
+        <div class="hdash-grid-inner">${headerH}${gridH}</div>
+      </div>
+    </div>
 
     <div class="section-title" style="margin-top:8px">Consistency since Apr 1</div>
     ${consistTableH}
@@ -1206,6 +1288,19 @@ async function restoreGoalsFromSheet(){
         restored++;
       }
     }catch(e){console.warn('Faith restore:',e);}
+
+    // BELLY: merge Sheets into localStorage
+    try{
+      const b=await apiFetch(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Belly!A:B')}`);
+      const rows=(b.values||[]).filter(r=>isValidDateStr(r[0])&&r[1]);
+      if(rows.length){
+        const byDate={};
+        getGoalsBelly().forEach(e=>{if(isValidDateStr(e.date))byDate[e.date]=e;});
+        rows.forEach(r=>{byDate[r[0]]={date:r[0],cm:parseFloat(r[1])};});
+        localStorage.setItem(GK_BELLY,JSON.stringify(Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date))));
+        restored++;
+      }
+    }catch(e){console.warn('Belly restore:',e);}
 
     if(restored>0)showToast('Goals restored from Sheets ✓','ok');
 

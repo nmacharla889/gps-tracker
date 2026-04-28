@@ -178,7 +178,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .habit-row.state-didnot .habit-state-badge{background:rgba(239,68,68,0.1);color:rgba(239,68,68,0.8)}
 
 /* ── HABIT DASHBOARD ── */
-.hdash-top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+.hdash-top{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:22px}
 .hdash-card{background:linear-gradient(145deg,rgba(15,15,24,0.98),rgba(9,9,16,0.98));border:1px solid rgba(255,255,255,0.055);border-radius:9px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
 .hdash-card-title{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
 .hdash-big-num{font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:800;color:var(--accent);line-height:1}

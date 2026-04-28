@@ -41,23 +41,31 @@ function getGoalsFaith(){try{return JSON.parse(localStorage.getItem(GK_FAITH)||'
 function getGoalsBelly(){try{return JSON.parse(localStorage.getItem(GK_BELLY)||'[]');}catch{return[];}}
 
 // ── Sparkline SVG helper ──
-function renderSparkline(entries, valueKey, color){
+function renderSparkline(entries, valueKey, color, unit=''){
   const pts=entries.slice(-30);
-  if(pts.length<2)return'';
+  if(pts.length<2)return`<div style="font-size:9px;color:var(--text-dim);margin:6px 0;padding:4px 0;border-top:1px solid var(--border)">Log 2+ readings to see trend</div>`;
   const vals=pts.map(e=>e[valueKey]);
   const min=Math.min(...vals),max=Math.max(...vals);
-  const range=(max-min)||1;
-  const W=300,H=40,PAD=5;
+  const range=(max-min)||0.1;
+  const W=280,H=60,PL=32,PR=6,PT=8,PB=18;
+  const cW=W-PL-PR,cH=H-PT-PB;
   const coords=pts.map((e,i)=>{
-    const x=PAD+Math.round((i/(pts.length-1))*(W-2*PAD));
-    const y=Math.round(H-PAD-((e[valueKey]-min)/range)*(H-2*PAD));
-    return `${x},${y}`;
+    const x=PL+(i/(pts.length-1))*cW;
+    const y=PT+(1-(e[valueKey]-min)/range)*cH;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ');
-  const lx=PAD+Math.round(((pts.length-1)/(pts.length-1))*(W-2*PAD));
-  const ly=Math.round(H-PAD-((vals[vals.length-1]-min)/range)*(H-2*PAD));
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" style="display:block;margin:6px 0">
-    <polyline points="${coords}" fill="none" stroke="${color}" stroke-width="1.5" opacity=".55" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${lx}" cy="${ly}" r="3" fill="${color}" opacity=".9"/>
+  const lx=(PL+cW).toFixed(1);
+  const ly=(PT+(1-(vals[vals.length-1]-min)/range)*cH).toFixed(1);
+  const fmtD=e=>{const d=new Date((e.date||'')+'T00:00:00');return isNaN(d)?'':d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});};
+  const fmt=v=>Number.isInteger(v)?v:v.toFixed(1);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" style="display:block;margin:6px 0;overflow:visible">
+    <text x="${PL-3}" y="${PT+5}" text-anchor="end" font-size="7" fill="rgba(144,144,168,0.8)">${fmt(max)}${unit}</text>
+    <text x="${PL-3}" y="${PT+cH+2}" text-anchor="end" font-size="7" fill="rgba(144,144,168,0.8)">${fmt(min)}${unit}</text>
+    <text x="${PL}" y="${H-2}" text-anchor="start" font-size="7" fill="rgba(144,144,168,0.6)">${fmtD(pts[0])}</text>
+    <text x="${W-PR}" y="${H-2}" text-anchor="end" font-size="7" fill="rgba(144,144,168,0.6)">${fmtD(pts[pts.length-1])}</text>
+    <polyline points="${coords}" fill="none" stroke="${color}" stroke-width="1.5" opacity=".6" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lx}" cy="${ly}" r="2.5" fill="${color}" opacity=".9"/>
+    <text x="${(parseFloat(lx)-5).toFixed(1)}" y="${(parseFloat(ly)-5).toFixed(1)}" text-anchor="end" font-size="8" font-weight="bold" fill="${color}" opacity=".9">${fmt(vals[vals.length-1])}${unit}</text>
   </svg>`;
 }
 
@@ -559,7 +567,7 @@ function renderGoals(){
     else if(diff>0.05){hTrendCls='bad';hTrendTxt=`↑ Gaining ${diff.toFixed(1)}kg/week`;}
     else{hTrendCls='warn';hTrendTxt='→ Holding steady';}
   }
-  const weightSpark=renderSparkline(healthData,'weight','rgba(51,182,121,0.9)');
+  const weightSpark=renderSparkline(healthData,'weight','rgba(51,182,121,0.9)','kg');
 
   // ── Belly ──
   const latestB=bellyData.length?bellyData[bellyData.length-1].cm:null;
@@ -579,7 +587,7 @@ function renderGoals(){
     else if(diffb>0.1){bTrendCls='bad';bTrendTxt=`↑ Up ${diffb.toFixed(1)}cm/week`;}
     else{bTrendCls='warn';bTrendTxt='→ Holding steady';}
   }
-  const bellySpark=renderSparkline(bellyData,'cm','rgba(51,182,121,0.9)');
+  const bellySpark=renderSparkline(bellyData,'cm','rgba(51,182,121,0.9)','cm');
 
   // ── Savings ──
   const savingsEntries=moneyData.filter(e=>e.type==='savings');
@@ -1238,7 +1246,7 @@ function renderHabitDash(){
     </div>
 
     <div class="section-title" style="margin-top:8px">Consistency since Apr 1</div>
-    ${consistTableH}
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">${consistTableH}</div>
   `;
 }
 

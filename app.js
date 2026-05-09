@@ -1147,32 +1147,23 @@ function renderHabitDash(){
     return groupEarliestTime(a)-groupEarliestTime(b);
   });
 
-  // Header: month blocks + date number row (every 7th day)
+  // Header: month blocks with start date label. No separate date row — keeps names column aligned.
   const CELL_W=10; // cell width + gap
   let headerH='<div class="hdash-header-row">';
-  let lastMo='',blockLen=0;
+  let lastMo='',blockLen=0,blockStart=null;
   const blocks=[];
   days90.forEach((d,i)=>{
     const mo=d.toLocaleDateString('en-AU',{month:'short'});
     if(mo!==lastMo){
-      if(lastMo)blocks.push({label:lastMo,len:blockLen});
-      lastMo=mo;blockLen=1;
+      if(lastMo)blocks.push({label:lastMo,len:blockLen,start:blockStart});
+      lastMo=mo;blockLen=1;blockStart=d.getDate();
     }else{blockLen++;}
-    if(i===days90.length-1)blocks.push({label:lastMo,len:blockLen});
+    if(i===days90.length-1)blocks.push({label:lastMo,len:blockLen,start:blockStart});
   });
   blocks.forEach(b=>{
-    headerH+=`<div class="hdash-month-block" style="width:${b.len*CELL_W}px">${b.label}</div>`;
+    headerH+=`<div class="hdash-month-block" style="width:${b.len*CELL_W}px">${b.label} <span style="opacity:.5">${b.start}</span></div>`;
   });
   headerH+='</div>';
-  // Date numbers row — show day-of-month every 7 cells
-  let dateRowH='<div class="hdash-date-row">';
-  days90.forEach((d,i)=>{
-    if(i%7===0){
-      dateRowH+=`<div class="hdash-date-num" style="width:${CELL_W*7}px">${d.getDate()}</div>`;
-    }
-  });
-  dateRowH+='</div>';
-  headerH+=dateRowH;
 
   // Two-column heatmap: fixed names left, scrollable grid right
   let namesH='<div class="hdash-names-spacer"></div>';
@@ -1188,7 +1179,7 @@ function renderHabitDash(){
       for(const h of scheduledMembers){const s=(store[ds]||{})[h.id];if(s){st=s;break;}}
       const cls=st==='did'?'hc-did':st==='delayed'?'hc-delayed':st==='didnot'?'hc-didnot':'hc-blank';
       const tipDate=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
-      gridH+=`<div class="hdash-cell ${cls}" onmouseenter="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;
+      gridH+=`<div class="hdash-cell ${cls}" onclick="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseenter="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;
     });
     gridH+='</div>';
   });

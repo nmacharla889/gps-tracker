@@ -188,7 +188,8 @@ async function loadCalendarData(){
     sun.setDate(mon.getDate()+6);
     sun.setHours(23,59,59,999);
 
-    // Load Habits calendar — overrides hardcoded HABITS array when populated
+    // Load Habits calendar — populates HABITS using stable recurringEventId as the ID.
+    // This means renaming or rescheduling an event in Calendar never breaks stored data.
     const habitCal=list.items.find(c=>c.summary.toLowerCase().trim()==='habits');
     if(habitCal){
       const hSun2=new Date(sun);hSun2.setDate(sun.getDate()+7);
@@ -208,16 +209,23 @@ async function loadCalendarData(){
           if(!dayKey)return;
           const rawTime=isAllDay?'All day':startDT.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,'').toLowerCase();
           const label=ev.summary.trim();
-          const group=label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-          const key=group+'__'+rawTime;
-          if(!habitMap[key])habitMap[key]={id:key,label,time:rawTime,days:new Set(),group};
-          habitMap[key].days.add(dayKey);
+          const slug=label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+          // Use recurringEventId (stable across renames/time changes) or fall back to event id
+          const stableId=ev.recurringEventId||ev.id;
+          if(!habitMap[stableId])habitMap[stableId]={id:stableId,label,time:rawTime,slug,days:new Set()};
+          habitMap[stableId].days.add(dayKey);
         });
         const calHabits=Object.values(habitMap).map(h=>({
-          id:h.id,label:h.label,time:h.time,group:h.group,
+          id:h.id,
+          label:h.label,
+          time:h.time,
+          group:h.slug,
           days:h.days.size===7?'daily':[...h.days].sort((a,b)=>DAYS.indexOf(a)-DAYS.indexOf(b)),
         }));
-        if(calHabits.length>0)HABITS=calHabits;
+        if(calHabits.length>0){
+          HABITS=calHabits;
+          migrateHabitData(); // one-time migration of old localStorage keys → recurringEventIds
+        }
       }
     }
 
@@ -486,7 +494,6 @@ function switchDay(day){
   if(day==='habits'){renderHabits();return}
   if(day==='habitdash'){renderHabitDash();return}
   if(day==='tasks'){renderTasks();return}
-  if(day==='calories'){renderCalories();return}
 }
 
 // ── Render Goals Tab ──
@@ -796,40 +803,8 @@ if('serviceWorker' in navigator){
 }
 
 // ─── HABITS SYSTEM ─────────────────────────────────────────────────────────
-let HABITS = [
-  { id:'wake_up',         label:'Wake up',                      time:'5:30am',  days:'daily' },
-  { id:'get_ready',       label:'Get ready',                    time:'6:15am',  days:'daily' },
-  { id:'thyroxine',       label:'Take Thyroxine',               time:'6:15am',  days:'daily' },
-  { id:'wash_clothes',    label:'Wash clothes',                 time:'6:30am',  days:['mon'] },
-  { id:'deepam_tt',       label:'Deepam',                       time:'6:45am',  days:['tue','thu'],                         group:'deepam' },
-  { id:'deepam_main',     label:'Deepam',                       time:'7:00am',  days:['mon','wed','fri','sat'],              group:'deepam' },
-  { id:'wash_pooja',      label:'Wash pooja samagri',           time:'7:00am',  days:['sun'] },
-  { id:'soak_nuts_tt',    label:'Soak nuts & sprouts',          time:'7:15am',  days:['tue','thu'],                         group:'soak_nuts' },
-  { id:'recite_main',     label:'Recite Lalitha Sahasranamam',  time:'7:15am',  days:['mon','tue','wed','thu','fri','sat'],  group:'recite' },
-  { id:'deepam_sun',      label:'Deepam',                       time:'7:30am',  days:['sun'],                               group:'deepam' },
-  { id:'gita_main',       label:'Read Bhagawad Gita',           time:'7:45am',  days:['mon','tue','wed','thu','fri','sat'],  group:'gita' },
-  { id:'recite_sun',      label:'Recite Lalitha Sahasranamam',  time:'7:45am',  days:['sun'],                               group:'recite' },
-  { id:'learn_main',      label:'Learn Lalitha Sahasranamam',   time:'8:00am',  days:['mon','tue','wed','thu','fri','sat'],  group:'learn' },
-  { id:'send_snap',       label:'Send snap',                    time:'8:30am',  days:'daily' },
-  { id:'gita_sun',        label:'Read Bhagawad Gita',           time:'8:15am',  days:['sun'],                               group:'gita' },
-  { id:'learn_sun',       label:'Learn Lalitha Sahasranamam',   time:'8:30am',  days:['sun'],                               group:'learn' },
-  { id:'soak_nuts_main',  label:'Soak nuts & sprouts',          time:'10:30am', days:['mon','wed','fri','sat','sun'],        group:'soak_nuts' },
-  { id:'lunch',           label:'Lunch',                        time:'11:00am', days:'daily' },
-  { id:'haircut',         label:'Haircut',                      time:'12:15pm', days:['sun'], lastSundayOnly:true },
-  { id:'buy_groceries',   label:'Buy Indian groceries',         time:'1:00pm',  days:['sun'] },
-  { id:'clean_house',     label:'Clean house',                  time:'3:00pm',  days:['wed'] },
-  { id:'wash_kitchen',    label:'Wash kitchen cloth',           time:'4:00pm',  days:['mon'] },
-  { id:'dinner',          label:'Dinner',                       time:'6:00pm',  days:'daily' },
-  { id:'wash_veg',        label:'Wash vegetables & fruits',     time:'7:00pm',  days:['sun'] },
-  { id:'order_groceries', label:'Order groceries',              time:'8:00pm',  days:['fri'] },
-  { id:'fold_clothes',    label:'Fold clothes',                 time:'8:30pm',  days:['tue'] },
-  { id:'iron_shirt',      label:'Iron shirt',                   time:'9:00pm',  days:['mon','wed'] },
-  { id:'prep_next_day',   label:'Prep for next day',            time:'9:00pm',  days:'daily' },
-  { id:'veg_fridge',      label:'Put veg back in fridge',       time:'9:00pm',  days:['sun'] },
-  { id:'peel_nuts',       label:'Peel nuts',                    time:'9:15pm',  days:'daily' },
-  { id:'pack_lunch',      label:'Pack lunch',                   time:'9:20pm',  days:['mon','wed'] },
-  { id:'sleep',           label:'Sleep',                        time:'10:30pm', days:'daily' },
-];
+// Populated from Habits Google Calendar on connect. Empty until then.
+let HABITS = [];
 
 const HK='gps_habits_v1';
 const HABITS_TAB='Habits';
@@ -877,6 +852,57 @@ function cycleHabitState(ds,hid){
   const next=cur===''?'did':cur==='did'?'delayed':cur==='delayed'?'didnot':'';
   setHabitStatus(ds,hid,next);
   renderHabits();
+}
+
+// ── One-time migration: remap old localStorage habit keys → recurringEventIds ──
+// Old keys were: hardcoded IDs (dinner, recite_main), label__time slugs (dinner__6:00pm),
+// or plain label slugs (dinner). Migration runs once per device, never again.
+const LEGACY_ALIASES={
+  'recite_lalitha_sahasranamam':['recite_main','recite_sun','recite'],
+  'read_bhagawad_gita':['gita_main','gita_sun','gita'],
+  'learn_lalitha_sahasranamam':['learn_main','learn_sun','learn'],
+  'deepam':['deepam_tt','deepam_main','deepam_sun'],
+  'take_thyroxine':['thyroxine'],
+  'wash_pooja_samagri':['wash_pooja'],
+  'soak_nuts_sprouts':['soak_nuts_tt','soak_nuts_main'],
+  'soak_nuts___sprouts':['soak_nuts_tt','soak_nuts_main'],
+  'buy_indian_groceries':['buy_groceries'],
+  'wash_kitchen_cloth':['wash_kitchen'],
+  'wash_vegetables___fruits':['wash_veg'],
+  'prep_for_next_day':['prep_next_day'],
+  'put_veg_back_in_fridge':['veg_fridge'],
+};
+const STATUS_RANK={'did':3,'delayed':2,'didnot':1,'':0};
+function bestStatus(a,b){return(STATUS_RANK[a]||0)>=(STATUS_RANK[b]||0)?a:b;}
+
+function migrateHabitData(){
+  if(localStorage.getItem('gps_migrated_v2'))return;
+  const store=getHabitStore();
+  const dates=Object.keys(store);
+  if(!dates.length){localStorage.setItem('gps_migrated_v2','1');return;}
+
+  const newStore={};
+  dates.forEach(dateStr=>{
+    const dayData=store[dateStr];
+    newStore[dateStr]={};
+    HABITS.forEach(h=>{
+      const slug=h.group; // label slug e.g. 'dinner', 'recite_lalitha_sahasranamam'
+      const aliases=LEGACY_ALIASES[slug]||[];
+      let best='';
+      Object.keys(dayData).forEach(oldKey=>{
+        // Match: exact slug, slug__ prefix (covers time variants), or known legacy alias
+        if(oldKey===slug||oldKey.startsWith(slug+'__')||aliases.includes(oldKey)){
+          best=bestStatus(best,dayData[oldKey]);
+        }
+      });
+      if(best)newStore[dateStr][h.id]=best;
+    });
+    if(!Object.keys(newStore[dateStr]).length)delete newStore[dateStr];
+  });
+
+  saveHabitStore(newStore);
+  localStorage.setItem('gps_migrated_v2','1');
+  showToast('Habit history migrated ✓','ok');
 }
 
 // ── Sheets for Habits ──
@@ -1100,12 +1126,28 @@ function renderHabitDash(){
   const days90=[];
   for(let d=new Date(gridStart);d<=gridEnd;d.setDate(d.getDate()+1)){days90.push(new Date(d));}
 
-  // Only show groups scheduled at least once in quarter
+  // Only show groups scheduled at least once in quarter, sorted by:
+  // 1. Frequency descending (daily=7 days, then by unique days/week)
+  // 2. Earliest scheduled time ascending (morning before afternoon etc.)
+  function groupFreq(g){
+    // Count how many unique days per week the group is scheduled
+    if(g.members.some(h=>h.days==='daily'))return 7;
+    const daySet=new Set();
+    g.members.forEach(h=>{(Array.isArray(h.days)?h.days:[]).forEach(d=>daySet.add(d));});
+    return daySet.size;
+  }
+  function groupEarliestTime(g){
+    return Math.min(...g.members.map(h=>parseTime12(h.time)));
+  }
   const visGroups=Object.values(groups).filter(g=>
     days90.some(d=>g.members.some(h=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id)))
-  );
+  ).sort((a,b)=>{
+    const freqDiff=groupFreq(b)-groupFreq(a);
+    if(freqDiff!==0)return freqDiff;
+    return groupEarliestTime(a)-groupEarliestTime(b);
+  });
 
-  // Month label blocks for header
+  // Header: month blocks + date number row (every 7th day)
   const CELL_W=10; // cell width + gap
   let headerH='<div class="hdash-header-row">';
   let lastMo='',blockLen=0;
@@ -1122,6 +1164,15 @@ function renderHabitDash(){
     headerH+=`<div class="hdash-month-block" style="width:${b.len*CELL_W}px">${b.label}</div>`;
   });
   headerH+='</div>';
+  // Date numbers row — show day-of-month every 7 cells
+  let dateRowH='<div class="hdash-date-row">';
+  days90.forEach((d,i)=>{
+    if(i%7===0){
+      dateRowH+=`<div class="hdash-date-num" style="width:${CELL_W*7}px">${d.getDate()}</div>`;
+    }
+  });
+  dateRowH+='</div>';
+  headerH+=dateRowH;
 
   // Two-column heatmap: fixed names left, scrollable grid right
   let namesH='<div class="hdash-names-spacer"></div>';
@@ -1691,16 +1742,4 @@ async function customLogsSheetRestore(){
 // ─── BOOTSTRAP ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', init);
 
-// ─── CALORIE TRACKER (STUB) ───────────────────────────────────────────────────
-function renderCalories(){
-  document.getElementById('main').innerHTML=`
-    <div class="section-title">Calorie Tracker</div>
-    <div class="no-data" style="padding:48px 20px;text-align:center">
-      <strong style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;color:var(--text-mid);margin-bottom:12px">Coming Soon</strong>
-      <span style="font-size:11px;color:var(--text-dim);line-height:2">
-        This tab will track daily calorie intake.<br>
-        Tap a food item → calories auto-added.<br>
-        See daily total vs. your target.
-      </span>
-    </div>`;
-}
+// ─── END ─────────────────────────────────────────────────────────────────────

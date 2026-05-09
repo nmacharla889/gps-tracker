@@ -483,6 +483,25 @@ function init(){
     }
   }
   setupGIS();
+
+  // Swipe left/right to switch tabs
+  const TAB_ORDER=['goals','habits','habitdash','tasks','history'];
+  let _swipeX=0,_swipeY=0,_swipeInScroll=false;
+  const _mainEl=document.getElementById('main');
+  _mainEl.addEventListener('touchstart',e=>{
+    _swipeX=e.touches[0].clientX;
+    _swipeY=e.touches[0].clientY;
+    _swipeInScroll=!!e.target.closest('.hdash-grid-scroll');
+  },{passive:true});
+  _mainEl.addEventListener('touchend',e=>{
+    if(_swipeInScroll)return;
+    const dx=e.changedTouches[0].clientX-_swipeX;
+    const dy=e.changedTouches[0].clientY-_swipeY;
+    if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy))return;
+    const idx=TAB_ORDER.indexOf(activeDay);
+    if(dx<0&&idx<TAB_ORDER.length-1)switchDay(TAB_ORDER[idx+1]);
+    else if(dx>0&&idx>0)switchDay(TAB_ORDER[idx-1]);
+  },{passive:true});
 }
 
 function switchDay(day){
@@ -1043,7 +1062,35 @@ function renderHabits(){
 function switchHabitDay(dk,ds){
   habitActiveDay=dk;habitActiveDateStr=ds;renderHabits();
 }
-
+// ── Heatmap frequency helpers ──
+function getGroupFrequencyType(g){
+  const qS=new Date('2026-04-01T00:00:00'),qE=new Date('2026-06-30T00:00:00');
+  let count=0;
+  for(let d=new Date(qS);d<=qE;d.setDate(d.getDate()+1)){
+    const dk=DAYS[JS2IDX[d.getDay()]],ds=dkey(d);
+    if(g.members.some(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id)))count++;
+  }
+  return count>=60?'daily':count>=6?'weekly':'monthly';
+}
+function groupDaysByWeek(days){
+  const weeks=[];let cur=[];
+  days.forEach(d=>{
+    if(cur.length&&JS2IDX[d.getDay()]===0){weeks.push(cur);cur=[];}
+    cur.push(d);
+  });
+  if(cur.length)weeks.push(cur);
+  return weeks;
+}
+function groupDaysByMonth(days){
+  const months=[];let cur=[],mo=-1;
+  days.forEach(d=>{
+    const m=d.getMonth();
+    if(m!==mo){if(cur.length)months.push(cur);cur=[];mo=m;}
+    cur.push(d);
+  });
+  if(cur.length)months.push(cur);
+  return months;
+}
 // ── Render Habit Dashboard ──
 function renderHabitDash(){
   if(!accessToken){
@@ -1147,7 +1194,7 @@ function renderHabitDash(){
     return groupEarliestTime(a)-groupEarliestTime(b);
   });
 
-  // Header: month blocks with start date label. No separate date row — keeps names column aligned.
+// Header: month blocks with start date label.
   const CELL_W=10; // cell width + gap
   let headerH='<div class="hdash-header-row">';
   let lastMo='',blockLen=0,blockStart=null;
@@ -1165,25 +1212,67 @@ function renderHabitDash(){
   });
   headerH+='</div>';
 
+  // Date row — one number per day column, aligned with daily cells
+  let dateRowH='<div class="hdash-date-row">';
+  days90.forEach(d=>{ dateRowH+=`<div class="hdash-date-cell">${d.getDate()}</div>`; });
+  dateRowH+='</div>';
+
   // Two-column heatmap: fixed names left, scrollable grid right
   let namesH='<div class="hdash-names-spacer"></div>';
   let gridH='';
   visGroups.forEach(g=>{
     namesH+=`<div class="hdash-habit-name-cell" title="${g.label}">${g.label}</div>`;
+    const freqType=getGroupFrequencyType(g);
     gridH+=`<div class="hdash-cells-row">`;
-    days90.forEach(d=>{
-      const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
-      const scheduledMembers=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
-      if(!scheduledMembers.length){gridH+='<div class="hdash-cell hc-skip"></div>';return;}
-      let st='';
-      for(const h of scheduledMembers){const s=(store[ds]||{})[h.id];if(s){st=s;break;}}
-      const cls=st==='did'?'hc-did':st==='delayed'?'hc-delayed':st==='didnot'?'hc-didnot':'hc-blank';
-      const tipDate=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
-      gridH+=`<div class="hdash-cell ${cls}" onclick="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseenter="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;
-    });
+    if(freqType==='daily'){
+      days90.forEach(d=>{
+        const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+        const scheduledMembers=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
+        if(!scheduledMembers.length){gridH+='<div class="hdash-cell hc-skip"></div>';return;}
+        let st='';
+        for(const h of scheduledMembers){const s=(store[ds]||{})[h.id];if(s){st=s;break;}}
+        const cls=st==='did'?'hc-did':st==='delayed'?'hc-delayed':st==='didnot'?'hc-didnot':'hc-blank';
+        const tipDate=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+        gridH+=`<div class="hdash-cell ${cls}" onclick="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseenter="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;
+      });
+    } else if(freqType==='weekly'){
+      groupDaysByWeek(days90).forEach(week=>{
+        const n=week.length,w=n*CELL_W-1;
+        let st='',hasScheduled=false;
+        week.forEach(d=>{
+          const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+          const sched=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
+          if(sched.length){
+            hasScheduled=true;
+            sched.forEach(h=>{const s=(store[ds]||{})[h.id];if(s&&(STATUS_RANK[s]||0)>(STATUS_RANK[st]||0))st=s;});
+          }
+        });
+        if(!hasScheduled){gridH+=`<div class="hdash-cell hc-skip" style="width:${w}px;margin-right:1px"></div>`;return;}
+        const cls=st==='did'?'hc-did':st==='delayed'?'hc-delayed':st==='didnot'?'hc-didnot':'hc-blank';
+        const d0=week[0].toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+        const d1=week[week.length-1].toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+        gridH+=`<div class="hdash-cell ${cls}" style="width:${w}px;margin-right:1px;border-radius:2px" onmouseenter="showTT(event,'${d0}–${d1}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;
+      });
+    } else {
+      groupDaysByMonth(days90).forEach(month=>{
+        const n=month.length,w=n*CELL_W-1;
+        let st='',hasScheduled=false;
+        month.forEach(d=>{
+          const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+          const sched=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
+          if(sched.length){
+            hasScheduled=true;
+            sched.forEach(h=>{const s=(store[ds]||{})[h.id];if(s&&(STATUS_RANK[s]||0)>(STATUS_RANK[st]||0))st=s;});
+          }
+        });
+        const moLabel=month[0].toLocaleDateString('en-AU',{month:'short'});
+        if(!hasScheduled){gridH+=`<div class="hdash-cell hc-skip" style="width:${w}px;margin-right:1px"></div>`;return;}
+        const cls=st==='did'?'hc-did':st==='delayed'?'hc-delayed':st==='didnot'?'hc-didnot':'hc-blank';
+        gridH+=`<div class="hdash-cell ${cls}" style="width:${w}px;margin-right:1px;border-radius:3px" onmouseenter="showTT(event,'${moLabel}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;
+      });
+    }
     gridH+='</div>';
   });
-
   // Habit consistency table (same data as old History tab)
   const qTotalDays=Math.round((Q_END-Q_START)/864e5)+1;
   const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
@@ -1283,7 +1372,7 @@ function renderHabitDash(){
     <div class="hdash-grid-wrapper">
       <div class="hdash-names-col">${namesH}</div>
       <div class="hdash-grid-scroll">
-        <div class="hdash-grid-inner">${headerH}${gridH}</div>
+        <div class="hdash-grid-inner">${headerH}${dateRowH}${gridH}</div>
       </div>
     </div>
 

@@ -192,14 +192,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .hdash-names-col{flex-shrink:0;width:130px;background:var(--bg);padding-top:0}
 .hdash-names-spacer{height:28px}
 .hdash-date-row{display:flex;margin-bottom:2px}
-.hdash-date-cell{width:9px;height:12px;font-size:6px;color:var(--text-dim);text-align:center;flex-shrink:0;margin-right:1px;line-height:12px;overflow:visible}
-.hdash-habit-name-cell{height:13px;font-size:9px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px;text-align:right;direction:rtl;display:flex;align-items:center;justify-content:flex-end;margin-bottom:2px}
+.hdash-date-cell{width:9px;height:15px;font-size:6px;color:var(--text-dim);text-align:center;flex-shrink:0;margin-right:1px;line-height:15px;overflow:visible}
+.hdash-habit-name-cell{height:15px;font-size:9px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px;text-align:right;direction:rtl;display:flex;align-items:center;justify-content:flex-end;margin-bottom:2px}
 .hdash-grid-scroll{overflow-x:auto;flex:1;-webkit-overflow-scrolling:touch}
 .hdash-grid-inner{display:inline-flex;flex-direction:column;min-width:max-content}
 .hdash-header-row{display:flex;margin-bottom:3px}
 .hdash-month-block{font-size:8px;color:var(--text-dim);letter-spacing:.3px;flex-shrink:0;text-align:left}
 .hdash-cells-row{display:flex;align-items:center;margin-bottom:2px}
-.hdash-cell{width:9px;height:13px;border-radius:1px;flex-shrink:0;margin-right:1px;cursor:default;transition:transform .1s}
+.hdash-cell{width:9px;height:15px;border-radius:1px;flex-shrink:0;margin-right:1px;cursor:default;transition:transform .1s}
 .hdash-cell:hover{transform:scale(1.4);z-index:10;position:relative}
 .hc-did{background:rgba(51,182,121,0.8)}
 .hc-delayed{background:rgba(245,158,11,0.7)}

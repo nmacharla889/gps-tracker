@@ -22,6 +22,7 @@ let activeDay     = null;
 let accessToken   = null;
 let tokenClient   = null;
 let goalsTargetEdit = null; // null | 'health'|'savings'|'gold'|'faith'|'belly'
+let dashViewQ     = null;   // null = current quarter; {start,end,label,qlabel} for past
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
 const TK = 'gps_token';
@@ -1118,8 +1119,10 @@ function getGroupFrequencyType(g){
     if(h.days==='daily'){DAYS.forEach(d=>daySet.add(d));return;}
     if(Array.isArray(h.days))h.days.forEach(d=>daySet.add(d));
   });
-  // 3+ unique days/week = daily; 1-2 days/week = weekly
-  return daySet.size>=3?'daily':'weekly';
+  // 3+ = daily, 2 = biweekly (two cells per week), 1 = weekly
+  if(daySet.size>=3)return 'daily';
+  if(daySet.size===2)return 'biweekly';
+  return 'weekly';
 }
 function groupDaysByWeek(days){
   const weeks=[];let cur=[];
@@ -1141,6 +1144,24 @@ function groupDaysByMonth(days){
   return months;
 }
 // ── Render Habit Dashboard ──
+function getAllQuarters(){
+  // Returns all quarters from Q2 2026 (app launch) up to and including the current quarter
+  const qs=[];
+  let y=2026,q=1; // Q2 2026 = index 1
+  const ny=_qNow.getFullYear(),nq=_qQ;
+  while(y<ny||(y===ny&&q<=nq)){
+    const start=new Date(y,q*3,1),end=new Date(y,q*3+3,0);
+    qs.push({start,end,label:`${_qMo[q*3]} → ${_qMo[q*3+2]} ${y}`,qlabel:`Q${q+1} ${y}`,isCurrent:y===ny&&q===nq});
+    q++;if(q>3){q=0;y++;}
+  }
+  return qs;
+}
+function setDashViewQ(qlabel){
+  if(!qlabel||qlabel===Q_QLABEL){dashViewQ=null;}
+  else{dashViewQ=getAllQuarters().find(q=>q.qlabel===qlabel)||null;}
+  renderHabitDash();
+}
+
 function renderHabitDash(){
   if(!accessToken){
     document.getElementById('main').innerHTML=`<div class="connect-screen">
@@ -1177,8 +1198,8 @@ function renderHabitDash(){
     }
     streaks[g.key]={id:g.key,label:g.label,streak,didCount};
   });
-  // Only include groups scheduled at least once since Apr 1
-  const qStart=new Date(Q_START);
+  // Only include groups scheduled at least once since quarter start
+  const qStart=new Date(Q_START); // always current quarter for streaks
   const scheduledSinceQ=Object.values(groups).filter(g=>
     Array.from({length:Math.ceil((now-qStart)/864e5)+1},(_,i)=>{const d=new Date(qStart);d.setDate(qStart.getDate()+i);return d;})
     .some(d=>g.members.some(h=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id)))
@@ -1217,8 +1238,9 @@ function renderHabitDash(){
   const bottom5=[...withSkips,...withDelaysOnly].slice(0,5);
 
   // Quarter grid: Apr 1 → today (capped at Aug 31)
-  const gridStart=new Date(Q_START);
-  const gridEnd=now<Q_END?now:Q_END;
+  const vQ=dashViewQ||{start:Q_START,end:Q_END,label:Q_LABEL,qlabel:Q_QLABEL,isCurrent:true};
+  const gridStart=new Date(vQ.start);
+  const gridEnd=vQ.isCurrent?(now<vQ.end?now:vQ.end):vQ.end;
   const days90=[];
   for(let d=new Date(gridStart);d<=gridEnd;d.setDate(d.getDate()+1)){days90.push(new Date(d));}
 
@@ -1284,6 +1306,43 @@ function renderHabitDash(){
         const tipDate=d.toLocaleDateString('en-AU',{day:'numeric',month:'short'});
         gridH+=`<div class="hdash-cell ${cls}" onclick="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseenter="showTT(event,'${tipDate}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;
       });
+    } else if(freqType==='biweekly'){
+      // Two cells per week. Find which days are scheduled, split week so each
+      // occurrence lands in its own half-cell.
+      groupDaysByWeek(days90).forEach(week=>{
+        const n=week.length;
+        // Find indices (0=first day of week) where habit is scheduled
+        const schedIdx=[];
+        week.forEach((d,i)=>{
+          const dk=DAYS[JS2IDX[d.getDay()]];
+          if(g.members.some(h=>getHabitsForDay(dk,dkey(d)).find(x=>x.id===h.id)))schedIdx.push(i);
+        });
+        if(!schedIdx.length){
+          // Not scheduled this week at all — one skip cell spanning full week
+          gridH+=`<div class="hdash-cell hc-skip" style="width:${n*CELL_W-1}px;margin-right:1px"></div>`;
+          return;
+        }
+        // Split point: midpoint between first and last scheduled index + 1
+        const splitAt=schedIdx.length>=2?Math.round((schedIdx[0]+schedIdx[schedIdx.length-1])/2)+1:Math.ceil(n/2);
+        const halves=[week.slice(0,Math.min(splitAt,n)),week.slice(Math.min(splitAt,n))].filter(h=>h.length);
+        halves.forEach(half=>{
+          const w=half.length*CELL_W-1;
+          let st='',hasScheduled=false;
+          half.forEach(d=>{
+            const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
+            const sched=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
+            if(sched.length){
+              hasScheduled=true;
+              sched.forEach(h=>{const s=(store[ds]||{})[h.id];if(s&&(STATUS_RANK[s]||0)>(STATUS_RANK[st]||0))st=s;});
+            }
+          });
+          if(!hasScheduled){gridH+=`<div class="hdash-cell hc-skip" style="width:${w}px;margin-right:1px"></div>`;return;}
+          const cls=st==='did'?'hc-did':st==='delayed'?'hc-delayed':st==='didnot'?'hc-didnot':'hc-blank';
+          const d0=half[0].toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+          const d1=half[half.length-1].toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+          gridH+=`<div class="hdash-cell ${cls}" style="width:${w}px;margin-right:1px;border-radius:2px" onmouseenter="showTT(event,'${d0}–${d1}: ${st||'not marked'}')" onmouseleave="hideTT()"></div>`;
+        });
+      });
     } else if(freqType==='weekly'){
       groupDaysByWeek(days90).forEach(week=>{
         const n=week.length,w=n*CELL_W-1;
@@ -1322,16 +1381,16 @@ function renderHabitDash(){
     }
     gridH+='</div>';
   });
-  // Habit consistency table (same data as old History tab)
-  const qTotalDays=Math.round((Q_END-Q_START)/864e5)+1;
-  const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((now-Q_START)/864e5)+1));
+  // Habit consistency table — uses the selected view quarter (vQ)
+  const qTotalDays=Math.round((vQ.end-vQ.start)/864e5)+1;
+  const qElapsed=Math.max(1,Math.min(qTotalDays,Math.round((gridEnd-vQ.start)/864e5)+1));
   const cG='rgba(51,182,121,0.8)',cR='rgba(239,68,68,0.7)',cA='rgba(245,158,11,0.8)';
   const consistGroups={};
   HABITS.forEach(h=>{const key=h.group||h.id;if(!consistGroups[key])consistGroups[key]={key,label:h.label,members:[]};consistGroups[key].members.push(h);});
   const habitStats=Object.values(consistGroups).map(g=>{
     let sched=0,done=0,delayed=0,skipped=0;
     for(let i=0;i<qElapsed;i++){
-      const d=new Date(Q_START);d.setDate(Q_START.getDate()+i);
+      const d=new Date(vQ.start);d.setDate(vQ.start.getDate()+i);
       const ds=dkey(d),dk=DAYS[JS2IDX[d.getDay()]];
       const members=g.members.filter(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id));
       if(!members.length)continue;
@@ -1372,9 +1431,14 @@ function renderHabitDash(){
   const npInfo=getNoPornInfo();
   const npStreakCol=npInfo.streak>=30?'#33b679':npInfo.streak>=7?'#f59e0b':'rgba(239,68,68,0.8)';
 
+  const qPills=getAllQuarters().map(q=>`<button class="q-pill${(!dashViewQ&&q.isCurrent)||(dashViewQ&&dashViewQ.qlabel===q.qlabel)?' q-pill-active':''}" onclick="setDashViewQ('${q.qlabel}')">${q.qlabel}</button>`).join('');
+  const isPastQ=!!dashViewQ;
+
   document.getElementById('main').innerHTML=`
     <div class="section-title">Habit Dashboard — ${Q_LABEL}</div>
-    <div class="hdash-top">
+    <div class="q-selector">${qPills}</div>
+    <div class="hdash-top" ${isPastQ?'style="display:none"':''}>
+
       <div class="hdash-card">
         <div class="hdash-card-title">Top streaks 🔥</div>
         <div class="streak-list">
@@ -1397,7 +1461,7 @@ function renderHabitDash(){
       </div>
     </div>
 
-    <div class="hdash-card" style="margin-bottom:22px">
+    <div class="hdash-card" style="margin-bottom:22px${isPastQ?';display:none':''}">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div>
           <div class="hdash-card-title">No-Porn Streak 🧘</div>
@@ -1411,7 +1475,7 @@ function renderHabitDash(){
       </div>
     </div>
 
-    <div class="section-title">${Q_LABEL} heat map</div>
+    <div class="section-title">${vQ.label} heat map</div>
     <div class="hdash-legend">
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(51,182,121,0.8)"></div><span class="hdash-legend-lbl">Done</span></div>
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(245,158,11,0.7)"></div><span class="hdash-legend-lbl">Delayed</span></div>
@@ -1425,7 +1489,7 @@ function renderHabitDash(){
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:8px">Consistency since ${Q_SINCE}</div>
+    <div class="section-title" style="margin-top:8px">Consistency — ${vQ.label}</div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">${consistTableH}</div>
   `;
 }

@@ -277,3 +277,7 @@ body::before{animation:ambientDrift 9s ease-in-out infinite}
 .goal-cat-work{border-left:3px solid rgba(66,133,244,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(66,133,244,0.13)!important}
 .goal-cat-rel{border-left:3px solid rgba(233,30,140,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(233,30,140,0.13)!important}
 .goal-cat-faith{border-left:3px solid rgba(246,191,38,0.5)!important;box-shadow:0 4px 28px rgba(0,0,0,0.6),-5px 0 18px rgba(246,191,38,0.13)!important}
+.q-selector{display:flex;gap:6px;overflow-x:auto;padding:8px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.q-selector::-webkit-scrollbar{display:none}
+.q-pill{padding:4px 10px;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:20px;font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.q-pill-active{background:var(--accent,#f59e0b);border-color:var(--accent,#f59e0b);color:#000;font-weight:700}

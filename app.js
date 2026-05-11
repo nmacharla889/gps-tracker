@@ -937,16 +937,16 @@ async function habitsSheetInit(){
       );
     }else{
       habitsSheetRowMap={};
-      const store=getHabitStore();
-      let changed=false;
+      // Sheet is authoritative: rebuild localStorage from sheet rows only.
+      // This ensures rows deleted from the sheet are also removed locally.
+      const newStore={};
       rows.forEach((row,i)=>{
         if(i===0||!row[0])return;
         habitsSheetRowMap[row[0]]=i+1;
-        if(!store[row[0]]&&row[2]){
-          try{store[row[0]]=JSON.parse(row[2]);changed=true;}catch{}
-        }
+        if(row[2]){try{newStore[row[0]]=JSON.parse(row[2]);}catch{}}
       });
-      if(changed){saveHabitStore(store);showToast('Habit data restored from Sheets','ok');}
+      saveHabitStore(newStore);
+      showToast('Habit data synced from Sheets','ok');
     }
   }catch(err){console.warn('Habits sheet init:',err);}
 }
@@ -1064,13 +1064,18 @@ function switchHabitDay(dk,ds){
 }
 // ── Heatmap frequency helpers ──
 function getGroupFrequencyType(g){
-  const qS=new Date('2026-04-01T00:00:00'),qE=new Date('2026-06-30T00:00:00');
-  let count=0;
-  for(let d=new Date(qS);d<=qE;d.setDate(d.getDate()+1)){
-    const dk=DAYS[JS2IDX[d.getDay()]],ds=dkey(d);
-    if(g.members.some(h=>getHabitsForDay(dk,ds).find(x=>x.id===h.id)))count++;
-  }
-  return count>=60?'daily':count>=6?'weekly':'monthly';
+  // Monthly: any member has lastSundayOnly flag
+  if(g.members.some(h=>h.lastSundayOnly))return 'monthly';
+  // Collect all unique scheduled days across all group members from their days field.
+  // This avoids relying on the 2-week calendar window, which would under-count
+  // individual (non-recurring) events and wrongly classify daily habits as weekly.
+  const daySet=new Set();
+  g.members.forEach(h=>{
+    if(h.days==='daily'){DAYS.forEach(d=>daySet.add(d));return;}
+    if(Array.isArray(h.days))h.days.forEach(d=>daySet.add(d));
+  });
+  // 5+ unique days/week = daily; otherwise weekly
+  return daySet.size>=5?'daily':'weekly';
 }
 function groupDaysByWeek(days){
   const weeks=[];let cur=[];

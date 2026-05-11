@@ -7,8 +7,15 @@ const SHEET_ID   = '1909BqpI0IUDqYbFKPFyh2TDc99f1nUMuAgpp8MhXhrg';
 const DAYS   = ['mon','tue','wed','thu','fri','sat','sun'];
 const DNAMES = {mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
 const JS2IDX = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
-const Q_START = new Date('2026-04-01');
-const Q_END   = new Date('2026-06-30');
+const _qNow=new Date(),_qY=_qNow.getFullYear(),_qQ=Math.floor(_qNow.getMonth()/3);
+const _qMo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const Q_START=new Date(_qY,_qQ*3,1);
+const Q_END=new Date(_qY,_qQ*3+3,0);
+const Q_LABEL=`${_qMo[_qQ*3]} → ${_qMo[_qQ*3+2]} ${_qY}`;
+const Q_QLABEL=`Q${_qQ+1} ${_qY}`;
+const Q_SINCE=`${_qMo[_qQ*3]} 1`;
+const Q_PERIOD=`${_qMo[_qQ*3]} 1 → ${_qMo[_qQ*3+2]} ${new Date(_qY,_qQ*3+3,0).getDate()}`;
+const Q_SHEET_PERIOD=`${_qMo[_qQ*3].substring(0,3)}-${_qMo[_qQ*3+2].substring(0,3)} ${_qY}`;
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let activeDay     = null;
@@ -81,10 +88,10 @@ async function goalsSheetAppend(sheetName,row){
 async function goalsTargetsSheetSave(t){
   if(!accessToken)return;
   const rows=[['quarter','goal','target'],
-    ['Apr-Jun 2026','health',t.health],
-    ['Apr-Jun 2026','savings',t.savings],
-    ['Apr-Jun 2026','gold',t.gold],
-    ['Apr-Jun 2026','faith',t.faith],
+    [Q_SHEET_PERIOD,'health',t.health],
+    [Q_SHEET_PERIOD,'savings',t.savings],
+    [Q_SHEET_PERIOD,'gold',t.gold],
+    [Q_SHEET_PERIOD,'faith',t.faith],
   ];
   try{
     await apiWrite(`${SHEETS_BASE}/values/${encodeURIComponent('Goals_Targets!A:C')}:clear`,'POST',{});
@@ -227,6 +234,38 @@ async function loadCalendarData(){
           migrateHabitData(); // one-time migration of old localStorage keys → recurringEventIds
         }
       }
+      // Second fetch: event definitions (singleEvents=false) to find monthly habits
+      // not captured by the 2-week window (e.g. "every 1st Sunday of month").
+      // Returns ~1 item per recurring habit — very fast regardless of how many occurrences exist.
+      try{
+        const defData=await apiFetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(habitCal.id)}/events`+
+          `?timeMin=${encodeURIComponent(new Date(Q_START.getFullYear(),Q_START.getMonth(),1).toISOString())}`+
+          `&timeMax=${encodeURIComponent(new Date(Q_END.getFullYear(),Q_END.getMonth()+1,1).toISOString())}`+
+          `&singleEvents=false&maxResults=200`
+        );
+        (defData.items||[]).forEach(ev=>{
+          const rrule=(ev.recurrence||[]).find(r=>r.startsWith('RRULE:'))||'';
+          if(!rrule.includes('FREQ=MONTHLY'))return;
+          if(!ev.summary)return;
+          const label=ev.summary.trim();
+          const slug=label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+          const stableId=ev.id;
+          const firstSun=/BYDAY=1SU/i.test(rrule);
+          const lastSun=/BYDAY=-1SU/i.test(rrule);
+          const existing=HABITS.find(h=>h.id===stableId);
+          if(!existing){
+            // Monthly habit not in 2-week window — add it so heatmap can show it
+            const startDT=ev.start?.date?new Date(ev.start.date+'T00:00:00'):new Date(ev.start?.dateTime||Date.now());
+            const dayKey=DAYS[JS2IDX[startDT.getDay()]];
+            if(!dayKey)return;
+            HABITS.push({id:stableId,label,time:'All day',group:slug,days:[dayKey],firstSundayOnly:firstSun,lastSundayOnly:lastSun});
+          }else{
+            if(firstSun)existing.firstSundayOnly=true;
+            if(lastSun)existing.lastSundayOnly=true;
+          }
+        });
+      }catch(e){console.warn('Monthly habit def fetch:',e);}
     }
 
     setSyncStatus('ok');
@@ -640,7 +679,7 @@ function renderGoals(){
   const fTrendTxt=fDiff>=0?`Ahead by ${fDiff} shloka${fDiff!==1?'s':''}`:`Behind by ${Math.abs(fDiff)} shloka${Math.abs(fDiff)!==1?'s':''}`;
 
   document.getElementById('main').innerHTML=`
-    <div class="section-title">Goals — Apr → Jun 2026</div>
+    <div class="section-title">Goals — ${Q_LABEL}</div>
 
     ${_goalsSectionHdr('Health 💪','health')}
     ${goalsTargetEdit==='health'?_goalsTargetBlock('health','Weight target',targets.health,'kg',0.1):''}
@@ -766,16 +805,16 @@ function renderHistory(){
   const daysLeft=qTotalDays-qElapsed;
   const cA='rgba(245,158,11,0.8)';
 
-  let h=`<div class="section-title">History — Apr → Jun 2026</div>`;
+  let h=`<div class="section-title">History — ${Q_LABEL}</div>`;
 
   // Quarter progress bar
   h+=`<div class="goal-card" style="margin-bottom:20px">
     <div class="goal-card-header">
-      <span class="goal-card-title">Q2 2026 progress</span>
+      <span class="goal-card-title">${Q_QLABEL} progress</span>
       <span class="goal-trend warn">${daysLeft} days left</span>
     </div>
     <div class="goal-bar-outer"><div class="goal-bar-inner" style="width:${qPct}%;background:${cA}"></div></div>
-    <div class="goal-metric-row"><span>Week ${Math.ceil(qElapsed/7)} of ${Math.ceil(qTotalDays/7)}</span><span>${qPct}% elapsed · Apr 1 → Jun 30</span></div>
+    <div class="goal-metric-row"><span>Week ${Math.ceil(qElapsed/7)} of ${Math.ceil(qTotalDays/7)}</span><span>${qPct}% elapsed · ${Q_PERIOD}</span></div>
   </div>`;
 
   // Build unified goal entry log (all types, sorted by date desc)
@@ -839,12 +878,17 @@ function isLastSundayOfMonth(dateStr){
   next.setDate(d.getDate()+7);
   return next.getMonth()!==d.getMonth();
 }
+function isFirstSundayOfMonth(dateStr){
+  const d=new Date(dateStr+'T00:00:00');
+  return d.getDay()===0&&d.getDate()<=7;
+}
 
 function getHabitsForDay(dayKey,dateStr){
   return HABITS.filter(h=>{
     const days=h.days==='daily'?DAYS:h.days;
     if(!days.includes(dayKey)) return false;
     if(h.lastSundayOnly&&!isLastSundayOfMonth(dateStr)) return false;
+    if(h.firstSundayOnly&&!isFirstSundayOfMonth(dateStr)) return false;
     return true;
   });
 }
@@ -1064,8 +1108,8 @@ function switchHabitDay(dk,ds){
 }
 // ── Heatmap frequency helpers ──
 function getGroupFrequencyType(g){
-  // Monthly: any member has lastSundayOnly flag
-  if(g.members.some(h=>h.lastSundayOnly))return 'monthly';
+  // Monthly: any member has a monthly-only flag
+  if(g.members.some(h=>h.lastSundayOnly||h.firstSundayOnly))return 'monthly';
   // Collect all unique scheduled days across all group members from their days field.
   // This avoids relying on the 2-week calendar window, which would under-count
   // individual (non-recurring) events and wrongly classify daily habits as weekly.
@@ -1074,8 +1118,8 @@ function getGroupFrequencyType(g){
     if(h.days==='daily'){DAYS.forEach(d=>daySet.add(d));return;}
     if(Array.isArray(h.days))h.days.forEach(d=>daySet.add(d));
   });
-  // 5+ unique days/week = daily; otherwise weekly
-  return daySet.size>=5?'daily':'weekly';
+  // 3+ unique days/week = daily; 1-2 days/week = weekly
+  return daySet.size>=3?'daily':'weekly';
 }
 function groupDaysByWeek(days){
   const weeks=[];let cur=[];
@@ -1134,7 +1178,7 @@ function renderHabitDash(){
     streaks[g.key]={id:g.key,label:g.label,streak,didCount};
   });
   // Only include groups scheduled at least once since Apr 1
-  const qStart=new Date('2026-04-01T00:00:00');
+  const qStart=new Date(Q_START);
   const scheduledSinceQ=Object.values(groups).filter(g=>
     Array.from({length:Math.ceil((now-qStart)/864e5)+1},(_,i)=>{const d=new Date(qStart);d.setDate(qStart.getDate()+i);return d;})
     .some(d=>g.members.some(h=>getHabitsForDay(DAYS[JS2IDX[d.getDay()]],dkey(d)).find(x=>x.id===h.id)))
@@ -1173,7 +1217,7 @@ function renderHabitDash(){
   const bottom5=[...withSkips,...withDelaysOnly].slice(0,5);
 
   // Quarter grid: Apr 1 → today (capped at Aug 31)
-  const gridStart=new Date("2026-04-01T00:00:00");
+  const gridStart=new Date(Q_START);
   const gridEnd=now<Q_END?now:Q_END;
   const days90=[];
   for(let d=new Date(gridStart);d<=gridEnd;d.setDate(d.getDate()+1)){days90.push(new Date(d));}
@@ -1329,7 +1373,7 @@ function renderHabitDash(){
   const npStreakCol=npInfo.streak>=30?'#33b679':npInfo.streak>=7?'#f59e0b':'rgba(239,68,68,0.8)';
 
   document.getElementById('main').innerHTML=`
-    <div class="section-title">Habit Dashboard — Apr → Jun 2026</div>
+    <div class="section-title">Habit Dashboard — ${Q_LABEL}</div>
     <div class="hdash-top">
       <div class="hdash-card">
         <div class="hdash-card-title">Top streaks 🔥</div>
@@ -1362,12 +1406,12 @@ function renderHabitDash(){
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
           <button onclick="noPornReset()" style="padding:8px 16px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:rgba(239,68,68,0.85);border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer">I broke it today</button>
-          ${npInfo.resetDate?`<div style="font-size:9px;color:var(--text-dim)">Last reset: ${npInfo.resetDate}</div>`:'<div style="font-size:9px;color:var(--text-dim)">Tracking since Apr 1</div>'}
+          ${npInfo.resetDate?`<div style="font-size:9px;color:var(--text-dim)">Last reset: ${npInfo.resetDate}</div>`:`<div style="font-size:9px;color:var(--text-dim)">Tracking since ${Q_SINCE}</div>`}
         </div>
       </div>
     </div>
 
-    <div class="section-title">Apr → Jun 2026 heat map</div>
+    <div class="section-title">${Q_LABEL} heat map</div>
     <div class="hdash-legend">
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(51,182,121,0.8)"></div><span class="hdash-legend-lbl">Done</span></div>
       <div class="hdash-legend-item"><div class="hdash-legend-dot" style="background:rgba(245,158,11,0.7)"></div><span class="hdash-legend-lbl">Delayed</span></div>
@@ -1381,7 +1425,7 @@ function renderHabitDash(){
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:8px">Consistency since Apr 1</div>
+    <div class="section-title" style="margin-top:8px">Consistency since ${Q_SINCE}</div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">${consistTableH}</div>
   `;
 }

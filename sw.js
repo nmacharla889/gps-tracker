@@ -1,4 +1,4 @@
-const CACHE = 'gps-v32';
+const CACHE = 'gps-v33';
 
 const ASSETS = [
   './',

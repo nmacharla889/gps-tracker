@@ -204,7 +204,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .hc-did{background:rgba(51,182,121,0.8)}
 .hc-delayed{background:rgba(245,158,11,0.7)}
 .hc-didnot{background:rgba(239,68,68,0.55)}
-.hc-blank{background:var(--surface2)}
+.hc-blank{background:rgba(255,255,255,0.1)}
 .hc-skip{background:transparent}
 .hdash-legend{display:flex;gap:14px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
 .hdash-legend-item{display:flex;align-items:center;gap:5px}
